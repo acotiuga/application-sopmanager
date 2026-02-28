@@ -19,6 +19,8 @@
  */
 package org.xwiki.contrib.sopmanager.internal;
 
+import java.util.Date;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -28,6 +30,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.SOPManager;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.model.reference.EntityReferenceSerializer;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -54,6 +57,9 @@ public class DefaultSOPManager implements SOPManager
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
+    @Inject
+    private EntityReferenceSerializer<String> serializer;
+
     @Override
     public void addDocumentToReviewProcess(DocumentReference documentReference)
     {
@@ -63,6 +69,10 @@ public class DefaultSOPManager implements SOPManager
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
             if (sopDoc.getXObjects(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE).isEmpty()) {
                 BaseObject sopObj = sopDoc.newXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE, context);
+                // Add the current user as default reviewer.
+                sopObj.setLargeStringValue("revisedBy", serializer.serialize(context.getUserReference()));
+                // Set today as the default revisionDate.
+                sopObj.setDateValue("releaseDate", new Date());
                 xWiki.saveDocument(sopDoc, localizationManager.getTranslationPlain("sopManager.addPage.added"),
                     context);
             }

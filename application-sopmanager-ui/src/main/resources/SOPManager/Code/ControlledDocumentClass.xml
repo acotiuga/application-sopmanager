@@ -107,10 +107,10 @@
     </pDFSecondaryTargetLocation>
     <releaseDate>
       <customDisplay/>
-      <dateFormat>dd/MM/yyyy HH:mm:ss</dateFormat>
+      <dateFormat>dd/MM/yyyy</dateFormat>
       <disabled>0</disabled>
       <emptyIsToday>1</emptyIsToday>
-      <hint/>
+      <hint>By default, the release date is automatically set to today.</hint>
       <name>releaseDate</name>
       <number>1</number>
       <picker>1</picker>
@@ -162,7 +162,7 @@
     </revision>
     <revisionPlannedDate>
       <customDisplay/>
-      <dateFormat>dd/MM/yyyy HH:mm:ss</dateFormat>
+      <dateFormat>dd/MM/yyyy</dateFormat>
       <disabled>0</disabled>
       <emptyIsToday>1</emptyIsToday>
       <hint/>

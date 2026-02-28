@@ -20,7 +20,6 @@
 package org.xwiki.contrib.sopmanager;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
