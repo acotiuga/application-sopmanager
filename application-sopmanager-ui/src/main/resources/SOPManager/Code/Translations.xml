@@ -36,9 +36,11 @@
   <minorEdit>false</minorEdit>
   <syntaxId>plain/1.0</syntaxId>
   <hidden>true</hidden>
-  <content>sopManager.addPage.label=Add the current page to the review process
+  <content>sopManager.name=SOP Manager
+sopManager.addPage.label=Add the current page to the review process
 sopManager.addPage.hint=Register this procedure in the review and approval process and manage reviewers, approval status, revisions, and revision dates.
-sopManager.addPage.button.label=Start review</content>
+sopManager.addPage.button.label=Start review
+sopManager.addPage.added=Page added to review.</content>
   <object>
     <name>SOPManager.Code.Translations</name>
     <number>0</number>

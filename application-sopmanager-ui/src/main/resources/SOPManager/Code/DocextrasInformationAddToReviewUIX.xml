@@ -40,7 +40,7 @@
 #if ($request.outputSyntax == 'plain')
   #set ($discard = $response.setContentType('application/json'))
   #if ("$!request.document" != '')
-    $services.sopManager.addDocumentToReviewProcess($request.document)
+    $services.sopService.addDocumentToReviewProcess($request.document)
     $jsontool.serialize({'status': 'success'})
   #end
 #end
@@ -144,7 +144,7 @@
         'document': xm.document
       }
     }).done(function(data) {
-      window.location = window.location.pathname;
+      window.location = window.location.pathname + '?r=1#SOPReviewPages';
     });
   });
 });</code>

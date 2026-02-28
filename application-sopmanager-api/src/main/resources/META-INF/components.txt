@@ -1,0 +1,2 @@
+org.xwiki.contrib.sopmanager.internal.DefaultSOPManager
+org.xwiki.contrib.sopmanager.script.SOPScriptService
