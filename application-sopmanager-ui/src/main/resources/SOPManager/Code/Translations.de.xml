@@ -1,0 +1,56 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.Translations" locale="de">
+  <web>SOPManager.Code</web>
+  <name>Translations</name>
+  <language>de</language>
+  <defaultLanguage>en</defaultLanguage>
+  <translation>1</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>Translations</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>plain/1.0</syntaxId>
+  <hidden>true</hidden>
+  <content>sopManager.name  = SOP‑Manager
+sopManager.addPage.label = Aktuelle Seite zum Prüfprozess hinzufügen
+sopManager.addPage.hint = Diese Vorgehensweise im Prüf‑ und Genehmigungsprozess registrieren und Prüfer, Genehmigungsstatus, Revisionen und Revisionsdaten verwalten.
+sopManager.addPage.button.label = Prüfung starten
+sopManager.addPage.added = Seite zum Prüfprozess hinzugefügt.
+
+SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
+SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Dieses Feld enthält das Freigabedatum der aktuell genehmigten Revision. Standardmäßig wird es automatisch auf das heutige Datum gesetzt.
+SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabe durch
+SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigt hat.
+SOPManager.Code.ControlledDocumentClass_revisedBy=Überarbeitet von
+SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig wird der Wert „Überarbeitet von“ automatisch auf den aktuellen Benutzer gesetzt.
+SOPManager.Code.ControlledDocumentClass_revision=Revision
+SOPManager.Code.ControlledDocumentClass_revision_hint=Geben Sie die Revisionskennung für dieses Dokument ein.
+SOPManager.Code.ControlledDocumentClass_revisionPlannedDate=Revision geplant
+SOPManager.Code.ControlledDocumentClass_revisionPlannedDate_hint=Wählen Sie das geplante Datum für die nächste Revision aus.
+SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation=Sekundärer PDF‑Zielspeicherort
+SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation_hint=Zeigt den Speicherort im Dateimanager an, an dem die exportierte PDF‑Version dieses Dokuments abgelegt wurde. Der primäre Speicherort der erzeugten PDF‑Datei ist stets das aktuelle Dokument.</content>
+</xwikidoc>

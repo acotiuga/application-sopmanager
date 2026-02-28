@@ -184,7 +184,14 @@
         ## Using the xform vertical form layout.
         &lt;div class="xform"&gt;
           &lt;dl&gt;
+          #set ($generalEditing = $editing)
           #foreach ($property in $xclass.properties)
+            ## This property is read‑only and cannot be modified by the user.
+            #if ($property.name == 'pDFSecondaryTargetLocation')
+              #set ($editing = 'false')
+            #else
+              #set ($editing = $generalEditing)
+            #end
             &lt;dt #if (!$editing &amp;&amp; $hasEdit)
                 class="editableProperty"
                 #set ($xobjectPropertyReference = $xobject.getPropertyReference($property.name))
