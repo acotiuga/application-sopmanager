@@ -36,5 +36,206 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
-  <content/>
+  <content>{{velocity}}
+#if (!$hasAdmin)
+  $response.sendRedirect($xwiki.getURL($xcontext.user, 'view', 'category=sopManager'))
+#end
+{{liveData
+  id="sopManagerTable"
+  properties="doc.title,status,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
+  source="liveTable"
+  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
+}}
+{{/velocity}}
+
+{{toc/}}
+= Controlled Document Workflow =
+
+This page explains how controlled documents move through their lifecycle, from initial drafting to approval and publication. The goal is to help users understand what each state means and what actions they can take at each step.
+
+== Overview ==
+
+Every controlled document goes through several stages before it becomes an approved and published version. These stages are represented as *workflow states* stored in the Controlled Document Class. The system updates these states automatically based on the actions performed by authors, reviewers, and approvers.
+
+== Workflow States ==
+
+* **draft** - The document is being created or updated. Authors can freely edit the content in this state.
+* **submittedForReview** - The document has been sent to reviewers for feedback and evaluation.
+* **submittedForApproval** - The document has passed review and is waiting for final approval.
+* **approved** - The document has been formally approved and is ready for publication.
+
+== How Documents Move Through the Workflow ==
+
+When a document is added to the review process from the Information tab, it starts in the **draft** state.
+
+From there, the following transitions can occur:
+
+* **draft → submittedForReview**
+  The author selects **Submit for Review** to send the document to reviewers.
+
+* **submittedForReview → submittedForApproval**
+  Reviewers select **Submit for approval** when the document is ready for final approval.
+
+* **submittedForReview → draft**
+  Reviewers select *Return for changes* if the document needs updates before it can proceed.
+
+* **submittedForApproval → approved**
+  The approver selects **Approve** to finalize the document.
+
+* **submittedForApproval → draft**
+  The approver selects **Return for changes** to request revisions.
+
+* **approved → draft**
+  After approval, the user generates the PDF file. Once the PDF is stored, the document returns to *draft* so the next revision cycle can begin.
+
+== Typical User Scenario ==
+
+A document usually begins in the **draft** state, where the author prepares the content. When ready, the author submits it for review, moving it to **submittedForReview**. Reviewers check the document and either forward it for approval or return it for changes.
+
+If forwarded, the document enters **submittedForApproval**, where an approver evaluates it. The approver may approve the document or return it for further editing.
+
+Once approved, the user generates the PDF file. The system stores the PDF as the official version, and the document returns to **draft** so that future updates can be prepared when needed.</content>
+  <object>
+    <name>SOPManager.WebHome</name>
+    <number>0</number>
+    <className>XWiki.UIExtensionClass</className>
+    <guid>21eb86e9-b139-4ad6-909c-f39b9b96e15c</guid>
+    <class>
+      <name>XWiki.UIExtensionClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <async_cached>
+        <defaultValue>0</defaultValue>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType/>
+        <name>async_cached</name>
+        <number>3</number>
+        <prettyName>Cached</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </async_cached>
+      <async_context>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>1</multiSelect>
+        <name>async_context</name>
+        <number>4</number>
+        <prettyName>Context elements</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator>, </separator>
+        <separators>|, </separators>
+        <size>5</size>
+        <unmodifiable>0</unmodifiable>
+        <values>action=Action|doc.reference=Document|doc.revision|icon.theme=Icon theme|locale=Language|rendering.defaultsyntax=Default syntax|rendering.restricted=Restricted|rendering.targetsyntax=Target syntax|request.base=Request base URL|request.cookies|request.headers|request.parameters=Request parameters|request.remoteAddr|request.session|request.url=Request URL|request.wiki=Request wiki|sheet|user=User|wiki=Wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </async_context>
+      <async_enabled>
+        <defaultValue>0</defaultValue>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType/>
+        <name>async_enabled</name>
+        <number>2</number>
+        <prettyName>Asynchronous rendering</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </async_enabled>
+      <content>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <name>content</name>
+        <number>1</number>
+        <prettyName>Executed Content</prettyName>
+        <restricted>0</restricted>
+        <rows>25</rows>
+        <size>120</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </content>
+      <extensionPointId>
+        <disabled>0</disabled>
+        <name>extensionPointId</name>
+        <number>5</number>
+        <prettyName>Extension Point ID</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </extensionPointId>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>6</number>
+        <prettyName>Extension ID</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parameters>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>parameters</name>
+        <number>7</number>
+        <prettyName>Extension Parameters</prettyName>
+        <restricted>0</restricted>
+        <rows>10</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </parameters>
+      <scope>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>scope</name>
+        <number>8</number>
+        <prettyName>Extension Scope</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>wiki=Current Wiki|user=Current User|global=Global</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </scope>
+    </class>
+    <property>
+      <async_cached>0</async_cached>
+    </property>
+    <property>
+      <async_context/>
+    </property>
+    <property>
+      <async_enabled>0</async_enabled>
+    </property>
+    <property>
+      <content/>
+    </property>
+    <property>
+      <extensionPointId>org.xwiki.platform.panels.Applications</extensionPointId>
+    </property>
+    <property>
+      <name>org.xwiki.contrib.applications.SOPManager</name>
+    </property>
+    <property>
+      <parameters>label=$services.localization.render('sopManager.name')
+target=SOPManager.WebHome
+icon=icon:refresh</parameters>
+    </property>
+    <property>
+      <scope/>
+    </property>
+  </object>
 </xwikidoc>

@@ -27,6 +27,7 @@
   <defaultLanguage>en</defaultLanguage>
   <translation>1</translation>
   <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <version>1.1</version>
@@ -35,22 +36,38 @@
   <minorEdit>false</minorEdit>
   <syntaxId>plain/1.0</syntaxId>
   <hidden>true</hidden>
-  <content>sopManager.name  = SOP‑Manager
-sopManager.addPage.label = Aktuelle Seite zum Prüfprozess hinzufügen
-sopManager.addPage.hint = Diese Vorgehensweise im Prüf‑ und Genehmigungsprozess registrieren und Prüfer, Genehmigungsstatus, Revisionen und Revisionsdaten verwalten.
-sopManager.addPage.button.label = Prüfung starten
-sopManager.addPage.added = Seite zum Prüfprozess hinzugefügt.
+  <content>sopManager.name=SOP‑Manager
+sopManager.addPage.label=Aktuelle Seite zum Prüfprozess hinzufügen
+sopManager.addPage.hint=Diese Vorgehensweise im Prüf‑ und Genehmigungsprozess registrieren und Prüfer, Genehmigungsstatus, Revisionen und Revisionsdaten verwalten.
+sopManager.addPage.button.label=Prüfung starten
+sopManager.addPage.added=Seite zum Prüfprozess hinzugefügt.
+sopManager.reviewPage.submitForReview.label=Zur Prüfung einreichen
+sopManager.reviewPage.submitForReview.title=Zur Prüfung einreichen
+sopManager.reviewPage.submitForApproval.label=Zur Genehmigung einreichen
+sopManager.reviewPage.submitForApproval.title=Zur Genehmigung einreichen
+sopManager.reviewPage.returnForChanges.label=Zur Überarbeitung zurückgeben
+sopManager.reviewPage.returnForChanges.title=Zur Überarbeitung zurückgeben
+sopManager.reviewPage.approve.label=Genehmigen
+sopManager.reviewPage.approve.title=Genehmigen
+sopManager.reviewPage.generatePDF.label=PDF erzeugen
+sopManager.reviewPage.generatePDF.title=PDF erzeugen
+sopManager.reviewPage.returnToDraft.label=In Entwurf zurücksetzen
+sopManager.reviewPage.returnToDraft.title=In Entwurf zurücksetzen
+sopManager.reviewPage.previousRevisions.label=Frühere Revisionen (PDFs)
+sopManager.reviewPage.submitForReview=Zur Überprüfung eingereicht.
+sopManager.reviewPage.returnForChanges=Zur Überarbeitung zurückgegeben.
+sopManager.reviewPage.submitForApproval=Zur Genehmigung eingereicht.
 
 SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
 SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Dieses Feld enthält das Freigabedatum der aktuell genehmigten Revision. Standardmäßig wird es automatisch auf das heutige Datum gesetzt.
-SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabe durch
-SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigt hat.
-SOPManager.Code.ControlledDocumentClass_revisedBy=Überarbeitet von
-SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig wird der Wert „Überarbeitet von“ automatisch auf den aktuellen Benutzer gesetzt.
+SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabebenutzer
+SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigen muss.
+SOPManager.Code.ControlledDocumentClass_revisedBy=Überprüfungsbenutzer
+SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig ist der Benutzer, der dieses Dokument überprüfen soll, auf den aktuellen Benutzer festgelegt.
 SOPManager.Code.ControlledDocumentClass_revision=Revision
 SOPManager.Code.ControlledDocumentClass_revision_hint=Geben Sie die Revisionskennung für dieses Dokument ein.
 SOPManager.Code.ControlledDocumentClass_revisionPlannedDate=Revision geplant
 SOPManager.Code.ControlledDocumentClass_revisionPlannedDate_hint=Wählen Sie das geplante Datum für die nächste Revision aus.
-SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation=Sekundärer PDF‑Zielspeicherort
+SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation=PDF im File Manager
 SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation_hint=Zeigt den Speicherort im Dateimanager an, an dem die exportierte PDF‑Version dieses Dokuments abgelegt wurde. Der primäre Speicherort der erzeugten PDF‑Datei ist stets das aktuelle Dokument.</content>
 </xwikidoc>

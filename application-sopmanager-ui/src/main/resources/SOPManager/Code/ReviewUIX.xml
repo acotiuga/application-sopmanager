@@ -36,7 +36,131 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <content/>
+  <content>{{velocity wiki="false"}}
+#if ($request.outputSyntax == 'plain')
+  #set ($discard = $response.setContentType('application/json'))
+  #set ($discard = $services.sopService.updateDocumentReviewState($request.action, $request.document))
+  $jsontool.serialize({'status': 'success'})
+#end
+{{/velocity}}
+</content>
+  <object>
+    <name>SOPManager.Code.ReviewUIX</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>b143e37a-2adf-4670-9aef-d49bd57c7836</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>require(['jquery', 'xwiki-meta', 'xwiki-events-bridge'], function ($, xm) {
+  var serviceURL = new XWiki.Document('ReviewUIX', 'SOPManager.Code').getURL('get', 'outputSyntax=plain');
+  $('#SOPReviewPagespane').on('click', '.reviewActions button', function() {
+    event.preventDefault();
+    var action = this.id;
+    $.post({
+      url : serviceURL,
+      data: {
+        'action': action,
+        'document': xm.document
+      },
+    }).done(function(data) {
+      // TODO: Add a live 3-seconds notification using https://www.xwiki.org/xwiki/bin/view/Documentation/DevGuide/FrontendResources/XWikiNotifications/ before reloading the page.
+      const r = Math.floor(Math.random() * 100);
+      window.location = window.location.pathname + '?r=' + r + '#SOPReviewPages';
+    });
+  });
+});</code>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
   <object>
     <name>SOPManager.Code.ReviewUIX</name>
     <number>0</number>
@@ -164,8 +288,10 @@
     </property>
     <property>
       <content>{{velocity}}
-#set ($reviewObj = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
-#if ($reviewObj)
+## The object to display.
+#set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
+#if ($xobject)
+  #set ($discard = $xwiki.jsx.use('SOPManager.Code.ReviewUIX'))
   {{html clean="false" wiki="true"}}
     &lt;div class="row"&gt;
       &lt;div class="col-md-6"&gt;
@@ -175,8 +301,6 @@
           'language': $xcontext.locale
         }))
         #set ($editing = $xcontext.action == 'edit')
-        ## The object to display.
-        #set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
         ## The class that describes the object properties.
         #set ($xclass = $xobject.xWikiClass)
         ## Make sure the following display* method calls use the right object.
@@ -185,7 +309,16 @@
         &lt;div class="xform"&gt;
           &lt;dl&gt;
           #set ($generalEditing = $editing)
+          #set ($propertiesToDisplay = [])
+          ## Do not display status or previousRevisions.
+          ## When in draft state, also hide approvedBy.
           #foreach ($property in $xclass.properties)
+            #set ($name = $property.name)
+            #if ($name != 'status' &amp;&amp; $name != 'previousRevisions' &amp;&amp; $name != 'revisionOwner' &amp;&amp; !($xobject.status == 'draft' &amp;&amp; $name == 'approvedBy'))
+              #set ($discard = $propertiesToDisplay.add($property))
+            #end
+          #end
+          #foreach ($property in $propertiesToDisplay)
             ## This property is read‑only and cannot be modified by the user.
             #if ($property.name == 'pDFSecondaryTargetLocation')
               #set ($editing = 'false')
@@ -215,8 +348,43 @@
           &lt;/dl&gt;
         &lt;/div&gt;
       &lt;/div&gt;
-      &lt;div class="col-md-6"&gt;
+      &lt;div class="col-md-6 reviewActions"&gt;
+        &lt;div class="xform"&gt;
+          &lt;dl&gt;
+            &lt;dt&gt;&lt;label&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.previousRevisions.label'))&lt;label&gt;&lt;dt&gt;
+            #foreach ($version in $jsontool.fromString($xobject.getValue('previousRevisions')))
+              &lt;p&gt;&lt;a href="$escapetool.xml($xwiki.getURL($version.get('url')))"&gt;$escapetool.xml($version.get('url'))&lt;/a&gt;&lt;/p&gt;
+            #end
+            &lt;dd&gt;&lt;/dd&gt;
+          &lt;/dl&gt;
+        &lt;/div&gt;
         ## Add the review process actions buttons here.
+        #if ($hasEdit)
+          #set ($status = $xobject.getValue('status'))
+          #if ($status == 'draft')
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.submitForReview.title'))" id="submitForReview"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.submitForReview.label'))
+            &lt;/button&gt;
+          #elseif ($status == 'submittedForReview')
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.submitForApproval.title'))" id="submitForApproval"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.submitForApproval.label'))
+            &lt;/button&gt;
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.title'))" id="returnForChanges"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
+            &lt;/button&gt;
+          #elseif ($status == 'submittedForApproval')
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.approve.title'))" id="approve"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.approve.label'))
+            &lt;/button&gt;
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.title'))" id="returnForChanges"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
+            &lt;/button&gt;
+          #elseif ($status == 'approved')
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="submittedForReview"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
+            &lt;/button&gt;
+          #end
+        #end
       &lt;/div&gt;
     &lt;/div&gt;
   {{/html}}

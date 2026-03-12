@@ -54,4 +54,12 @@ public interface SOPManager
      * @param documentReference the reference of the document to be added to the review process.
      */
     void addDocumentToReviewProcess(DocumentReference documentReference);
+
+    /**
+     * Updates the review state of a document based on the specified action.
+     *
+     * @param action the action taken in the review process (e.g., "draft", "submittedForReview")
+     * @param documentReference a reference to the document whose review state is to be updated
+     */
+    void updateDocumentReviewState(String action, DocumentReference documentReference);
 }

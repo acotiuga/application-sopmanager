@@ -59,13 +59,13 @@
       <disabled>0</disabled>
       <displayType>input</displayType>
       <freeText/>
-      <hint>Specify the user who approved this document.</hint>
+      <hint>Specify the user who needs to approve this document.</hint>
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
       <name>approvedBy</name>
-      <number>2</number>
+      <number>3</number>
       <picker>1</picker>
-      <prettyName>Approved by</prettyName>
+      <prettyName>Approval user</prettyName>
       <relationalStorage>0</relationalStorage>
       <separator> </separator>
       <separators/>
@@ -83,7 +83,7 @@
       <customDisplay/>
       <defaultValue/>
       <disabled>0</disabled>
-      <displayType>select</displayType>
+      <displayType>input</displayType>
       <freeText/>
       <hint>Displays the File Manager location where the exported PDF version of this document is stored. The primary location of the resulting PDF file is always the current document.</hint>
       <idField/>
@@ -92,7 +92,7 @@
       <name>pDFSecondaryTargetLocation</name>
       <number>6</number>
       <picker>1</picker>
-      <prettyName>PDF secondary target location</prettyName>
+      <prettyName>PDF in File Manager</prettyName>
       <relationalStorage>0</relationalStorage>
       <separator> </separator>
       <separators/>
@@ -105,6 +105,24 @@
       <valueField/>
       <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
     </pDFSecondaryTargetLocation>
+    <previousRevisions>
+      <contenttype>PureText</contenttype>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <editor>---</editor>
+      <hint/>
+      <name>previousRevisions</name>
+      <number>8</number>
+      <picker>0</picker>
+      <prettyName>Previous revisions</prettyName>
+      <restricted>0</restricted>
+      <rows>5</rows>
+      <size>40</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+    </previousRevisions>
     <releaseDate>
       <customDisplay/>
       <dateFormat>dd/MM/yyyy</dateFormat>
@@ -128,13 +146,13 @@
       <disabled>0</disabled>
       <displayType>input</displayType>
       <freeText/>
-      <hint>By default, the revised by value is automatically set to the current user.</hint>
+      <hint>By default, the user to review this document is set to the current user.</hint>
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
       <name>revisedBy</name>
-      <number>3</number>
+      <number>2</number>
       <picker>1</picker>
-      <prettyName>Revised by</prettyName>
+      <prettyName>Review user</prettyName>
       <relationalStorage>0</relationalStorage>
       <separator> </separator>
       <separators/>
@@ -160,6 +178,31 @@
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
     </revision>
+    <revisionOwner>
+      <cache>0</cache>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>select</displayType>
+      <freeText/>
+      <hint>The user that initiates the review process. This field is needed to know to whom to return document for changes.</hint>
+      <largeStorage>0</largeStorage>
+      <multiSelect>0</multiSelect>
+      <name>revisionOwner</name>
+      <number>9</number>
+      <picker>1</picker>
+      <prettyName>Revision owner</prettyName>
+      <relationalStorage>0</relationalStorage>
+      <separator> </separator>
+      <separators/>
+      <size>20</size>
+      <sort/>
+      <unmodifiable>0</unmodifiable>
+      <usesList>0</usesList>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
+    </revisionOwner>
     <revisionPlannedDate>
       <customDisplay/>
       <dateFormat>dd/MM/yyyy</dateFormat>
@@ -176,6 +219,31 @@
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.DateClass</classType>
     </revisionPlannedDate>
+    <status>
+      <cache>0</cache>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>select</displayType>
+      <freeText/>
+      <hint/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>0</multiSelect>
+      <name>status</name>
+      <number>7</number>
+      <picker>1</picker>
+      <prettyName>Status</prettyName>
+      <relationalStorage>0</relationalStorage>
+      <separator> </separator>
+      <separators>|, </separators>
+      <size>1</size>
+      <sort/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <values>draft|submittedForReview|submittedForApproval|approved</values>
+      <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+    </status>
   </class>
   <object>
     <name>SOPManager.Code.ControlledDocumentClass</name>
