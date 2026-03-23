@@ -57,9 +57,10 @@ public class SOPScriptService implements ScriptService
      *
      * @param action the action taken in the review process (e.g., "draft", "submittedForReview")
      * @param documentReference a reference to the document whose review state is to be updated
+     * @return a success message after applying the specified action
      */
-    public void updateDocumentReviewState(String action, DocumentReference documentReference)
+    public String updateDocumentReviewState(String action, DocumentReference documentReference)
     {
-        sopManager.updateDocumentReviewState(action, documentReference);
+        return sopManager.updateDocumentReviewState(action, documentReference);
     }
 }

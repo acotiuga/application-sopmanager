@@ -28,6 +28,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.rights.RightsWriter;
@@ -64,8 +65,10 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String REVISED_BY = "revisedBy";
 
+    private static final String XWIKI = "XWiki";
+
     private static final LocalDocumentReference RIGHTS_CLASS_REF =
-        new LocalDocumentReference(List.of("XWiki"), "XWikiRights");
+        new LocalDocumentReference(List.of(XWIKI), "XWikiRights");
 
     private static final String DRAFT = "draft";
 
@@ -120,55 +123,118 @@ public class DefaultSOPManager implements SOPManager
     }
 
     @Override
-    public void updateDocumentReviewState(String action, DocumentReference documentReference)
+    public String updateDocumentReviewState(String action, DocumentReference documentReference)
     {
         XWikiContext context = xcontextProvider.get();
         XWiki xWiki = context.getWiki();
         try {
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
-            BaseObject sopObj = sopDoc.getXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE);
+            BaseObject sopObj = getControlledDocumentObject(sopDoc, documentReference);
             if (sopObj == null) {
-                logger.warn(String.format("Document [%s] doesn't have the [%s] object, cannot update review state",
-                    documentReference, SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE));
-                return;
+                return "The document is not part of the SOP workflow.";
             }
-            String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
-            DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
 
-            String approvedByString = sopObj.getLargeStringValue(APPROVED_BY);
-            DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
-            String status = "";
+            String status;
+            String successMessage;
             List<ReadableSecurityRule> rules = new ArrayList<>();
+
             switch (action) {
                 case "submitForReview":
+                    successMessage = handleSubmitForReview(sopObj, rules);
                     status = "submittedForReview";
-                    rules.add(
-                        rightsWriter.createRule(null, List.of(revisedByUser), List.of(Right.EDIT), RuleState.ALLOW));
-                    // TODO: Send notifications!
                     break;
                 case "returnForChanges":
+                    successMessage = localizationManager.getTranslationPlain("sopManager.reviewPage"
+                        + ".returnForChanges.success");
                     status = DRAFT;
                     break;
                 case "submitForApproval":
+                    successMessage = handleSubmitForApproval(sopObj, rules);
                     status = "submittedForApproval";
-                    rules.add(
-                        rightsWriter.createRule(null, List.of(approvedByUser), List.of(Right.EDIT), RuleState.ALLOW));
                     break;
                 case "approve":
+                    successMessage = localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success");
                     status = "approved";
-                    // TODO: Generate the PDF file, attach it to the current page and in the File manager and store a
-                    //  pair of XWiki version and the revision number in the object.
+                    // TODO: Generate PDF and archive it.
                     break;
                 default:
                     logger.warn(String.format("Unknown action [%s] when updating document [%s] review state",
                         action, documentReference));
+                    throw new IllegalArgumentException("Unknown workflow action.");
             }
-            String comment = String.format("sopManager.reviewPage.%s", action);
-            sopObj.setStringValue(STATUS, status);
-            rulesObjectWriter.persistRulesToObjects(rules, sopDoc, RIGHTS_CLASS_REF, context);
-            xWiki.saveDocument(sopDoc, localizationManager.getTranslationPlain(comment), context);
+
+            saveReviewState(sopDoc, sopObj, status, rules, action, context, xWiki);
+
+            return successMessage;
         } catch (XWikiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private BaseObject getControlledDocumentObject(XWikiDocument sopDoc, DocumentReference documentReference)
+    {
+        BaseObject sopObj = sopDoc.getXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE);
+        if (sopObj == null) {
+            logger.warn(String.format("Document [%s] doesn't have the [%s] object, cannot update review state",
+                documentReference, SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE));
+        }
+        return sopObj;
+    }
+
+    private String handleSubmitForReview(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
+    {
+        String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
+        if (StringUtils.isBlank(revisedByString)) {
+            throw new IllegalArgumentException(
+                localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.error"));
+        }
+
+        DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
+        rules.add(
+            rightsWriter.createRule(null, List.of(revisedByUser), List.of(Right.EDIT), RuleState.ALLOW));
+
+        return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.success",
+            getUserDisplayName(revisedByUser));
+    }
+
+    private String handleSubmitForApproval(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
+    {
+        String approvedByString = sopObj.getLargeStringValue(APPROVED_BY);
+        if (StringUtils.isBlank(approvedByString)) {
+            throw new IllegalArgumentException(
+                localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.error"));
+        }
+
+        DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
+        rules.add(
+            rightsWriter.createRule(null, List.of(approvedByUser), List.of(Right.EDIT), RuleState.ALLOW));
+        return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.success",
+            getUserDisplayName(approvedByUser));
+    }
+
+    private void saveReviewState(XWikiDocument sopDoc, BaseObject sopObj, String status,
+        List<ReadableSecurityRule> rules, String action, XWikiContext context, XWiki xWiki) throws XWikiException
+    {
+        String comment = String.format("sopManager.reviewPage.%s", action);
+        sopObj.setStringValue(STATUS, status);
+        rulesObjectWriter.persistRulesToObjects(rules, sopDoc, RIGHTS_CLASS_REF, context);
+        xWiki.saveDocument(sopDoc, localizationManager.getTranslationPlain(comment), context);
+    }
+
+    private String getUserDisplayName(DocumentReference userReference) throws XWikiException
+    {
+        XWikiContext context = xcontextProvider.get();
+        XWikiDocument userDoc = context.getWiki().getDocument(userReference, context);
+        BaseObject userObj = userDoc.getXObject(new LocalDocumentReference(XWIKI, "XWikiUsers"));
+
+        if (userObj == null) {
+            return serializer.serialize(userReference);
+        }
+
+        String firstName = userObj.getStringValue("first_name");
+        String lastName = userObj.getStringValue("last_name");
+        String fullName = (StringUtils.defaultString(firstName) + " " + StringUtils.defaultString(lastName)).trim();
+
+        return fullName.isEmpty() ? serializer.serialize(userReference) : fullName;
     }
 }

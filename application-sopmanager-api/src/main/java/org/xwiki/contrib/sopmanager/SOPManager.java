@@ -60,6 +60,7 @@ public interface SOPManager
      *
      * @param action the action taken in the review process (e.g., "draft", "submittedForReview")
      * @param documentReference a reference to the document whose review state is to be updated
+     * @return a success message after applying the specified action
      */
-    void updateDocumentReviewState(String action, DocumentReference documentReference);
+    String updateDocumentReviewState(String action, DocumentReference documentReference);
 }
