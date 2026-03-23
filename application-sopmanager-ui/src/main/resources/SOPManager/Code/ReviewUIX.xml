@@ -547,8 +547,8 @@
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
             &lt;/button&gt;
-            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.returnToDraft.title'))" id="returnForChanges"&gt;
-              $escapetool.xml($services.localization.render('sopManager.reviewPage.returnToDraft.label'))
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.title'))" id="startNewRevision"&gt;
+              $escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.label'))
             &lt;/button&gt;
           #end
           &lt;div class="reviewNotifications"&gt;
