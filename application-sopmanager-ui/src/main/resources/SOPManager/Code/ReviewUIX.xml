@@ -156,7 +156,7 @@
     <property>
       <code>require(['jquery', 'xwiki-meta', 'xwiki-events-bridge'], function ($, xm) {
   var serviceURL = new XWiki.Document('ReviewUIX', 'SOPManager.Code').getURL('get', 'outputSyntax=plain');
-  $('#SOPReviewPagespane').on('click', '.reviewActions button', function() {
+  $('#SOPReviewPagespane').on('click', '.reviewActions button', function(event) {
     event.preventDefault();
     var action = this.id;
     var successbox = $('.reviewNotificationSuccess');

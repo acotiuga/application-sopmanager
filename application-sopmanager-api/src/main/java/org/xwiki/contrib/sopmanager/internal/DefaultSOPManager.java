@@ -117,9 +117,8 @@ public class DefaultSOPManager implements SOPManager
                 sopObj.setStringValue(STATUS, DRAFT);
 
                 List<ReadableSecurityRule> rules = new ArrayList<>();
-                rules.add(
-                    rightsWriter.createRule(null, List.of(context.getUserReference()), List.of(Right.EDIT),
-                        RuleState.ALLOW));
+                addEditRight(rules, context.getUserReference());
+
                 rulesObjectWriter.persistRulesToObjects(rules, sopDoc, RIGHTS_CLASS_REF, context);
                 xWiki.saveDocument(sopDoc, localizationManager.getTranslationPlain("sopManager.addPage.added"),
                     context);
@@ -201,8 +200,7 @@ public class DefaultSOPManager implements SOPManager
         }
 
         DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
-        rules.add(
-            rightsWriter.createRule(null, List.of(revisedByUser), List.of(Right.EDIT), RuleState.ALLOW));
+        addEditRight(rules, revisedByUser);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.success",
             getUserDisplayName(revisedByUser));
@@ -217,10 +215,10 @@ public class DefaultSOPManager implements SOPManager
         }
 
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
-        rules.add(
-            rightsWriter.createRule(null, List.of(revisionOwner), List.of(Right.EDIT), RuleState.ALLOW));
+        addEditRight(rules, revisionOwner);
 
-        return localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.success");
+        return localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.success",
+            getUserDisplayName(revisionOwner));
     }
 
     private String handleSubmitForApproval(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
@@ -232,8 +230,8 @@ public class DefaultSOPManager implements SOPManager
         }
 
         DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
-        rules.add(
-            rightsWriter.createRule(null, List.of(approvedByUser), List.of(Right.EDIT), RuleState.ALLOW));
+        addEditRight(rules, approvedByUser);
+
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.success",
             getUserDisplayName(approvedByUser));
     }
@@ -242,9 +240,7 @@ public class DefaultSOPManager implements SOPManager
     {
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
         sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(revisionOwner));
-
-        rules.add(
-            rightsWriter.createRule(null, List.of(revisionOwner), List.of(Right.EDIT), RuleState.ALLOW));
+        addEditRight(rules, revisionOwner);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.startNewRevision.success");
     }
@@ -273,5 +269,10 @@ public class DefaultSOPManager implements SOPManager
         String fullName = (StringUtils.defaultString(firstName) + " " + StringUtils.defaultString(lastName)).trim();
 
         return fullName.isEmpty() ? serializer.serialize(userReference) : fullName;
+    }
+
+    private void addEditRight(List<ReadableSecurityRule> rules, DocumentReference userReference)
+    {
+        rules.add(rightsWriter.createRule(null, List.of(userReference), List.of(Right.EDIT), RuleState.ALLOW));
     }
 }
