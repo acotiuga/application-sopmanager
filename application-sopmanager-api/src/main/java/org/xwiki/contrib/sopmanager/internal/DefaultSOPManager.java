@@ -74,6 +74,24 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String DRAFT = "draft";
 
+    private static final String SUBMIT_FOR_REVIEW = "submitForReview";
+
+    private static final String RETURN_FOR_CHANGES = "returnForChanges";
+
+    private static final String SUBMITTED_FOR_REVIEW = "submittedForReview";
+
+    private static final String SUBMITTED_FOR_APPROVAL = "submittedForApproval";
+
+    private static final String APPROVED = "approved";
+
+    private static final String SUBMIT_FOR_APPROVAL = "submitForApproval";
+
+    private static final String APPROVE = "approve";
+
+    private static final String START_NEW_REVISION = "startNewRevision";
+
+    private static final String UNKNOWN_WORKFLOW_ACTION = "Unknown workflow action.";
+
     @Inject
     private ContextualLocalizationManager localizationManager;
 
@@ -141,36 +159,39 @@ public class DefaultSOPManager implements SOPManager
                 return "The document is not part of the SOP workflow.";
             }
 
+            String currentStatus = sopObj.getStringValue(STATUS);
+            validateTransition(action, currentStatus);
+
             String status;
             String successMessage;
             List<ReadableSecurityRule> rules = new ArrayList<>();
 
             switch (action) {
-                case "submitForReview":
+                case SUBMIT_FOR_REVIEW:
                     successMessage = handleSubmitForReview(sopObj, rules);
-                    status = "submittedForReview";
+                    status = SUBMITTED_FOR_REVIEW;
                     break;
-                case "returnForChanges":
+                case RETURN_FOR_CHANGES:
                     successMessage = handleReturnForChanges(sopObj, rules);
                     status = DRAFT;
                     break;
-                case "submitForApproval":
+                case SUBMIT_FOR_APPROVAL:
                     successMessage = handleSubmitForApproval(sopObj, rules);
-                    status = "submittedForApproval";
+                    status = SUBMITTED_FOR_APPROVAL;
                     break;
-                case "approve":
+                case APPROVE:
                     successMessage = localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success");
-                    status = "approved";
+                    status = APPROVED;
                     // TODO: Generate PDF and archive it.
                     break;
-                case "startNewRevision":
+                case START_NEW_REVISION:
                     successMessage = handleStartNewRevision(sopObj, rules);
                     status = DRAFT;
                     break;
                 default:
                     logger.warn(String.format("Unknown action [%s] when updating document [%s] review state",
                         action, documentReference));
-                    throw new IllegalArgumentException("Unknown workflow action.");
+                    throw new IllegalArgumentException(UNKNOWN_WORKFLOW_ACTION);
             }
 
             saveReviewState(sopDoc, sopObj, status, rules, action, context, xWiki);
@@ -179,6 +200,41 @@ public class DefaultSOPManager implements SOPManager
         } catch (XWikiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void validateTransition(String action, String currentStatus)
+    {
+        switch (action) {
+            case SUBMIT_FOR_REVIEW:
+                requireStatus(action, currentStatus, DRAFT);
+                break;
+            case RETURN_FOR_CHANGES:
+                requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW, SUBMITTED_FOR_APPROVAL, APPROVED);
+                break;
+            case SUBMIT_FOR_APPROVAL:
+                requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW);
+                break;
+            case APPROVE:
+                requireStatus(action, currentStatus, SUBMITTED_FOR_APPROVAL);
+                break;
+            case START_NEW_REVISION:
+                requireStatus(action, currentStatus, APPROVED);
+                break;
+            default:
+                throw new IllegalArgumentException(UNKNOWN_WORKFLOW_ACTION);
+        }
+    }
+
+    private void requireStatus(String action, String currentStatus, String... allowedStatuses)
+    {
+        for (String allowedStatus : allowedStatuses) {
+            if (allowedStatus.equals(currentStatus)) {
+                return;
+            }
+        }
+
+        throw new IllegalArgumentException(String.format(
+            "Cannot perform action [%s] when the document is in state [%s].", action, currentStatus));
     }
 
     private BaseObject getControlledDocumentObject(XWikiDocument sopDoc, DocumentReference documentReference)
