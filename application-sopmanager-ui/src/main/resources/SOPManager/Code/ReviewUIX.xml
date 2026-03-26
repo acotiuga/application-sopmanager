@@ -525,7 +525,7 @@
         ## Add the review process actions buttons here.
         #if ($hasEdit)
           #set ($status = $xobject.getValue('status'))
-          #if ($status == 'draft')
+          #if ($status == 'draft' || $status == 'returnedForChanges')
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.submitForReview.title'))" id="submitForReview"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.submitForReview.label'))
             &lt;/button&gt;
