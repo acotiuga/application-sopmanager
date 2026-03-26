@@ -21,7 +21,9 @@ package org.xwiki.contrib.sopmanager.internal;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,11 +36,16 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
 import org.xwiki.contrib.sopmanager.SOPManager;
+import org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent;
+import org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent;
+import org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent;
+import org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.LocalDocumentReference;
+import org.xwiki.observation.ObservationManager;
 import org.xwiki.security.authorization.ReadableSecurityRule;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.security.authorization.RuleState;
@@ -82,6 +89,8 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String SUBMITTED_FOR_APPROVAL = "submittedForApproval";
 
+    private static final String RETURNED_FOR_CHANGES = "returnedForChanges";
+
     private static final String APPROVED = "approved";
 
     private static final String SUBMIT_FOR_APPROVAL = "submitForApproval";
@@ -92,6 +101,8 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String UNKNOWN_WORKFLOW_ACTION = "Unknown workflow action.";
 
+    private static final String EVENT_SOURCE = "org.xwiki.contrib:application-sopmanager-api";
+
     @Inject
     private ContextualLocalizationManager localizationManager;
 
@@ -101,6 +112,9 @@ public class DefaultSOPManager implements SOPManager
 
     @Inject
     private Logger logger;
+
+    @Inject
+    private ObservationManager observationManager;
 
     @Inject
     private Provider<XWikiContext> xcontextProvider;
@@ -168,19 +182,19 @@ public class DefaultSOPManager implements SOPManager
 
             switch (action) {
                 case SUBMIT_FOR_REVIEW:
-                    successMessage = handleSubmitForReview(sopObj, rules);
+                    successMessage = handleSubmitForReview(sopDoc, sopObj, rules);
                     status = SUBMITTED_FOR_REVIEW;
                     break;
                 case RETURN_FOR_CHANGES:
-                    successMessage = handleReturnForChanges(sopObj, rules);
-                    status = DRAFT;
+                    successMessage = handleReturnForChanges(sopDoc, sopObj, rules);
+                    status = RETURNED_FOR_CHANGES;
                     break;
                 case SUBMIT_FOR_APPROVAL:
-                    successMessage = handleSubmitForApproval(sopObj, rules);
+                    successMessage = handleSubmitForApproval(sopDoc, sopObj, rules);
                     status = SUBMITTED_FOR_APPROVAL;
                     break;
                 case APPROVE:
-                    successMessage = localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success");
+                    successMessage = handleApprove(sopDoc, sopObj, rules);
                     status = APPROVED;
                     // TODO: Generate PDF and archive it.
                     break;
@@ -206,7 +220,7 @@ public class DefaultSOPManager implements SOPManager
     {
         switch (action) {
             case SUBMIT_FOR_REVIEW:
-                requireStatus(action, currentStatus, DRAFT);
+                requireStatus(action, currentStatus, DRAFT, RETURNED_FOR_CHANGES);
                 break;
             case RETURN_FOR_CHANGES:
                 requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW, SUBMITTED_FOR_APPROVAL, APPROVED);
@@ -247,7 +261,8 @@ public class DefaultSOPManager implements SOPManager
         return sopObj;
     }
 
-    private String handleSubmitForReview(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
+    private String handleSubmitForReview(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+        throws XWikiException
     {
         String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
         if (StringUtils.isBlank(revisedByString)) {
@@ -258,11 +273,16 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
         addEditRight(rules, revisedByUser);
 
+        Set<String> target = new HashSet<>();
+        target.add(serializer.serialize(revisedByUser));
+        observationManager.notify(new SubmittedForReviewEvent(target), EVENT_SOURCE, sopDoc);
+
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.success",
             getUserDisplayName(revisedByUser));
     }
 
-    private String handleReturnForChanges(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
+    private String handleReturnForChanges(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+        throws XWikiException
     {
         String revisionOwnerString = sopObj.getLargeStringValue(REVISION_OWNER);
         if (StringUtils.isBlank(revisionOwnerString)) {
@@ -273,11 +293,16 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
         addEditRight(rules, revisionOwner);
 
+        Set<String> target = new HashSet<>();
+        target.add(serializer.serialize(revisionOwner));
+        observationManager.notify(new ReturnedForChangesEvent(target), EVENT_SOURCE, sopDoc);
+
         return localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.success",
             getUserDisplayName(revisionOwner));
     }
 
-    private String handleSubmitForApproval(BaseObject sopObj, List<ReadableSecurityRule> rules) throws XWikiException
+    private String handleSubmitForApproval(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+        throws XWikiException
     {
         String approvedByString = sopObj.getLargeStringValue(APPROVED_BY);
         if (StringUtils.isBlank(approvedByString)) {
@@ -288,8 +313,36 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
         addEditRight(rules, approvedByUser);
 
+        Set<String> target = new HashSet<>();
+        target.add(serializer.serialize(approvedByUser));
+        observationManager.notify(new SubmittedForApprovalEvent(target), EVENT_SOURCE, sopDoc);
+
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.success",
             getUserDisplayName(approvedByUser));
+    }
+
+    private String handleApprove(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+        throws XWikiException
+    {
+        String revisionOwnerString = sopObj.getLargeStringValue(REVISION_OWNER);
+        String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
+        if (StringUtils.isBlank(revisionOwnerString) && StringUtils.isBlank(revisedByString)) {
+            throw new IllegalArgumentException(
+                localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
+        }
+
+        DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
+        DocumentReference revisedBy = currentStringDocRefResolver.resolve(revisedByString);
+
+        addEditRight(rules, revisionOwner);
+
+        Set<String> target = new HashSet<>();
+        target.add(serializer.serialize(revisionOwner));
+        target.add(serializer.serialize(revisedBy));
+        observationManager.notify(new ApprovedEvent(target), EVENT_SOURCE, sopDoc);
+
+        return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
+            getUserDisplayName(revisionOwner), getUserDisplayName(revisedBy));
     }
 
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)

@@ -241,7 +241,7 @@
       <unmodifiable>0</unmodifiable>
       <validationMessage/>
       <validationRegExp/>
-      <values>draft|submittedForReview|submittedForApproval|approved</values>
+      <values>draft|returnedForChanges|submittedForReview|submittedForApproval|approved</values>
       <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
     </status>
   </class>

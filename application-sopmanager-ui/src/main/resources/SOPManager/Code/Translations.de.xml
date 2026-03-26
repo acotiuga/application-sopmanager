@@ -38,7 +38,7 @@
   <hidden>true</hidden>
   <content>sopManager.name=SOP‑Manager
 sopManager.addPage.label=Aktuelle Seite zum Prüfprozess hinzufügen
-sopManager.addPage.hint=Diese Vorgehensweise im Prüf‑ und Genehmigungsprozess registrieren und Prüfer, Genehmigungsstatus, Revisionen und Revisionsdaten verwalten.
+sopManager.addPage.hint=Diese Vorgehensweise im Prüf- und Genehmigungsprozess registrieren sowie Prüfer, Genehmiger, Revisionen und Revisionsdaten verwalten.
 sopManager.addPage.button.label=Prüfung starten
 sopManager.addPage.added=Seite zum Prüfprozess hinzugefügt.
 sopManager.reviewPage.submitForReview.label=Zur Prüfung einreichen
@@ -47,7 +47,7 @@ sopManager.reviewPage.submitForReview.error=Bitte wählen Sie den Prüfer aus, b
 sopManager.reviewPage.submitForReview.success=Das Dokument wurde zur Prüfung eingereicht und « {0} » wird in Kürze eine Benachrichtigung erhalten.
 sopManager.reviewPage.submitForApproval.label=Zur Genehmigung einreichen
 sopManager.reviewPage.submitForApproval.title=Zur Genehmigung einreichen
-sopManager.reviewPage.submitForApproval.error=Bitte wählen Sie den Freigabeverantwortlichen aus, bevor Sie das aktuelle Dokument zur Freigabe einreichen.
+sopManager.reviewPage.submitForApproval.error=Bitte wählen Sie den Genehmiger aus, bevor Sie das aktuelle Dokument zur Freigabe einreichen.
 sopManager.reviewPage.submitForApproval.success=Das Dokument wurde zur Freigabe eingereicht und « {0} » wird in Kürze eine Benachrichtigung erhalten.
 sopManager.reviewPage.returnForChanges.label=Zur Überarbeitung zurückgeben
 sopManager.reviewPage.returnForChanges.title=Zur Überarbeitung zurückgeben
@@ -55,7 +55,8 @@ sopManager.reviewPage.returnForChanges.error=Bitte wählen Sie den Revisionsvera
 sopManager.reviewPage.returnForChanges.success=Das Dokument wurde zur Überarbeitung zurückgegeben und « {0} » wird in Kürze eine Benachrichtigung erhalten.
 sopManager.reviewPage.approve.label=Genehmigen
 sopManager.reviewPage.approve.title=Genehmigen
-sopManager.reviewPage.approve.success=Das Dokument wurde freigegeben.
+sopManager.reviewPage.approve.error=Bitte stellen Sie sicher, dass sowohl der Revisionsverantwortliche als auch der Prüfer zugewiesen sind, damit sie über diese Aktion benachrichtigt werden können.
+sopManager.reviewPage.approve.success=Das Dokument wurde genehmigt und « {0} » sowie « {1} » werden in Kürze eine Benachrichtigung erhalten.
 sopManager.reviewPage.generatePDF.label=PDF erzeugen
 sopManager.reviewPage.generatePDF.title=PDF erzeugen
 sopManager.reviewPage.startNewRevision.label=Neue Revision starten
@@ -68,14 +69,33 @@ sopManager.reviewPage.submitForApproval=Zur Genehmigung eingereicht.
 
 SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
 SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Dieses Feld enthält das Freigabedatum der aktuell genehmigten Revision. Standardmäßig wird es automatisch auf das heutige Datum gesetzt.
-SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabebenutzer
-SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigen muss.
-SOPManager.Code.ControlledDocumentClass_revisedBy=Überprüfungsbenutzer
-SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig ist der Benutzer, der dieses Dokument überprüfen soll, auf den aktuellen Benutzer festgelegt.
+SOPManager.Code.ControlledDocumentClass_approvedBy=Genehmiger
+SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigen soll.
+SOPManager.Code.ControlledDocumentClass_revisedBy=Prüfer
+SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig ist der Benutzer, der dieses Dokument prüfen soll, auf den aktuellen Benutzer festgelegt.
 SOPManager.Code.ControlledDocumentClass_revision=Revision
 SOPManager.Code.ControlledDocumentClass_revision_hint=Geben Sie die Revisionskennung für dieses Dokument ein.
 SOPManager.Code.ControlledDocumentClass_revisionPlannedDate=Revision geplant
 SOPManager.Code.ControlledDocumentClass_revisionPlannedDate_hint=Wählen Sie das geplante Datum für die nächste Revision aus.
 SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation=PDF im File Manager
-SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation_hint=Zeigt den Speicherort im Dateimanager an, an dem die exportierte PDF‑Version dieses Dokuments abgelegt wurde. Der primäre Speicherort der erzeugten PDF‑Datei ist stets das aktuelle Dokument.</content>
+SOPManager.Code.ControlledDocumentClass_pDFSecondaryTargetLocation_hint=Zeigt den Speicherort im Dateimanager an, an dem die exportierte PDF‑Version dieses Dokuments abgelegt wurde. Der primäre Speicherort der erzeugten PDF‑Datei ist stets das aktuelle Dokument.
+SOPManager.Code.ControlledDocumentClass_status=Status
+SOPManager.Code.ControlledDocumentClass_status_draft=Entwurf
+SOPManager.Code.ControlledDocumentClass_status_returnedForChanges=Zur Überarbeitung
+SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Zur Überprüfung
+SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Zur Genehmigung
+SOPManager.Code.ControlledDocumentClass_status_approved=Genehmigt
+
+sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht
+sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben
+sopManager.event.submittedForApprovalEvent.description=Eine Seite wurde zur Genehmigung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=wurde zur Überprüfung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=hat eine Seite zur Überprüfung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=wurde zur Überarbeitung zurückgegeben
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description=hat eine Seite zur Überarbeitung zurückgegeben
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description.by.1user=wurde zur Genehmigung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=hat eine Seite zur Genehmigung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=wurde genehmigt
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=hat eine Seite genehmigt
+  </content>
 </xwikidoc>

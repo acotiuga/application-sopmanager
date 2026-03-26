@@ -55,7 +55,8 @@ sopManager.reviewPage.returnForChanges.error=Please select the revision owner be
 sopManager.reviewPage.returnForChanges.success=The document was returned for changes and « {0} » will receive soon a notification.
 sopManager.reviewPage.approve.label=Approve
 sopManager.reviewPage.approve.title=Approve
-sopManager.reviewPage.approve.success=The document was approved.
+sopManager.reviewPage.approve.error=Please ensure that the revision owner and the review user are assigned, so they can be notified about this action.
+sopManager.reviewPage.approve.success=The document was approved and « {0} » and « {1} »will receive soon a notification.
 sopManager.reviewPage.generatePDF.label=Generate PDF
 sopManager.reviewPage.generatePDF.title=Generate PDF
 sopManager.reviewPage.startNewRevision.label=Start a new revision
@@ -65,6 +66,24 @@ sopManager.reviewPage.previousRevisions.label=Previous revisions PDFs
 sopManager.reviewPage.submitForReview=Submitted for review.
 sopManager.reviewPage.returnForChanges=Returned for changes.
 sopManager.reviewPage.submitForApproval=Submitted for approval.
+
+SOPManager.Code.ControlledDocumentClass_status_returnedForChanges=Returned for changes
+SOPManager.Code.ControlledDocumentClass_status_draft=Draft
+SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Submitted for review
+SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Submitted for approval
+SOPManager.Code.ControlledDocumentClass_status_approved=Approved
+
+sopManager.event.submittedForReviewEvent.description=A page is submitted for review
+sopManager.event.returnedForChangesEvent.description=A page is returned for changes
+sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=submitted page for review
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=was returned for changes
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description=returned page for changes
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description.by.1user=was submitted for approval
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=submitted page for approval
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=was approved
+notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=approved page
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>
