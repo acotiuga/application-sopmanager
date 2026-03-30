@@ -141,8 +141,6 @@ public class DefaultSOPManager implements SOPManager
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
             if (sopDoc.getXObjects(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE).isEmpty()) {
                 BaseObject sopObj = sopDoc.newXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE, context);
-                // Add the current user as default reviewer.
-                sopObj.setLargeStringValue(REVISED_BY, serializer.serialize(context.getUserReference()));
                 sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
@@ -196,7 +194,6 @@ public class DefaultSOPManager implements SOPManager
                 case APPROVE:
                     successMessage = handleApprove(sopDoc, sopObj, rules);
                     status = APPROVED;
-                    // TODO: Generate PDF and archive it.
                     break;
                 case START_NEW_REVISION:
                     successMessage = handleStartNewRevision(sopObj, rules);
