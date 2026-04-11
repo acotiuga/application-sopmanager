@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.SOPManager;
+import org.xwiki.contrib.sopmanager.PDFExportManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.script.service.ScriptService;
 
@@ -41,6 +42,9 @@ public class SOPScriptService implements ScriptService
 {
     @Inject
     private SOPManager sopManager;
+
+    @Inject
+    private PDFExportManager pdfExportManager;
 
     /**
      * Adds a document to the review process.
@@ -62,5 +66,16 @@ public class SOPScriptService implements ScriptService
     public String updateDocumentReviewState(String action, DocumentReference documentReference)
     {
         return sopManager.updateDocumentReviewState(action, documentReference);
+    }
+
+    /**
+     * Exports the given document to PDF and attaches the generated PDF to the document.
+     *
+     * @param documentReference the reference of the document to export and attach the PDF to
+     * @return the URL of the attached PDF
+     */
+    public String exportAndAttachPDF(DocumentReference documentReference)
+    {
+        return pdfExportManager.exportAndAttachPDF(documentReference);
     }
 }

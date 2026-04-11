@@ -42,7 +42,11 @@
   #set ($statusCode = 200)
 
   #try('sopException')
-    #set ($message = $services.sopService.updateDocumentReviewState($request.action, $request.document))
+    #if ($request.action == 'generatePDF')
+      #set ($message = $services.sopService.exportAndAttachPDF($request.document))
+    #else
+      #set ($message = $services.sopService.updateDocumentReviewState($request.action, $request.document))
+    #end
   #end
 
   #if ("$!sopException" != '')
@@ -544,6 +548,7 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;
           #elseif ($status == 'approved')
+          ## TODO: check if isServerSidePrintingAvailable() or display a message instead of the Generate PDF button
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
             &lt;/button&gt;
