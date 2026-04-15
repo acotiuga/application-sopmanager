@@ -147,7 +147,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
     }
 
-    private DocumentReference getOrCreateFileManagerFolder(String folderName, DocumentReference parentFolderReference,
+    DocumentReference getOrCreateFileManagerFolder(String folderName, DocumentReference parentFolderReference,
         String wikiName, XWikiContext context) throws Exception
     {
         XWiki xwiki = context.getWiki();
@@ -182,7 +182,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         return folderReference;
     }
 
-    private DocumentReference findExistingFolder(String folderName, DocumentReference parentFolderReference,
+    DocumentReference findExistingFolder(String folderName, DocumentReference parentFolderReference,
         XWikiContext context) throws QueryException, XWikiException
     {
         String hql =
@@ -207,8 +207,15 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         for (String documentName : documentNames) {
             DocumentReference candidateReference = documentReferenceResolver.resolve(documentName);
             XWikiDocument candidateDoc = context.getWiki().getDocument(candidateReference, context);
+            if (candidateDoc == null) {
+                continue;
+            }
 
-            if (sameReference(candidateDoc.getParentReference().getLocalDocumentReference(), expectedParent)) {
+            EntityReference actualParent = candidateDoc.getParentReference() != null
+                ? candidateDoc.getParentReference().getLocalDocumentReference()
+                : null;
+
+            if (sameReference(actualParent, expectedParent)) {
                 return candidateReference;
             }
         }
@@ -216,7 +223,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         return null;
     }
 
-    private List<String> extractFolderNames(DocumentReference sourceDocumentReference)
+    List<String> extractFolderNames(DocumentReference sourceDocumentReference)
     {
         List<String> folderNames = new ArrayList<>();
 
