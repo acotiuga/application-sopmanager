@@ -31,6 +31,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
+import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
 import org.xwiki.contrib.sopmanager.PDFExportManager;
 import org.xwiki.export.pdf.job.PDFExportJobRequest;
 import org.xwiki.export.pdf.job.PDFExportJobRequestFactory;
@@ -44,8 +45,8 @@ import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.resource.temporary.TemporaryResourceReference;
 import org.xwiki.resource.temporary.TemporaryResourceStore;
 
-import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.doc.XWikiAttachment;
 import com.xpn.xwiki.doc.XWikiDocument;
 
 /**
@@ -77,40 +78,24 @@ public class DefaultPDFExportManager implements PDFExportManager
     @Named("currentmixed")
     private DocumentReferenceResolver<String> documentReferenceResolver;
 
+    @Inject
+    private FileManagerStorageManager fileManagerStorageManager;
+
     @Override
     public String exportAndAttachPDF(DocumentReference documentReference)
     {
-        XWikiContext context = this.xcontextProvider.get();
-        XWiki xwiki = context.getWiki();
+        XWikiContext context = xcontextProvider.get();
         XWikiDocument previousDoc = context.getDoc();
 
         try {
-            XWikiDocument attachmentDoc = xwiki.getDocument(documentReference, context);
+            XWikiDocument attachmentDoc = context.getWiki().getDocument(documentReference, context);
             context.setDoc(attachmentDoc);
+
             String attachmentName = attachmentDoc.getTitle() + ".pdf";
 
-            PDFExportJobRequest request = requestFactory.createRequest();
-            request.setDocuments(List.of(documentReference));
-            request.setTemplate(documentReferenceResolver.resolve("XWiki.PDFExport.Template"));
-            request.setFileName(attachmentName);
+            PDFExportJobRequest request = createExportRequest(documentReference, context);
 
-            EntityReference spaceReferences =
-                documentReference.getLastSpaceReference().removeParent(documentReference.getWikiReference());
-
-            URL baseURL = context.getURLFactory().createExternalURL(
-                defaultEntityReferenceSerializer.serialize(spaceReferences),
-                documentReference.getName(),
-                "view",
-                "",
-                "",
-                documentReference.getWikiReference().getName(),
-                context
-            );
-            request.setBaseURL(baseURL);
-
-            request.setId("export", "pdf", documentReference.toString(), String.valueOf(System.currentTimeMillis()));
-
-            Job job = this.jobExecutor.execute("export/pdf", request);
+            Job job = jobExecutor.execute("export/pdf", request);
             job.join();
 
             PDFExportJobStatus status = (PDFExportJobStatus) job.getStatus();
@@ -120,24 +105,59 @@ public class DefaultPDFExportManager implements PDFExportManager
                 throw new RuntimeException("The PDF export did not produce a temporary PDF file.");
             }
 
-            File pdfFile = this.temporaryResourceStore.getTemporaryFile(pdfReference);
+            File pdfFile = temporaryResourceStore.getTemporaryFile(pdfReference);
             if (pdfFile == null || !pdfFile.exists() || !pdfFile.isFile()) {
                 throw new RuntimeException("The PDF export finished without creating the temporary PDF file at ["
                     + pdfFile + "].");
             }
 
-            try (InputStream is = new FileInputStream(pdfFile)) {
-                attachmentDoc.setAttachment(attachmentName, is, context);
-                xwiki.saveDocument(attachmentDoc, "Attach generated PDF", context);
+            XWikiAttachment attachment = createAttachment(pdfFile, attachmentName, context);
 
-                // TODO: Store the attachment as file in the File Manager application.
-            }
+            attachmentDoc.setAttachment(attachment);
+            attachmentDoc.setAuthorReference(context.getUserReference());
+            context.getWiki().saveDocument(attachmentDoc, "Attach generated PDF", context);
+
+            fileManagerStorageManager.storeAttachment(documentReference, attachment, attachmentName);
 
             return String.format("The PDF was attached as [%s].", attachmentName);
         } catch (Exception e) {
             throw new RuntimeException("Failed to attach generated PDF to the document [" + documentReference + "]", e);
         } finally {
             context.setDoc(previousDoc);
+        }
+    }
+
+    private PDFExportJobRequest createExportRequest(DocumentReference documentReference, XWikiContext context)
+        throws Exception
+    {
+        PDFExportJobRequest request = requestFactory.createRequest();
+        request.setDocuments(List.of(documentReference));
+        request.setTemplate(documentReferenceResolver.resolve("XWiki.PDFExport.Template"));
+
+        EntityReference spaceReferences =
+            documentReference.getLastSpaceReference().removeParent(documentReference.getWikiReference());
+        URL baseURL = context.getURLFactory().createExternalURL(
+            defaultEntityReferenceSerializer.serialize(spaceReferences),
+            documentReference.getName(),
+            "view",
+            "",
+            "",
+            documentReference.getWikiReference().getName(),
+            context
+        );
+        request.setBaseURL(baseURL);
+        request.setId("export", "pdf", documentReference.toString(), String.valueOf(System.currentTimeMillis()));
+        return request;
+    }
+
+    private XWikiAttachment createAttachment(File pdfFile, String attachmentName, XWikiContext context) throws Exception
+    {
+        try (InputStream is = new FileInputStream(pdfFile)) {
+            XWikiAttachment attachment = new XWikiAttachment();
+            attachment.setFilename(attachmentName);
+            attachment.setContent(is);
+            attachment.setAuthorReference(context.getUserReference());
+            return attachment;
         }
     }
 }
