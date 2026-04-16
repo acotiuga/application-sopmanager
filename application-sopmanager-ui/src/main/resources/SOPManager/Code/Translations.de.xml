@@ -69,9 +69,9 @@ sopManager.reviewPage.submitForApproval=Zur Genehmigung eingereicht.
 
 SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
 SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Dieses Feld enthält das Freigabedatum der aktuell genehmigten Revision. Standardmäßig wird es automatisch auf das heutige Datum gesetzt.
-SOPManager.Code.ControlledDocumentClass_approvedBy=Genehmiger
+SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabe durch
 SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigen soll.
-SOPManager.Code.ControlledDocumentClass_revisedBy=Prüfer
+SOPManager.Code.ControlledDocumentClass_revisedBy=Überarbeitet von
 SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig ist der Benutzer, der dieses Dokument prüfen soll, auf den aktuellen Benutzer festgelegt.
 SOPManager.Code.ControlledDocumentClass_revision=Revision
 SOPManager.Code.ControlledDocumentClass_revision_hint=Geben Sie die Revisionskennung für dieses Dokument ein.
@@ -85,6 +85,8 @@ SOPManager.Code.ControlledDocumentClass_status_returnedForChanges=Zur Überarbei
 SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Zur Überprüfung
 SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Zur Genehmigung
 SOPManager.Code.ControlledDocumentClass_status_approved=Genehmigt
+
+sopManager.pdfExport.page=Seite
 
 sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben

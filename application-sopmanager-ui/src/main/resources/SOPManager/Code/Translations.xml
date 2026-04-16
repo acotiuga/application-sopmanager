@@ -73,6 +73,8 @@ SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Submitted for 
 SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Submitted for approval
 SOPManager.Code.ControlledDocumentClass_status_approved=Approved
 
+sopManager.pdfExport.page=Page
+
 sopManager.event.submittedForReviewEvent.description=A page is submitted for review
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes
 sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval

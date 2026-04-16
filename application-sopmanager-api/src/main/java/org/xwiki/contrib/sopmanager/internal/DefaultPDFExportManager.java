@@ -132,7 +132,9 @@ public class DefaultPDFExportManager implements PDFExportManager
     {
         PDFExportJobRequest request = requestFactory.createRequest();
         request.setDocuments(List.of(documentReference));
-        request.setTemplate(documentReferenceResolver.resolve("XWiki.PDFExport.Template"));
+        request.setTemplate(documentReferenceResolver.resolve("SOPManager.Code.GKHPDFTemplateVertical"));
+        request.setWithCover(false);
+        request.setWithToc(false);
 
         EntityReference spaceReferences =
             documentReference.getLastSpaceReference().removeParent(documentReference.getWikiReference());

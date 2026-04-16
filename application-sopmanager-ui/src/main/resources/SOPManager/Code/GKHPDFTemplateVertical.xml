@@ -1,0 +1,499 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.GKHPDFTemplateVertical" locale="">
+  <web>SOPManager.Code</web>
+  <name>GKHPDFTemplateVertical</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>SOPManager.Code.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>GKH PDF Template Vertical</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content/>
+  <attachment>
+    <filename>gkh_pdf_logo.png</filename>
+    <mimetype>image/png</mimetype>
+    <charset>UTF-8</charset>
+    <author>xwiki:XWiki.Admin</author>
+    <version>1.1</version>
+    <comment/>
+    <content>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</content>
+    <filesize>7915</filesize>
+  </attachment>
+  <object>
+    <name>SOPManager.Code.GKHPDFTemplateVertical</name>
+    <number>0</number>
+    <className>XWiki.PDFExport.TemplateClass</className>
+    <guid>ddb5650a-9114-42f2-8a05-dedcca133593</guid>
+    <class>
+      <name>XWiki.PDFExport.TemplateClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cover>
+        <contenttype>FullyRenderedText</contenttype>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <hint>XWiki.PDFExport.TemplateClass_cover.hint</hint>
+        <name>cover</name>
+        <number>1</number>
+        <picker>0</picker>
+        <prettyName>Cover</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </cover>
+      <footer>
+        <contenttype>FullyRenderedText</contenttype>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <hint>XWiki.PDFExport.TemplateClass_footer.hint</hint>
+        <name>footer</name>
+        <number>4</number>
+        <picker>0</picker>
+        <prettyName>Footer</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </footer>
+      <header>
+        <contenttype>FullyRenderedText</contenttype>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <hint>XWiki.PDFExport.TemplateClass_header.hint</hint>
+        <name>header</name>
+        <number>3</number>
+        <picker>0</picker>
+        <prettyName>Header</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </header>
+      <metadata>
+        <contenttype>FullyRenderedText</contenttype>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <hint>XWiki.PDFExport.TemplateClass_metadata.hint</hint>
+        <name>metadata</name>
+        <number>5</number>
+        <picker>0</picker>
+        <prettyName>Metadata</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </metadata>
+      <toc>
+        <contenttype>FullyRenderedText</contenttype>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <hint>XWiki.PDFExport.TemplateClass_toc.hint</hint>
+        <name>toc</name>
+        <number>2</number>
+        <picker>0</picker>
+        <prettyName>Table of Contents</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </toc>
+    </class>
+    <property>
+      <cover>{{velocity}}
+{{html clean="false"}}
+&lt;h1&gt;$escapetool.xml($tdoc.plainTitle)&lt;/h1&gt;
+#set ($versionInfo = $escapetool.xml($services.localization.render('export.pdf.templates.default.versionInfo',
+  [$tdoc.version, '__author__', $xwiki.formatDate($tdoc.date)])))
+&lt;p&gt;$versionInfo.replace('__author__', "#displayUser($tdoc.authorReference {'useInlineHTML': true})")&lt;/p&gt;
+{{/html}}
+{{/velocity}}</cover>
+    </property>
+    <property>
+      <footer>{{velocity}}
+#set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
+#set ($xclass = $controlledObj.xWikiClass)
+
+#set ($releaseDate = '')
+#set ($approvedBy = '')
+#set ($revisedBy = '')
+#set ($revision = '')
+#set ($plannedRevisionDate = '')
+
+#if ($controlledObj)
+  #set ($releaseDateValue = $controlledObj.getValue('releaseDate'))
+  #if ($releaseDateValue)
+    #set ($releaseDate = $datetool.format('dd.MM.yyyy', $releaseDateValue))
+  #end
+
+  #set ($approvedBy = $!controlledObj.getValue('approvedBy'))
+  #set ($revisedBy = $!controlledObj.getValue('revisedBy'))
+  #set ($revision = $!controlledObj.getValue('revision'))
+
+  #set ($plannedRevisionDateValue = $controlledObj.getValue('revisionPlannedDate'))
+  #if ($plannedRevisionDateValue)
+    #set ($plannedRevisionDate = $datetool.format('dd.MM.yyyy', $plannedRevisionDateValue))
+  #end
+#end
+
+#set ($fieldsToDisplay = ['releaseDate', 'approvedBy', 'revisedBy', 'revision', 'revisionPlannedDate'])
+
+{{html clean="false"}}
+&lt;table class="sop-pdf-footer-table"&gt;
+  &lt;tr&gt;
+    #foreach ($property in $xclass.properties)
+      #if ($fieldsToDisplay.contains($property.name))
+        &lt;th&gt;$escapetool.xml($property.translatedPrettyName)&lt;/th&gt;
+      #end
+    #end
+    &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.pdfExport.page'))&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;$escapetool.xml($releaseDate)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($approvedBy)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($revisedBy)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($revision)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($plannedRevisionDate)&lt;/td&gt;
+    &lt;td&gt;
+      $escapetool.xml($services.localization.render('sopManager.pdfExport.page')) &lt;span class="pdf-page-number"&gt;&lt;/span&gt; / &lt;span class="pdf-page-count"&gt;&lt;/span&gt;
+    &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;
+{{/html}}
+{{/velocity}}</footer>
+    </property>
+    <property>
+      <header>{{velocity}}
+#set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
+#set ($revision = '')
+#if ($controlledObj)
+  #set ($revision = $controlledObj.getValue('revision'))
+#end
+#set ($logoURL = $xwiki.getDocument('SOPManager.Code.GKHPDFTemplateVertical').getAttachmentURL('gkh_pdf_logo.png'))
+
+{{html clean="false"}}
+&lt;div class="sop-pdf-header"&gt;
+  &lt;div class="sop-pdf-header-left"&gt;
+    &lt;img
+      class="sop-pdf-logo"
+      src="$logoURL"
+      alt="Company logo" /&gt;
+  &lt;/div&gt;
+
+  &lt;div class="sop-pdf-header-right"&gt;
+    &lt;div class="sop-pdf-current-revision"&gt;$escapetool.xml($revision)&lt;/div&gt;
+    &lt;div class="sop-pdf-current-title"&gt;$escapetool.xml($doc.getTitle())&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+{{/html}}
+{{/velocity}}</header>
+    </property>
+    <property>
+      <metadata/>
+    </property>
+    <property>
+      <toc>(% id="Hcore.pdf.tableOfContents" %)
+= {{translation key="core.pdf.tableOfContents"/}} =
+
+{{velocity}}
+{{pdftoc jobId="$!services.rendering.escape($request.jobId, 'xwiki/2.1')" /}}
+{{/velocity}}</toc>
+    </property>
+  </object>
+  <object>
+    <name>SOPManager.Code.GKHPDFTemplateVertical</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>3fd67f34-3575-4d57-b4fb-b04a3593d50d</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <contentType>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>contentType</name>
+        <number>6</number>
+        <prettyName>Content Type</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>CSS|LESS</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </contentType>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>@media print {
+  @page {
+  margin-top: 28mm;
+  margin-right: 15mm;
+  margin-bottom: 28mm;
+  margin-left: 15mm;
+}
+
+  /**
+   * Cover Page
+   */
+  .pdf-cover {
+    border-top: 1px solid @nav-tabs-border-color;
+    border-bottom: 1px solid @nav-tabs-border-color;
+    margin-top: 3in;
+  }
+
+  .pdf-cover h1 {
+    font-weight: bolder;
+  }
+
+  /**
+   * Table of Contents
+   */
+  /* Distinguish the table of contents entries that correspond to document titles from those that correspond to headings
+    found in the document content. */
+  .pdf-toc &gt; ul &gt; li[data-xwiki-document-reference] {
+    margin-top: 1em;
+
+    &gt; span {
+      font-weight: bolder;
+    }
+  }
+
+  /**
+   * Header
+   */
+  .pdf-chapter-name:before {
+    content: string(chapter-name);
+  }
+
+  .sop-pdf-header {
+    width: 100%;
+    display: table;
+    table-layout: fixed;
+    border-bottom: 1px solid @nav-tabs-border-color;
+    padding: 6mm 0 3mm 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111;
+  }
+
+  .sop-pdf-header-left,
+  .sop-pdf-header-right {
+    display: table-cell;
+    vertical-align: bottom;
+  }
+
+  .sop-pdf-header-left {
+    width: 42%;
+    text-align: left;
+  }
+
+  .sop-pdf-header-right {
+    width: 58%;
+    text-align: right;
+  }
+
+  .sop-pdf-logo {
+    max-height: 18mm;
+    max-width: 70mm;
+  }
+
+  .sop-pdf-current-revision {
+    font-size: 10pt;
+    line-height: 1.2;
+    white-space: nowrap;
+    margin-bottom: 1.5mm;
+  }
+
+  .sop-pdf-current-title {
+    font-size: 11pt;
+    font-weight: bolder;
+    line-height: 1.2;
+  }
+  
+  .sop-pdf-footer-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 8pt;
+    color: #111;
+  }
+
+  .sop-pdf-footer-table th,
+  .sop-pdf-footer-table td {
+    border: 1px solid #777;
+    padding: 1.2mm 2mm;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1.1;
+  }
+
+  .sop-pdf-footer-table th {
+    font-weight: normal;
+  }
+
+  /**
+   * Content
+   */
+  /* Marks the beginning of a new XWiki document. */
+  h1[data-xwiki-document-reference] {
+    /* Distinguish document titles from the rest of the level 1 headings that may appear in the document content. */
+    font-weight: bolder;
+    string-set: chapter-name content(text);
+
+    /* Start each XWiki document on a new print page. */
+    &amp; ~ h1[data-xwiki-document-reference] {
+      break-before: page;
+      /* Prevent floating to leak from one wiki page to the next. */
+      clear: both;
+    }
+  }
+}</code>
+    </property>
+    <property>
+      <contentType>LESS</contentType>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse>0</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
+</xwikidoc>
