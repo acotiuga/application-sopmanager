@@ -548,10 +548,14 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;
           #elseif ($status == 'approved')
-          ## TODO: check if isServerSidePrintingAvailable() or display a message instead of the Generate PDF button
-            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
-              $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
-            &lt;/button&gt;
+            ## Show the Generate PDF button only when server-side printing is available, otherwise display a clear (localized) error message.
+            #if ($services.export.pdf.isServerSidePrintingAvailable())
+              &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
+                $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
+              &lt;/button&gt;
+            #else
+              {{error}}$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.notAvailable')){{/error}}
+            #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.title'))" id="startNewRevision"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.label'))
             &lt;/button&gt;
