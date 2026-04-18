@@ -218,9 +218,9 @@
     <property>
       <header>{{velocity}}
 #set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
-#set ($revision = '')
+#set ($revisionId = '')
 #if ($controlledObj)
-  #set ($revision = $controlledObj.getValue('revision'))
+  #set ($revisionId = $controlledObj.getValue('revisionId'))
 #end
 #set ($logoURL = $xwiki.getDocument('SOPManager.Code.GKHPDFTemplateVertical').getAttachmentURL('gkh_pdf_logo.png'))
 
@@ -234,7 +234,7 @@
   &lt;/div&gt;
 
   &lt;div class="sop-pdf-header-right"&gt;
-    &lt;div class="sop-pdf-current-revision"&gt;$escapetool.xml($revision)&lt;/div&gt;
+    &lt;div class="sop-pdf-current-revision"&gt;$escapetool.xml($revisionId)&lt;/div&gt;
     &lt;div class="sop-pdf-current-title"&gt;$escapetool.xml($doc.getTitle())&lt;/div&gt;
   &lt;/div&gt;
 &lt;/div&gt;

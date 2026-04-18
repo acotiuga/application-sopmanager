@@ -90,7 +90,7 @@
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
       <name>pDFSecondaryTargetLocation</name>
-      <number>6</number>
+      <number>7</number>
       <picker>1</picker>
       <prettyName>PDF in File Manager</prettyName>
       <relationalStorage>0</relationalStorage>
@@ -112,7 +112,7 @@
       <editor>---</editor>
       <hint/>
       <name>previousRevisions</name>
-      <number>8</number>
+      <number>9</number>
       <picker>0</picker>
       <prettyName>Previous revisions</prettyName>
       <restricted>0</restricted>
@@ -164,12 +164,26 @@
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
     </revisedBy>
+    <revisionId>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>Enter the fixed document code shown in the PDF header (for example: XXX_XX_3.7).</hint>
+      <name>revisionId</name>
+      <number>4</number>
+      <picker>0</picker>
+      <prettyName>Revision ID</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </revisionId>
     <revision>
       <customDisplay/>
       <disabled>0</disabled>
       <hint> Enter the revision identifier for this document.</hint>
       <name>revision</name>
-      <number>4</number>
+      <number>5</number>
       <picker>0</picker>
       <prettyName>Revision</prettyName>
       <size>30</size>
@@ -189,7 +203,7 @@
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
       <name>revisionOwner</name>
-      <number>9</number>
+      <number>10</number>
       <picker>1</picker>
       <prettyName>Revision owner</prettyName>
       <relationalStorage>0</relationalStorage>
@@ -210,7 +224,7 @@
       <emptyIsToday>1</emptyIsToday>
       <hint>Select the planned date for the next revision.</hint>
       <name>revisionPlannedDate</name>
-      <number>5</number>
+      <number>6</number>
       <picker>1</picker>
       <prettyName>Revision planned date</prettyName>
       <size>20</size>
@@ -230,7 +244,7 @@
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
       <name>status</name>
-      <number>7</number>
+      <number>8</number>
       <picker>1</picker>
       <prettyName>Status</prettyName>
       <relationalStorage>0</relationalStorage>
