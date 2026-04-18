@@ -77,6 +77,9 @@ SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Submitted fo
 SOPManager.Code.ControlledDocumentClass_status_approved=Approved
 
 sopManager.pdfExport.page=Page
+sopManager.userProfile.ownedPages=Owned pages
+sopManager.userProfile.pagesToReview=Pages to review
+sopManager.userProfile.pagesToApprove=Pages to approve
 
 sopManager.event.submittedForReviewEvent.description=A page is submitted for review
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes

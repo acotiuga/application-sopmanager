@@ -92,6 +92,9 @@ SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Zur Genehmig
 SOPManager.Code.ControlledDocumentClass_status_approved=Genehmigt
 
 sopManager.pdfExport.page=Seite
+sopManager.userProfile.ownedPages=Eigene Seiten
+sopManager.userProfile.pagesToReview=Seiten zur Überprüfung
+sopManager.userProfile.pagesToApprove=Seiten zur Genehmigung
 
 sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben
