@@ -35,7 +35,8 @@ public interface PDFExportManager
      * Exports the given document to PDF and attaches the generated PDF to the document.
      *
      * @param documentReference the reference of the document to export and attach the PDF to
+     * @param pdfTemplateReference the document reference of the PDF template to use
      * @return the URL of the attached PDF
      */
-    String exportAndAttachPDF(DocumentReference documentReference);
+    String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference);
 }

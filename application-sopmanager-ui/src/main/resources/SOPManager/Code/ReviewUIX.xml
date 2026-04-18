@@ -43,7 +43,7 @@
 
   #try('sopException')
     #if ($request.action == 'generatePDF')
-      #set ($message = $services.sopService.exportAndAttachPDF($request.document))
+      #set ($message = $services.sopService.exportAndAttachPDF($request.document, $request.pdfTemplate))
     #else
       #set ($message = $services.sopService.updateDocumentReviewState($request.action, $request.document))
     #end
@@ -159,36 +159,65 @@
     </property>
     <property>
       <code>require(['jquery', 'xwiki-meta', 'xwiki-events-bridge'], function ($, xm) {
-  var serviceURL = new XWiki.Document('ReviewUIX', 'SOPManager.Code').getURL('get', 'outputSyntax=plain');
+  var serviceURL = new XWiki.Document('ReviewUIX', 'SOPManager.Code').getURL('get');
   $('#SOPReviewPagespane').on('click', '.reviewActions button', function(event) {
     event.preventDefault();
     var action = this.id;
-    var successbox = $('.reviewNotificationSuccess');
-    var errorbox = $('.reviewNotificationError');
+    var button = $(this);
+    var successBox = $('.reviewNotificationSuccess');
+    var errorBox = $('.reviewNotificationError');
+    var spinner = button.siblings('.fa-spinner');
+
+    // Build the data object first and append the pdfTemplate only if present.
+    var data = {
+      'action': action,
+      'document': xm.document
+    };
+
+    var pdfSelect = $('#pdfTemplateSelect');
+    if (pdfSelect.length) {
+      var pdfTemplateVal = pdfSelect.val();
+      if (pdfTemplateVal &amp;&amp; pdfTemplateVal.length &gt; 0) {
+        data.pdfTemplate = pdfTemplateVal;
+      }
+    }
+
+    // Disable the clicked button for any action to prevent multiple clicks.
+    button.prop('disabled', true);
+    // Show spinner only for generatePDF action.
+    if (action === 'generatePDF') {
+      if (spinner.length) {
+        spinner.removeClass('hidden');
+      }
+    }
+
     $.post({
-      url : serviceURL,
-      data: {
-        'action': action,
-        'document': xm.document
-      },
+      url: serviceURL,
+      data: data
     }).done(function (data) {
-      var successboxContent = successbox.find('.box div p');
-      successboxContent.text(data.message);
-      successbox.toggleClass('hidden');
-      if (errorbox.is(':visible')) {
-        errorbox.toggleClass('hidden');
+      var successBoxContent = successBox.find('.box div p');
+      successBoxContent.text(data.message);
+      successBox.toggleClass('hidden');
+      if (errorBox.is(':visible')) {
+        errorBox.toggleClass('hidden');
       }
       setTimeout(function () {
         const r = Math.floor(Math.random() * 100);
         window.location = window.location.pathname + '?r=' + r + '#SOPReviewPages';
       }, 3000);
     }).fail(function (xhr) {
-      var errorboxContent = errorbox.find('.box div p');
-      errorboxContent.text(xhr.responseJSON.message);
-      errorbox.toggleClass('hidden');
-      if (successbox.is(':visible')) {
-        successbox.toggleClass('hidden');
+      var errorBoxContent = errorBox.find('.box div p');
+      errorBoxContent.text(xhr.responseJSON.message);
+      errorBox.toggleClass('hidden');
+      if (successBox.is(':visible')) {
+        successBox.toggleClass('hidden');
       }
+    }).always(function () {
+      // Always hide spinner and re-enable the button.
+      if (spinner.length) {
+        spinner.addClass('hidden');
+      }
+      button.prop('disabled', false);
     });
   });
 });</code>
@@ -311,6 +340,11 @@
     <property>
       <code>.reviewNotifications {
   margin-top: 10px;
+}
+
+#generatePDF {
+  margin-top: 0;
+  margin-right: 10px;
 }</code>
     </property>
     <property>
@@ -548,17 +582,27 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;
           #elseif ($status == 'approved')
-            ## Show the Generate PDF button only when server-side printing is available, otherwise display a clear (localized) error message.
             #if ($services.export.pdf.isServerSidePrintingAvailable())
-              &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
-                $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
-              &lt;/button&gt;
+              &lt;div&gt;
+                #set ($statement = "from doc.object(XWiki.PDFExport.TemplateClass) as obj")
+                #set ($results = $services.query.xwql($statement).execute())
+                #if ($results.size() &gt; 0)
+                  &lt;select id="pdfTemplateSelect" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.selectPdfTemplate.title'))"&gt;
+                    #foreach ($result in $results)
+                      &lt;option value="$result" #if ($result == 'SOPManager.Code.GKHPDFTemplateVertical') selected="selected"#end&gt;$escapetool.xml($xwiki.getDocument($result).displayTitle)&lt;/option&gt;
+                    #end
+                  &lt;/select&gt;
+                #end
+                &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
+                  $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
+                &lt;/button&gt;&lt;span class="hidden fa fa-spinner fa-spin"&gt;&lt;/span&gt;
+              &lt;/div&gt;
             #else
+
               {{error}}$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.notAvailable')){{/error}}
+
             #end
-            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.title'))" id="startNewRevision"&gt;
-              $escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.label'))
-            &lt;/button&gt;
+            &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.title'))" id="startNewRevision"&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.label'))&lt;/button&gt;
           #end
           &lt;div class="reviewNotifications"&gt;
             &lt;div class="hidden reviewNotificationSuccess"&gt;

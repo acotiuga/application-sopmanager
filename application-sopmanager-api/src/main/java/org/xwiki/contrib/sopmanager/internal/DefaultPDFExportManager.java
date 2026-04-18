@@ -82,7 +82,7 @@ public class DefaultPDFExportManager implements PDFExportManager
     private FileManagerStorageManager fileManagerStorageManager;
 
     @Override
-    public String exportAndAttachPDF(DocumentReference documentReference)
+    public String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference)
     {
         XWikiContext context = xcontextProvider.get();
         XWikiDocument previousDoc = context.getDoc();
@@ -93,7 +93,7 @@ public class DefaultPDFExportManager implements PDFExportManager
 
             String attachmentName = attachmentDoc.getTitle() + ".pdf";
 
-            PDFExportJobRequest request = createExportRequest(documentReference, context);
+            PDFExportJobRequest request = createExportRequest(documentReference, context, pdfTemplateReference);
 
             Job job = jobExecutor.execute("export/pdf", request);
             job.join();
@@ -127,12 +127,14 @@ public class DefaultPDFExportManager implements PDFExportManager
         }
     }
 
-    private PDFExportJobRequest createExportRequest(DocumentReference documentReference, XWikiContext context)
-        throws Exception
+    private PDFExportJobRequest createExportRequest(DocumentReference documentReference, XWikiContext context,
+        DocumentReference pdfTemplateReference) throws Exception
     {
         PDFExportJobRequest request = requestFactory.createRequest();
         request.setDocuments(List.of(documentReference));
-        request.setTemplate(documentReferenceResolver.resolve("SOPManager.Code.GKHPDFTemplateVertical"));
+        if (pdfTemplateReference != null) {
+            request.setTemplate(pdfTemplateReference);
+        }
         request.setWithCover(false);
         request.setWithToc(false);
 

@@ -72,10 +72,11 @@ public class SOPScriptService implements ScriptService
      * Exports the given document to PDF and attaches the generated PDF to the document.
      *
      * @param documentReference the reference of the document to export and attach the PDF to
+     * @param pdfTemplateReference the document reference of the PDF template to use
      * @return the URL of the attached PDF
      */
-    public String exportAndAttachPDF(DocumentReference documentReference)
+    public String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference)
     {
-        return pdfExportManager.exportAndAttachPDF(documentReference);
+        return pdfExportManager.exportAndAttachPDF(documentReference, pdfTemplateReference);
     }
 }
