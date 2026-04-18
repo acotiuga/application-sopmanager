@@ -19,6 +19,8 @@
  */
 package org.xwiki.contrib.sopmanager.internal;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,10 +30,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.List;
 
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -298,14 +299,19 @@ class DefaultFileManagerStorageManagerTest
 
         Provider<XWikiContext> xcontextProvider = mock(Provider.class);
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
+        @SuppressWarnings("unchecked")
+        EntityReferenceSerializer<String> localSerializer = mock(EntityReferenceSerializer.class);
 
         setField(storageManager, "xcontextProvider", xcontextProvider);
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
+        setField(storageManager, "localEntityReferenceSerializer", localSerializer);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
         XWikiDocument fileDoc = mock(XWikiDocument.class);
+        BaseObject fileObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
+        BaseObject backlinkObject = mock(BaseObject.class);
 
         when(xcontextProvider.get()).thenReturn(context);
         when(context.getWiki()).thenReturn(wiki);
@@ -325,17 +331,22 @@ class DefaultFileManagerStorageManagerTest
             .thenReturn(fileReference);
 
         when(wiki.getDocument(fileReference, context)).thenReturn(fileDoc);
-        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, tagObject);
-        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context))).thenReturn(tagObject);
         when(context.getUserReference()).thenReturn(currentUser);
+        when(localSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
+
+        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
+        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context)))
+            .thenReturn(fileObject, tagObject, backlinkObject);
 
         storageManager.storeAttachment(sourceReference, attachment, "Sandbox.pdf");
 
         verify(fileDoc).setTitle("Sandbox.pdf");
-        verify(fileDoc).newXObject(any(LocalDocumentReference.class), eq(context));
+        verify(fileDoc, times(3)).newXObject(any(LocalDocumentReference.class), eq(context));
         verify(fileDoc).setParentReference(
             sandboxFolderReference.removeParent(sandboxFolderReference.getWikiReference()));
         verify(tagObject).setDBStringListValue("tags", List.of("Sandbox"));
+        String expectedBacklink = localSerializer.serialize(sourceReference);
+        verify(backlinkObject).setStringValue("backlink", expectedBacklink);
         verify(fileDoc).setAttachment(attachment);
         verify(fileDoc).setCreatorReference(currentUser);
         verify(fileDoc).setAuthorReference(currentUser);
@@ -349,14 +360,19 @@ class DefaultFileManagerStorageManagerTest
 
         Provider<XWikiContext> xcontextProvider = mock(Provider.class);
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
+        @SuppressWarnings("unchecked")
+        EntityReferenceSerializer<String> localSerializer = mock(EntityReferenceSerializer.class);
 
         setField(storageManager, "xcontextProvider", xcontextProvider);
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
+        setField(storageManager, "localEntityReferenceSerializer", localSerializer);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
         XWikiDocument fileDoc = mock(XWikiDocument.class);
+        BaseObject fileObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
+        BaseObject backlinkObject = mock(BaseObject.class);
 
         when(xcontextProvider.get()).thenReturn(context);
         when(context.getWiki()).thenReturn(wiki);
@@ -379,16 +395,24 @@ class DefaultFileManagerStorageManagerTest
             .thenReturn(fileReference);
 
         when(wiki.getDocument(fileReference, context)).thenReturn(fileDoc);
-        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, tagObject);
-        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context))).thenReturn(tagObject);
         when(context.getUserReference()).thenReturn(currentUser);
+        when(localSerializer.serialize(sourceReference)).thenReturn("Sandbox.Marmota.Zorro");
+
+        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
+        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context)))
+            .thenReturn(fileObject, tagObject, backlinkObject);
 
         storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf");
 
+        verify(fileDoc).setTitle("Zorro.pdf");
         verify(fileDoc).setParentReference(
             marmotaFolderReference.removeParent(marmotaFolderReference.getWikiReference()));
         verify(tagObject).setDBStringListValue("tags", List.of("Marmota"));
+        String expectedBacklink = localSerializer.serialize(sourceReference);
+        verify(backlinkObject).setStringValue("backlink", expectedBacklink);
         verify(fileDoc).setAttachment(attachment);
+        verify(fileDoc).setCreatorReference(currentUser);
+        verify(fileDoc).setAuthorReference(currentUser);
         verify(wiki).saveDocument(fileDoc, "Store generated PDF in File Manager", context);
     }
 
