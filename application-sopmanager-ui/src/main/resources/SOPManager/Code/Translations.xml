@@ -101,9 +101,17 @@ notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.d
 sopManager.defaultSOPManager.error.invalidAction=Cannot perform action [{0}] when the document is in state [{1}].
 sopManager.defaultSOPManager.error.notInWorkflow=The document is not part of the SOP workflow.
 sopManager.defaultPDFExportManager.saveDocument=Attach generated PDF
+sopManager.defaultPDFExportManager.success=The PDF was generated and attached as "{0}" to the current page (Attachments tab) and stored in the File Manager.
+sopManager.defaultPDFExportManager.error.attachFailed=Failed to attach the generated PDF to [{0}].
 
 sopManager.defaultPDFExportManager.error.noTemporaryFile=The PDF export did not produce a temporary PDF file.
 sopManager.defaultPDFExportManager.error.missingTemporaryFile=The PDF export finished without creating the temporary PDF file at [{0}].
+
+sopManager.defaultFileManagerStorageManager.saveDocument=Store generated PDF in the File Manager
+sopManager.defaultFileManagerStorageManager.saveFolder=Create / update File Manager folder
+sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to store the generated PDF in the File Manager for [{0}].
+
+sopManager.reviewPage.selectPdfTemplate.title=Select the PDF template to use for this export.
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>

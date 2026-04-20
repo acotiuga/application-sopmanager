@@ -118,5 +118,13 @@ sopManager.defaultSOPManager.error.notInWorkflow=Das Dokument ist kein Teil des 
 sopManager.defaultPDFExportManager.saveDocument=Erzeugte PDF anhängen
 sopManager.defaultPDFExportManager.error.noTemporaryFile=Die PDF-Erzeugung hat keine temporäre PDF-Datei erzeugt.
 sopManager.defaultPDFExportManager.error.missingTemporaryFile=Die PDF-Erzeugung wurde abgeschlossen, ohne die temporäre PDF-Datei unter [{0}] zu erstellen.
+sopManager.defaultPDFExportManager.success=Die PDF wurde erzeugt und als "{0}" an die aktuelle Seite (Reiter „Anhänge“) angehängt und im File Manager gespeichert.
+sopManager.defaultPDFExportManager.error.attachFailed=Die erzeugte PDF konnte nicht an [{0}] angehängt werden.
+
+sopManager.defaultFileManagerStorageManager.saveDocument=Erzeugte PDF im File Manager speichern
+sopManager.defaultFileManagerStorageManager.saveFolder=File-Manager-Ordner erstellen / aktualisieren
+sopManager.defaultFileManagerStorageManager.error.storeAttachment=Die erzeugte PDF konnte für [{0}] nicht im File Manager gespeichert werden.
+
+sopManager.reviewPage.selectPdfTemplate.title=Wählen Sie die PDF-Vorlage aus, die für diesen Export verwendet werden soll.
   </content>
 </xwikidoc>
