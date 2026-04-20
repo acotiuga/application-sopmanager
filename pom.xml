@@ -29,7 +29,7 @@
   </parent>
   <groupId>org.xwiki.contrib</groupId>
   <artifactId>application-sopmanager</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0rc1</version>
   <name>SOP Manager Application - Parent POM</name>
   <packaging>pom</packaging>
   <properties>
@@ -43,7 +43,7 @@
     <connection>scm:git:git://github.com/acotiuga/application-sopmanager.git</connection>
     <developerConnection>scm:git:git@github.com:acotiuga/application-sopmanager.git</developerConnection>
     <url>https://github.com/acotiuga/application-sopmanager/tree/master/</url>
-    <tag>HEAD</tag>
+    <tag>application-sopmanager-1.0rc1</tag>
   </scm>
   <developers>
     <developer>
