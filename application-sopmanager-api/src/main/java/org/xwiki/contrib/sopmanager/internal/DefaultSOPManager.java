@@ -168,7 +168,7 @@ public class DefaultSOPManager implements SOPManager
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
             BaseObject sopObj = getControlledDocumentObject(sopDoc, documentReference);
             if (sopObj == null) {
-                return "The document is not part of the SOP workflow.";
+                return localizationManager.getTranslationPlain("sopManager.defaultSOPManager.error.notInWorkflow");
             }
 
             String currentStatus = sopObj.getStringValue(STATUS);
@@ -244,8 +244,8 @@ public class DefaultSOPManager implements SOPManager
             }
         }
 
-        throw new IllegalArgumentException(String.format(
-            "Cannot perform action [%s] when the document is in state [%s].", action, currentStatus));
+        throw new IllegalArgumentException(localizationManager.getTranslationPlain(
+            "sopManager.defaultSOPManager.error.invalidAction", action, currentStatus));
     }
 
     private BaseObject getControlledDocumentObject(XWikiDocument sopDoc, DocumentReference documentReference)

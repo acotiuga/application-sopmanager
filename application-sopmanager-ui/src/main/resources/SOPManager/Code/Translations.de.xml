@@ -108,5 +108,11 @@ notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApp
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=hat eine Seite zur Genehmigung eingereicht
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=wurde genehmigt
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=hat eine Seite genehmigt
+
+sopManager.defaultSOPManager.error.invalidAction=Die Aktion [{0}] kann nicht ausgeführt werden, wenn sich das Dokument im Status [{1}] befindet.
+sopManager.defaultSOPManager.error.notInWorkflow=Das Dokument ist kein Teil des SOP-Workflows.
+sopManager.defaultPDFExportManager.saveDocument=Erzeugte PDF anhängen
+sopManager.defaultPDFExportManager.error.noTemporaryFile=Die PDF-Erzeugung hat keine temporäre PDF-Datei erzeugt.
+sopManager.defaultPDFExportManager.error.missingTemporaryFile=Die PDF-Erzeugung wurde abgeschlossen, ohne die temporäre PDF-Datei unter [{0}] zu erstellen.
   </content>
 </xwikidoc>

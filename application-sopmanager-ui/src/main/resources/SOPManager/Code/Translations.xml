@@ -93,6 +93,13 @@ notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApp
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=submitted page for approval
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=was approved
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=approved page
+
+sopManager.defaultSOPManager.error.invalidAction=Cannot perform action [{0}] when the document is in state [{1}].
+sopManager.defaultSOPManager.error.notInWorkflow=The document is not part of the SOP workflow.
+sopManager.defaultPDFExportManager.saveDocument=Attach generated PDF
+
+sopManager.defaultPDFExportManager.error.noTemporaryFile=The PDF export did not produce a temporary PDF file.
+sopManager.defaultPDFExportManager.error.missingTemporaryFile=The PDF export finished without creating the temporary PDF file at [{0}].
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>

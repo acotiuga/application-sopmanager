@@ -31,9 +31,11 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import com.xpn.xwiki.objects.BaseObject;
+
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
 import org.xwiki.contrib.sopmanager.PDFExportManager;
+import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.export.pdf.job.PDFExportJobRequest;
 import org.xwiki.export.pdf.job.PDFExportJobRequestFactory;
 import org.xwiki.export.pdf.job.PDFExportJobStatus;
@@ -62,7 +64,8 @@ import com.xpn.xwiki.doc.XWikiDocument;
 public class DefaultPDFExportManager implements PDFExportManager
 {
     private static final LocalDocumentReference CONTROLLED_DOC_CLASS =
-            new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
+        new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -85,6 +88,9 @@ public class DefaultPDFExportManager implements PDFExportManager
     @Inject
     private FileManagerStorageManager fileManagerStorageManager;
 
+    @Inject
+    private ContextualLocalizationManager localizationManager;
+
     @Override
     public String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference)
     {
@@ -104,13 +110,14 @@ public class DefaultPDFExportManager implements PDFExportManager
             TemporaryResourceReference pdfReference = status.getPDFFileReference();
 
             if (pdfReference == null) {
-                throw new RuntimeException("The PDF export did not produce a temporary PDF file.");
+                throw new RuntimeException(localizationManager.getTranslationPlain(
+                    "sopManager.defaultPDFExportManager.error.noTemporaryFile"));
             }
 
             File pdfFile = temporaryResourceStore.getTemporaryFile(pdfReference);
             if (pdfFile == null || !pdfFile.exists() || !pdfFile.isFile()) {
-                throw new RuntimeException("The PDF export finished without creating the temporary PDF file at ["
-                    + pdfFile + "].");
+                throw new RuntimeException(localizationManager.getTranslationPlain(
+                    "sopManager.defaultPDFExportManager.error.missingTemporaryFile", pdfFile));
             }
 
             BaseObject controlledObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
@@ -123,13 +130,16 @@ public class DefaultPDFExportManager implements PDFExportManager
 
             attachmentDoc.setAttachment(attachment);
             attachmentDoc.setAuthorReference(context.getUserReference());
-            context.getWiki().saveDocument(attachmentDoc, "Attach generated PDF", context);
+            context.getWiki().saveDocument(attachmentDoc,
+                localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.saveDocument"), context);
 
             fileManagerStorageManager.storeAttachment(documentReference, attachment, attachmentName);
 
-            return String.format("The PDF was attached as [%s].", attachmentName);
+            return localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
+                attachmentName);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to attach generated PDF to the document [" + documentReference + "]", e);
+            throw new RuntimeException(localizationManager.getTranslationPlain(
+                "sopManager.defaultPDFExportManager.error.attachFailed", documentReference), e);
         } finally {
             context.setDoc(previousDoc);
         }

@@ -31,6 +31,7 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
 import org.xwiki.filemanager.internal.reference.DocumentNameSequence;
 import org.xwiki.filemanager.reference.UniqueDocumentReferenceGenerator;
+import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
@@ -95,6 +96,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     @Named("currentmixed")
     private DocumentReferenceResolver<String> documentReferenceResolver;
 
+    @Inject
+    private ContextualLocalizationManager localizationManager;
+
     @Override
     public void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName)
     {
@@ -152,10 +156,12 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             fileDoc.setAttachment(attachment);
             fileDoc.setCreatorReference(context.getUserReference());
             fileDoc.setAuthorReference(context.getUserReference());
-            xwiki.saveDocument(fileDoc, "Store generated PDF in File Manager", context);
+            xwiki.saveDocument(fileDoc,
+                localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"),
+                context);
         } catch (Exception e) {
-            throw new RuntimeException(
-                "Failed to store generated PDF in File Manager for document [" + sourceDocumentReference + "]", e);
+            throw new RuntimeException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.storeAttachment", sourceDocumentReference), e);
         }
     }
 
@@ -190,7 +196,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
         folderDoc.setCreatorReference(context.getUserReference());
         folderDoc.setAuthorReference(context.getUserReference());
-        xwiki.saveDocument(folderDoc, "Create File Manager folder", context);
+        xwiki.saveDocument(folderDoc,
+            localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveFolder"),
+            context);
         return folderReference;
     }
 
