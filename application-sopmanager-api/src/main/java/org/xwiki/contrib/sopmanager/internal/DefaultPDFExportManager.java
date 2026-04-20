@@ -30,6 +30,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import com.xpn.xwiki.objects.BaseObject;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
 import org.xwiki.contrib.sopmanager.PDFExportManager;
@@ -42,6 +43,7 @@ import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
+import org.xwiki.model.reference.LocalDocumentReference;
 import org.xwiki.resource.temporary.TemporaryResourceReference;
 import org.xwiki.resource.temporary.TemporaryResourceStore;
 
@@ -59,6 +61,8 @@ import com.xpn.xwiki.doc.XWikiDocument;
 @Singleton
 public class DefaultPDFExportManager implements PDFExportManager
 {
+    private static final LocalDocumentReference CONTROLLED_DOC_CLASS =
+            new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -91,8 +95,6 @@ public class DefaultPDFExportManager implements PDFExportManager
             XWikiDocument attachmentDoc = context.getWiki().getDocument(documentReference, context);
             context.setDoc(attachmentDoc);
 
-            String attachmentName = attachmentDoc.getTitle() + ".pdf";
-
             PDFExportJobRequest request = createExportRequest(documentReference, context, pdfTemplateReference);
 
             Job job = jobExecutor.execute("export/pdf", request);
@@ -110,6 +112,12 @@ public class DefaultPDFExportManager implements PDFExportManager
                 throw new RuntimeException("The PDF export finished without creating the temporary PDF file at ["
                     + pdfFile + "].");
             }
+
+            BaseObject controlledObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
+            String revisionId = controlledObj != null ? controlledObj.getStringValue("revisionId").trim() : "";
+            String title = attachmentDoc.getTitle();
+
+            String attachmentName = revisionId.isEmpty() ? title + ".pdf" : revisionId + "_" + title + ".pdf";
 
             XWikiAttachment attachment = createAttachment(pdfFile, attachmentName, context);
 
