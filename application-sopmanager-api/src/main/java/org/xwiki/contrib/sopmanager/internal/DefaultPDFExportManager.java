@@ -26,7 +26,6 @@ import java.net.URL;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
@@ -34,20 +33,15 @@ import com.xpn.xwiki.objects.BaseObject;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
+import org.xwiki.contrib.sopmanager.PDFExportJobManager;
 import org.xwiki.contrib.sopmanager.PDFExportManager;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.export.pdf.job.PDFExportJobRequest;
 import org.xwiki.export.pdf.job.PDFExportJobRequestFactory;
-import org.xwiki.export.pdf.job.PDFExportJobStatus;
-import org.xwiki.job.Job;
-import org.xwiki.job.JobExecutor;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.LocalDocumentReference;
-import org.xwiki.resource.temporary.TemporaryResourceReference;
-import org.xwiki.resource.temporary.TemporaryResourceStore;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiAttachment;
@@ -70,20 +64,13 @@ public class DefaultPDFExportManager implements PDFExportManager
     private Provider<XWikiContext> xcontextProvider;
 
     @Inject
-    private TemporaryResourceStore temporaryResourceStore;
+    private PDFExportJobManager pdfExportJobManager;
 
     @Inject
     private PDFExportJobRequestFactory requestFactory;
 
     @Inject
-    private JobExecutor jobExecutor;
-
-    @Inject
     private EntityReferenceSerializer<String> defaultEntityReferenceSerializer;
-
-    @Inject
-    @Named("currentmixed")
-    private DocumentReferenceResolver<String> documentReferenceResolver;
 
     @Inject
     private FileManagerStorageManager fileManagerStorageManager;
@@ -103,28 +90,13 @@ public class DefaultPDFExportManager implements PDFExportManager
 
             PDFExportJobRequest request = createExportRequest(documentReference, context, pdfTemplateReference);
 
-            Job job = jobExecutor.execute("export/pdf", request);
-            job.join();
-
-            PDFExportJobStatus status = (PDFExportJobStatus) job.getStatus();
-            TemporaryResourceReference pdfReference = status.getPDFFileReference();
-
-            if (pdfReference == null) {
-                throw new RuntimeException(localizationManager.getTranslationPlain(
-                    "sopManager.defaultPDFExportManager.error.noTemporaryFile"));
-            }
-
-            File pdfFile = temporaryResourceStore.getTemporaryFile(pdfReference);
-            if (pdfFile == null || !pdfFile.exists() || !pdfFile.isFile()) {
-                throw new RuntimeException(localizationManager.getTranslationPlain(
-                    "sopManager.defaultPDFExportManager.error.missingTemporaryFile", pdfFile));
-            }
+            File pdfFile = pdfExportJobManager.export(request);
 
             BaseObject controlledObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
             String revisionId = controlledObj != null ? controlledObj.getStringValue("revisionId").trim() : "";
-            String title = attachmentDoc.getTitle();
+            String attachmentBaseName = attachmentDoc.getTitle() + ".pdf";
 
-            String attachmentName = revisionId.isEmpty() ? title + ".pdf" : revisionId + "_" + title + ".pdf";
+            String attachmentName = revisionId.isEmpty() ? attachmentBaseName : revisionId + "_" + attachmentBaseName;
 
             XWikiAttachment attachment = createAttachment(pdfFile, attachmentName, context);
 

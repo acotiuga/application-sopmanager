@@ -41,6 +41,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xwiki.filemanager.internal.reference.DocumentNameSequence;
 import org.xwiki.filemanager.reference.UniqueDocumentReferenceGenerator;
+import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReference;
@@ -230,14 +231,20 @@ class DefaultFileManagerStorageManagerTest
         DefaultFileManagerStorageManager storageManager = spy(new DefaultFileManagerStorageManager());
 
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
+        ContextualLocalizationManager localizationManager = mock(ContextualLocalizationManager.class);
 
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
+        setField(storageManager, "localizationManager", localizationManager);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
         XWikiDocument folderDoc = mock(XWikiDocument.class);
+        DocumentReference currentUser = new DocumentReference("xwiki", List.of("XWiki"), "Admin");
 
         when(context.getWiki()).thenReturn(wiki);
+        when(context.getUserReference()).thenReturn(currentUser);
+        when(localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveFolder"))
+            .thenReturn("Create File Manager folder");
 
         DocumentReference generatedReference = new DocumentReference("xwiki", List.of("FileManager"), "Sandbox");
         when(uniqueDocRefGenerator.generate(any(SpaceReference.class), any(DocumentNameSequence.class)))
@@ -254,6 +261,8 @@ class DefaultFileManagerStorageManagerTest
         verify(folderDoc).setTitle("Sandbox");
         verify(folderDoc).setParentReference(any(LocalDocumentReference.class));
         verify(folderDoc).newXObject(any(LocalDocumentReference.class), eq(context));
+        verify(folderDoc).setCreatorReference(currentUser);
+        verify(folderDoc).setAuthorReference(currentUser);
         verify(wiki).saveDocument(folderDoc, "Create File Manager folder", context);
     }
 
@@ -263,14 +272,20 @@ class DefaultFileManagerStorageManagerTest
         DefaultFileManagerStorageManager storageManager = spy(new DefaultFileManagerStorageManager());
 
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
+        ContextualLocalizationManager localizationManager = mock(ContextualLocalizationManager.class);
 
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
+        setField(storageManager, "localizationManager", localizationManager);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
         XWikiDocument folderDoc = mock(XWikiDocument.class);
+        DocumentReference currentUser = new DocumentReference("xwiki", List.of("XWiki"), "Admin");
 
         when(context.getWiki()).thenReturn(wiki);
+        when(context.getUserReference()).thenReturn(currentUser);
+        when(localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveFolder"))
+            .thenReturn("Create File Manager folder");
 
         DocumentReference parentReference = new DocumentReference("xwiki", List.of("FileManager"), "Sandbox");
         DocumentReference generatedReference = new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
@@ -289,6 +304,8 @@ class DefaultFileManagerStorageManagerTest
         verify(folderDoc).setTitle("Marmota");
         verify(folderDoc).setParentReference(parentReference.removeParent(parentReference.getWikiReference()));
         verify(folderDoc).newXObject(any(LocalDocumentReference.class), eq(context));
+        verify(folderDoc).setCreatorReference(currentUser);
+        verify(folderDoc).setAuthorReference(currentUser);
         verify(wiki).saveDocument(folderDoc, "Create File Manager folder", context);
     }
 
@@ -301,10 +318,12 @@ class DefaultFileManagerStorageManagerTest
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
         @SuppressWarnings("unchecked")
         EntityReferenceSerializer<String> localSerializer = mock(EntityReferenceSerializer.class);
+        ContextualLocalizationManager localizationManager = mock(ContextualLocalizationManager.class);
 
         setField(storageManager, "xcontextProvider", xcontextProvider);
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
         setField(storageManager, "localEntityReferenceSerializer", localSerializer);
+        setField(storageManager, "localizationManager", localizationManager);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
@@ -333,6 +352,8 @@ class DefaultFileManagerStorageManagerTest
         when(wiki.getDocument(fileReference, context)).thenReturn(fileDoc);
         when(context.getUserReference()).thenReturn(currentUser);
         when(localSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
+        when(localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"))
+            .thenReturn("Store generated PDF in File Manager");
 
         when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
         when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context)))
@@ -345,8 +366,7 @@ class DefaultFileManagerStorageManagerTest
         verify(fileDoc).setParentReference(
             sandboxFolderReference.removeParent(sandboxFolderReference.getWikiReference()));
         verify(tagObject).setDBStringListValue("tags", List.of("Sandbox"));
-        String expectedBacklink = localSerializer.serialize(sourceReference);
-        verify(backlinkObject).setStringValue("backlink", expectedBacklink);
+        verify(backlinkObject).setStringValue("backlink", "Sandbox.WebHome");
         verify(fileDoc).setAttachment(attachment);
         verify(fileDoc).setCreatorReference(currentUser);
         verify(fileDoc).setAuthorReference(currentUser);
@@ -362,10 +382,12 @@ class DefaultFileManagerStorageManagerTest
         UniqueDocumentReferenceGenerator uniqueDocRefGenerator = mock(UniqueDocumentReferenceGenerator.class);
         @SuppressWarnings("unchecked")
         EntityReferenceSerializer<String> localSerializer = mock(EntityReferenceSerializer.class);
+        ContextualLocalizationManager localizationManager = mock(ContextualLocalizationManager.class);
 
         setField(storageManager, "xcontextProvider", xcontextProvider);
         setField(storageManager, "uniqueDocRefGenerator", uniqueDocRefGenerator);
         setField(storageManager, "localEntityReferenceSerializer", localSerializer);
+        setField(storageManager, "localizationManager", localizationManager);
 
         XWikiContext context = mock(XWikiContext.class);
         XWiki wiki = mock(XWiki.class);
@@ -397,6 +419,8 @@ class DefaultFileManagerStorageManagerTest
         when(wiki.getDocument(fileReference, context)).thenReturn(fileDoc);
         when(context.getUserReference()).thenReturn(currentUser);
         when(localSerializer.serialize(sourceReference)).thenReturn("Sandbox.Marmota.Zorro");
+        when(localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"))
+            .thenReturn("Store generated PDF in File Manager");
 
         when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
         when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(context)))
@@ -408,8 +432,7 @@ class DefaultFileManagerStorageManagerTest
         verify(fileDoc).setParentReference(
             marmotaFolderReference.removeParent(marmotaFolderReference.getWikiReference()));
         verify(tagObject).setDBStringListValue("tags", List.of("Marmota"));
-        String expectedBacklink = localSerializer.serialize(sourceReference);
-        verify(backlinkObject).setStringValue("backlink", expectedBacklink);
+        verify(backlinkObject).setStringValue("backlink", "Sandbox.Marmota.Zorro");
         verify(fileDoc).setAttachment(attachment);
         verify(fileDoc).setCreatorReference(currentUser);
         verify(fileDoc).setAuthorReference(currentUser);
