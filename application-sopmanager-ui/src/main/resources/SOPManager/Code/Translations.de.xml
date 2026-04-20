@@ -93,8 +93,12 @@ SOPManager.Code.ControlledDocumentClass_status_approved=Genehmigt
 
 sopManager.pdfExport.page=Seite
 sopManager.userProfile.ownedPages=Eigene Seiten
+sopManager.userProfile.ownedPages.noResults=Sie haben keine Seiten im Prüfsystem angelegt.
 sopManager.userProfile.pagesToReview=Seiten zur Überprüfung
+sopManager.userProfile.pagesToReview.noResults=Es gibt keine Seiten, die auf Ihre Überprüfung warten.
 sopManager.userProfile.pagesToApprove=Seiten zur Genehmigung
+sopManager.userProfile.pagesToApprove.noResults=Es gibt keine Seiten, die auf Ihre Genehmigung warten.
+sopManager.userProfile.noResults=Es gibt keine Seiten im Prüfsystem, die Ihre Aufmerksamkeit erfordern.
 sopManager.contentMenu.backlinkToOrigin=Originaldokument anzeigen
 
 sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht

@@ -164,74 +164,96 @@
     </property>
     <property>
       <content>{{velocity}}
+#set ($currentUser = $doc.fullName)
+#set ($properties = 'doc.title,status,revisionOwner,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags')
+#set ($sourceParameters = 'className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage')
+#set ($ownDocs = $services.query.xwql(
+  'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.revisionOwner = :currentUser'
+).bindValue('currentUser', $currentUser).setLimit(1).execute())
+#set ($reviewDocs = $services.query.xwql(
+  'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.revisedBy = :currentUser'
+).bindValue('currentUser', $currentUser).setLimit(1).execute())
+#set ($approveDocs = $services.query.xwql(
+  'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.approvedBy = :currentUser'
+).bindValue('currentUser', $currentUser).setLimit(1).execute())
+
 = $services.localization.render('sopManager.name') =
-== $services.localization.render('sopManager.userProfile.ownedPages') ==
-
-{{liveData
-  id="ownerTable"
-  properties="doc.title,status,revisionOwner,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
-  source="liveTable"
-  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
-  filters="revisionOwner=$doc.documentReference"
-  queryFilters="currentlanguage"
-}}
-  {
-    "meta": {
-      "propertyDescriptors": [
-        {
-          "id": "revisionOwner",
-          "visible": false
+#if ($ownDocs.size() &gt; 0 || $reviewDocs.size() &gt; 0 || $approveDocs.size() &gt; 0)
+  == $services.localization.render('sopManager.userProfile.ownedPages') ==
+  #if ($ownDocs.size() &gt; 0)
+    {{liveData
+      id="ownerTable"
+      properties="$properties"
+      source="liveTable"
+      sourceParameters="$sourceParameters"
+      filters="revisionOwner=$currentUser"
+      queryFilters="currentlanguage"
+    }}
+      {
+        "meta": {
+          "propertyDescriptors": [
+            {
+              "id": "revisionOwner",
+              "visible": false
+            }
+          ]
         }
-      ]
-    }
-  }
-{{/liveData}}
-
-== $services.localization.render('sopManager.userProfile.pagesToReview') ==
-
-{{liveData
-  id="reviewerTable"
-  properties="doc.title,status,revisionOwner,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
-  source="liveTable"
-  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index."
-  filters="revisedBy=$doc.fullName"
-  queryFilters="currentlanguage"
-}}
-  {
-    "meta": {
-      "propertyDescriptors": [
-        {
-          "id": "revisedBy",
-          "visible": false
+      }
+    {{/liveData}}
+  #else
+    {{info}}$services.localization.render('sopManager.userProfile.ownedPages.noResults'){{/info}}
+  #end
+  == $services.localization.render('sopManager.userProfile.pagesToReview') ==
+  #if ($reviewDocs.size() &gt; 0)
+    {{liveData
+      id="reviewerTable"
+      properties="$properties"
+      source="liveTable"
+      sourceParameters="$sourceParameters"
+      filters="revisedBy=$currentUser"
+      queryFilters="currentlanguage"
+    }}
+      {
+        "meta": {
+          "propertyDescriptors": [
+            {
+              "id": "revisedBy",
+              "visible": false
+            }
+          ]
         }
-      ]
-    }
-  }
-{{/liveData}}
-
-== $services.localization.render('sopManager.userProfile.pagesToApprove') ==
-
-{{liveData
-  id="approvalTable"
-  properties="doc.title,status,revisionOwner,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
-  source="liveTable"
-  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
-  filters="approvedBy=$doc.fullName"
-  queryFilters="currentlanguage"
-}}
-  {
-    "meta": {
-      "propertyDescriptors": [
-        {
-          "id": "approvedBy",
-          "visible": false
+      }
+    {{/liveData}}
+  #else
+    {{info}}$services.localization.render('sopManager.userProfile.pagesToReview.noResults'){{/info}}
+  #end
+  == $services.localization.render('sopManager.userProfile.pagesToApprove') ==
+  #if ($approveDocs.size() &gt; 0)
+    {{liveData
+      id="approvalTable"
+      properties="$properties"
+      source="liveTable"
+      sourceParameters="$sourceParameters"
+      filters="approvedBy=$currentUser"
+      queryFilters="currentlanguage"
+    }}
+      {
+        "meta": {
+          "propertyDescriptors": [
+            {
+              "id": "approvedBy",
+              "visible": false
+            }
+          ]
         }
-      ]
-    }
-  }
-{{/liveData}}
-
-
+      }
+    {{/liveData}}
+  #else
+    {{info}}$services.localization.render('sopManager.userProfile.pagesToApprove.noResults'){{/info}}
+  #end
+#else
+  {{info}}$services.localization.render('sopManager.userProfile.noResults'){{/info}}
+#end
 {{/velocity}}</content>
     </property>
     <property>

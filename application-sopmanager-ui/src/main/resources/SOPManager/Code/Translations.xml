@@ -78,8 +78,12 @@ SOPManager.Code.ControlledDocumentClass_status_approved=Approved
 
 sopManager.pdfExport.page=Page
 sopManager.userProfile.ownedPages=Owned pages
+sopManager.userProfile.ownedPages.noResults=There are no pages added by you in the review system.
 sopManager.userProfile.pagesToReview=Pages to review
+sopManager.userProfile.pagesToReview.noResults=There are no pages waiting for your review.
 sopManager.userProfile.pagesToApprove=Pages to approve
+sopManager.userProfile.pagesToApprove.noResults=There are no pages waiting for your approval.
+sopManager.userProfile.noResults=There are no pages in the review system that require your attention.
 sopManager.contentMenu.backlinkToOrigin=View original document
 
 sopManager.event.submittedForReviewEvent.description=A page is submitted for review

@@ -132,6 +132,10 @@ public class DefaultSOPManager implements SOPManager
     @Inject
     private EntityReferenceSerializer<String> serializer;
 
+    @Inject
+    @Named("compact")
+    private EntityReferenceSerializer<String> compactSerializer;
+
     @Override
     public void addDocumentToReviewProcess(DocumentReference documentReference)
     {
@@ -141,7 +145,7 @@ public class DefaultSOPManager implements SOPManager
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
             if (sopDoc.getXObjects(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE).isEmpty()) {
                 BaseObject sopObj = sopDoc.newXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE, context);
-                sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
+                sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
                 sopObj.setStringValue(STATUS, DRAFT);
@@ -345,7 +349,7 @@ public class DefaultSOPManager implements SOPManager
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)
     {
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
-        sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(revisionOwner));
+        sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(revisionOwner));
         addEditRight(rules, revisionOwner);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.startNewRevision.success");
