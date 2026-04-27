@@ -148,7 +148,7 @@ class DefaultSOPManagerTest
         when(this.sopDoc.getXObject(SOP_CLASS)).thenReturn(this.sopObj);
 
         when(this.sopObj.getStringValue("status")).thenReturn("submittedForApproval");
-        when(this.sopObj.getStringValue("revision")).thenReturn(null);
+        when(this.sopObj.getStringValue("revisionNumber")).thenReturn(null);
         when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.RevisionOwner");
         when(this.sopObj.getLargeStringValue("revisedBy")).thenReturn("xwiki:XWiki.RevisedBy");
 
@@ -164,7 +164,7 @@ class DefaultSOPManagerTest
         String result = this.sopManager.updateDocumentReviewState("approve", documentReference);
 
         assertEquals("sopManager.reviewPage.approve.success", result);
-        verify(this.sopObj).setStringValue("revision", "1");
+        verify(this.sopObj).setStringValue("revisionNumber", "1");
         verify(this.sopObj).setStringValue("status", "approved");
         verify(this.rulesObjectWriter).persistRulesToObjects(any(), eq(this.sopDoc), any(), eq(this.context));
         verify(this.wiki).saveDocument(eq(this.sopDoc), eq("sopManager.reviewPage.approve"), eq(this.context));

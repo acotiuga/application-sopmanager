@@ -105,6 +105,34 @@
       <valueField/>
       <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
     </pDFSecondaryTargetLocation>
+    <pdfTemplate>
+      <cache>0</cache>
+      <classname/>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>radio</displayType>
+      <freeText/>
+      <hint/>
+      <idField/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>0</multiSelect>
+      <name>pdfTemplate</name>
+      <number>11</number>
+      <picker>1</picker>
+      <prettyName>PDF Template</prettyName>
+      <relationalStorage>0</relationalStorage>
+      <separator> </separator>
+      <separators/>
+      <size>1</size>
+      <sort/>
+      <sql>select doc.fullName, doc.title from XWikiDocument doc, BaseObject obj where obj.name = doc.fullName and obj.className = 'XWiki.PDFExport.TemplateClass' and doc.space = 'SOPManager.Code' order by doc.title asc</sql>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <valueField/>
+      <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
+    </pdfTemplate>
     <previousRevisions>
       <contenttype>PureText</contenttype>
       <customDisplay/>
@@ -178,20 +206,20 @@
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
     </revisionId>
-    <revision>
+    <revisionNumber>
       <customDisplay/>
       <disabled>0</disabled>
-      <hint> Enter the revision identifier for this document.</hint>
-      <name>revision</name>
+      <hint>The revision number of the current document.</hint>
+      <name>revisionNumber</name>
       <number>5</number>
       <picker>0</picker>
-      <prettyName>Revision</prettyName>
+      <prettyName>Revision number</prettyName>
       <size>30</size>
       <unmodifiable>0</unmodifiable>
       <validationMessage/>
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-    </revision>
+    </revisionNumber>
     <revisionOwner>
       <cache>0</cache>
       <customDisplay/>

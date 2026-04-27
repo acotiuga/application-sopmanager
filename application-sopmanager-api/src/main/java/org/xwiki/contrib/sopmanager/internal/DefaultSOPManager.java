@@ -68,7 +68,7 @@ public class DefaultSOPManager implements SOPManager
 {
     private static final String REVISION_OWNER = "revisionOwner";
 
-    private static final String REVISION = "revision";
+    private static final String REVISION_NUMBER = "revisionNumber";
 
     private static final String STATUS = "status";
 
@@ -334,7 +334,7 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
 
-        sopObj.setStringValue(REVISION, incrementRevision(sopObj.getStringValue(REVISION)));
+        sopObj.setStringValue(REVISION_NUMBER, incrementRevision(sopObj.getStringValue(REVISION_NUMBER)));
 
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
         DocumentReference revisedBy = currentStringDocRefResolver.resolve(revisedByString);
