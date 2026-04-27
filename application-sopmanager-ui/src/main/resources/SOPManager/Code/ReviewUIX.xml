@@ -514,7 +514,7 @@
           ## When in draft state, also hide approvedBy.
           #foreach ($property in $xclass.properties)
             #set ($name = $property.name)
-            #if ($name != 'status' &amp;&amp; $name != 'previousRevisions' &amp;&amp; $name != 'revisionOwner' &amp;&amp; !($xobject.status == 'draft' &amp;&amp; $name == 'approvedBy'))
+            #if ($name != 'status' &amp;&amp; $name != 'previousRevisions' &amp;&amp; $name != 'revision' &amp;&amp; $name != 'revisionOwner' &amp;&amp; !($xobject.status == 'draft' &amp;&amp; $name == 'approvedBy'))
               #set ($discard = $propertiesToDisplay.add($property))
             #end
           #end

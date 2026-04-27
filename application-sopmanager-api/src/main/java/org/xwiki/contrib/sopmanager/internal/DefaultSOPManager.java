@@ -68,6 +68,8 @@ public class DefaultSOPManager implements SOPManager
 {
     private static final String REVISION_OWNER = "revisionOwner";
 
+    private static final String REVISION = "revision";
+
     private static final String STATUS = "status";
 
     private static final String APPROVED_BY = "approvedBy";
@@ -332,6 +334,8 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
 
+        sopObj.setStringValue(REVISION, incrementRevision(sopObj.getStringValue(REVISION)));
+
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
         DocumentReference revisedBy = currentStringDocRefResolver.resolve(revisedByString);
 
@@ -344,6 +348,19 @@ public class DefaultSOPManager implements SOPManager
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
             getUserDisplayName(revisionOwner), getUserDisplayName(revisedBy));
+    }
+
+    private String incrementRevision(String revision)
+    {
+        if (StringUtils.isBlank(revision)) {
+            return "1";
+        }
+
+        try {
+            return String.valueOf(Integer.parseInt(revision.trim()) + 1);
+        } catch (NumberFormatException e) {
+            return revision.trim() + "1";
+        }
     }
 
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)
