@@ -105,6 +105,8 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String EVENT_SOURCE = "org.xwiki.contrib:application-sopmanager-api";
 
+    private static final String IS_IN_REVIEW = "isInReview";
+
     @Inject
     private ContextualLocalizationManager localizationManager;
 
@@ -145,13 +147,17 @@ public class DefaultSOPManager implements SOPManager
         XWiki xWiki = context.getWiki();
         try {
             XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
-            if (sopDoc.getXObjects(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE).isEmpty()) {
-                BaseObject sopObj = sopDoc.newXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE, context);
+            BaseObject sopObj = sopDoc.getXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE);
+            if (sopObj == null) {
+                return;
+            }
+            boolean isInReview = sopObj.getIntValue(IS_IN_REVIEW) == 1;
+            if (!isInReview) {
                 sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
                 sopObj.setStringValue(STATUS, DRAFT);
-
+                sopObj.setIntValue(IS_IN_REVIEW, 1);
                 List<ReadableSecurityRule> rules = new ArrayList<>();
                 addEditRight(rules, context.getUserReference());
 

@@ -20,9 +20,9 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.6" reference="SOPManager.Code.DocextrasInformationAddToReviewUIX" locale="">
+<xwikidoc version="1.6" reference="SOPManager.Code.ContentMenuAddToReviewUIX" locale="">
   <web>SOPManager.Code</web>
-  <name>DocextrasInformationAddToReviewUIX</name>
+  <name>ContentMenuAddToReviewUIX</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
@@ -31,7 +31,7 @@
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <version>1.1</version>
-  <title>DocextrasInformationAddToReviewUIX</title>
+  <title>ContentMenuAddToReviewUIX</title>
   <comment/>
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
@@ -47,7 +47,7 @@
 {{/velocity}}
 </content>
   <object>
-    <name>SOPManager.Code.DocextrasInformationAddToReviewUIX</name>
+    <name>SOPManager.Code.ContentMenuAddToReviewUIX</name>
     <number>0</number>
     <className>XWiki.JavaScriptExtension</className>
     <guid>ed4bc6c1-2387-430c-88e3-4bbd7e42ddda</guid>
@@ -135,8 +135,8 @@
     </property>
     <property>
       <code>require(['jquery', 'xwiki-meta'], function($, xm) {
-  var serviceURL = new XWiki.Document('DocextrasInformationAddToReviewUIX', 'SOPManager.Code').getURL('get', 'outputSyntax=plain');
-  $('#xwikidatacontents').on('click', '#startSopManagerPageReview', function() {
+  var serviceURL = new XWiki.Document('ContentMenuAddToReviewUIX', 'SOPManager.Code').getURL('get', 'outputSyntax=plain');
+  $('#contentmenu').on('click', '#tmAddToReview', function() {
     event.preventDefault();
     $.post({
       url : serviceURL,
@@ -160,7 +160,7 @@
     </property>
   </object>
   <object>
-    <name>SOPManager.Code.DocextrasInformationAddToReviewUIX</name>
+    <name>SOPManager.Code.ContentMenuAddToReviewUIX</name>
     <number>0</number>
     <className>XWiki.UIExtensionClass</className>
     <guid>3f9c8a01-76a0-4815-988c-3cb5d0ac0720</guid>
@@ -286,25 +286,28 @@
     </property>
     <property>
       <content>{{velocity}}
-#if ($doc.getObjects('SOPManager.Code.ControlledDocumentClass').isEmpty())
+#set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
+#set ($isInReview = $xobject.getValue('isInReview') == 1)
+#if ("$!xobject" != '' &amp;&amp; !$isInReview)
   {{html clean="false"}}
-    &lt;dt&gt;
-      &lt;label&gt;$escapetool.xml($services.localization.render('sopManager.addPage.label'))&lt;/label&gt;
-      &lt;span class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.addPage.hint'))&lt;/span&gt;
-    &lt;/dt&gt;
-    &lt;dd&gt;&lt;input type="button" class="button " name="add" id="startSopManagerPageReview" value="$services.localization.render('sopManager.addPage.button.label')" /&gt;&lt;/dd&gt;
+    &lt;div class="btn-group" id="tmAddToReview"&gt;
+      &lt;a class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.addPage.hint'))" href="" role="button" rel="nofollow"&gt;
+        $services.icon.renderHTML('refresh')
+        &lt;span class="btn-label"&gt;$services.localization.render('sopManager.addPage.button.label')&lt;/span&gt;
+      &lt;/a&gt;
+    &lt;/div&gt;
   {{/html}}
 #end
 {{/velocity}}</content>
     </property>
     <property>
-      <extensionPointId>org.xwiki.platform.template.information</extensionPointId>
+      <extensionPointId>org.xwiki.plaftorm.menu.content</extensionPointId>
     </property>
     <property>
-      <name>org.xwiki.platform.template.information.sopManagerPageReview</name>
+      <name>org.xwiki.plaftorm.menu.content.sopManagerPageReview</name>
     </property>
     <property>
-      <parameters>order=500</parameters>
+      <parameters>order=100</parameters>
     </property>
     <property>
       <scope>wiki</scope>

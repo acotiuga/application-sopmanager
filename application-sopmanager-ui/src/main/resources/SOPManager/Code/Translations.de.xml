@@ -60,8 +60,6 @@ sopManager.reviewPage.approve.success=Das Dokument wurde genehmigt und « {0} »
 sopManager.reviewPage.generatePDF.label=PDF erzeugen
 sopManager.reviewPage.generatePDF.title=PDF erzeugen
 sopManager.reviewPage.generatePDF.notAvailable=Die serverseitige PDF-Erzeugung ist in diesem Wiki nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.
-sopManager.pdfTemplate.vertical.title=GKH FB Vorlagedokument QM hoch
-sopManager.pdfTemplate.horizontal.title=GKH FB 8.2 Vorlagedokument QM quer
 sopManager.reviewPage.startNewRevision.label=Neue Revision starten
 sopManager.reviewPage.startNewRevision.title=Neue Revision starten
 sopManager.reviewPage.startNewRevision.success=Eine neue Revision wurde gestartet.
@@ -124,7 +122,5 @@ sopManager.defaultPDFExportManager.error.attachFailed=Die erzeugte PDF konnte ni
 sopManager.defaultFileManagerStorageManager.saveDocument=Erzeugte PDF im File Manager speichern
 sopManager.defaultFileManagerStorageManager.saveFolder=File-Manager-Ordner erstellen / aktualisieren
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Die erzeugte PDF konnte für [{0}] nicht im File Manager gespeichert werden.
-
-sopManager.reviewPage.selectPdfTemplate.title=Wählen Sie die PDF-Vorlage aus, die für diesen Export verwendet werden soll.
   </content>
 </xwikidoc>

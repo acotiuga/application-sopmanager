@@ -60,8 +60,6 @@ sopManager.reviewPage.approve.success=The document was approved and « {0} » an
 sopManager.reviewPage.generatePDF.label=Generate PDF
 sopManager.reviewPage.generatePDF.title=Generate PDF
 sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
-sopManager.pdfTemplate.vertical.title=GKH FB TemplateDocument QM portrait
-sopManager.pdfTemplate.horizontal.title=GKH FB 8.2 TemplateDocument QM landscape
 sopManager.reviewPage.startNewRevision.label=Start a new revision
 sopManager.reviewPage.startNewRevision.title=Start a new revision
 sopManager.reviewPage.startNewRevision.success=A new revision has been started.
@@ -112,8 +110,6 @@ sopManager.defaultPDFExportManager.error.missingTemporaryFile=The PDF export fin
 sopManager.defaultFileManagerStorageManager.saveDocument=Store generated PDF in the File Manager
 sopManager.defaultFileManagerStorageManager.saveFolder=Create / update File Manager folder
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to store the generated PDF in the File Manager for [{0}].
-
-sopManager.reviewPage.selectPdfTemplate.title=Select the PDF template to use for this export.
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>

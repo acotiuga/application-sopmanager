@@ -489,7 +489,8 @@
       <content>{{velocity}}
 ## The object to display.
 #set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
-#if ($xobject)
+#set ($isInReview = $xobject.getValue('isInReview') == 1)
+#if ($xobject &amp;&amp; $isInReview)
   #set ($discard = $xwiki.jsx.use('SOPManager.Code.ReviewUIX'))
   #set ($discard = $xwiki.ssx.use('SOPManager.Code.ReviewUIX'))
   {{html clean="false" wiki="true"}}
@@ -510,17 +511,19 @@
           &lt;dl&gt;
           #set ($generalEditing = $editing)
           #set ($propertiesToDisplay = [])
+          #set ($hiddenFields = ['status', 'previousRevisions', 'revisionOwner', 'isInReview'])
+          #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revision'])
           ## Do not display status or previousRevisions.
           ## When in draft state, also hide approvedBy.
           #foreach ($property in $xclass.properties)
             #set ($name = $property.name)
-            #if ($name != 'status' &amp;&amp; $name != 'previousRevisions' &amp;&amp; $name != 'revision' &amp;&amp; $name != 'revisionOwner' &amp;&amp; !($xobject.status == 'draft' &amp;&amp; $name == 'approvedBy'))
+            #if (!$hiddenFields.contains($name))
               #set ($discard = $propertiesToDisplay.add($property))
             #end
           #end
           #foreach ($property in $propertiesToDisplay)
             ## This property is read‑only and cannot be modified by the user.
-            #if ($property.name == 'pDFSecondaryTargetLocation')
+            #if ($readOnlyFields.contains($property.name))
               #set ($editing = 'false')
             #else
               #set ($editing = $generalEditing)
@@ -575,6 +578,11 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;
           #elseif ($status == 'submittedForApproval')
+            #if (!$services.export.pdf.isServerSidePrintingAvailable())
+
+              {{error}}$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.notAvailable')){{/error}}
+
+            #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.approve.title'))" id="approve"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.approve.label'))
             &lt;/button&gt;
@@ -582,26 +590,6 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;
           #elseif ($status == 'approved')
-            #if ($services.export.pdf.isServerSidePrintingAvailable())
-              &lt;div&gt;
-                #set ($statement = "from doc.object(XWiki.PDFExport.TemplateClass) as obj")
-                #set ($results = $services.query.xwql($statement).execute())
-                #if ($results.size() &gt; 0)
-                  &lt;select id="pdfTemplateSelect" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.selectPdfTemplate.title'))"&gt;
-                    #foreach ($result in $results)
-                      &lt;option value="$result" #if ($result == 'SOPManager.Code.GKHPDFTemplateVertical') selected="selected"#end&gt;$escapetool.xml($xwiki.getDocument($result).displayTitle)&lt;/option&gt;
-                    #end
-                  &lt;/select&gt;
-                #end
-                &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.title'))" id="generatePDF"&gt;
-                  $escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.label'))
-                &lt;/button&gt;&lt;span class="hidden fa fa-spinner fa-spin"&gt;&lt;/span&gt;
-              &lt;/div&gt;
-            #else
-
-              {{error}}$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.notAvailable')){{/error}}
-
-            #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.title'))" id="startNewRevision"&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.startNewRevision.label'))&lt;/button&gt;
           #end
           &lt;div class="reviewNotifications"&gt;
@@ -634,7 +622,7 @@
 title=$services.localization.render('sopManager.name')
 name=sopReviewPages
 itemnumber=-1
-show=#if($doc.getObject('SOPManager.Code.ControlledDocumentClass'))true#{else}false#end</parameters>
+show=#if($doc.getObject('SOPManager.Code.ControlledDocumentClass') &amp;&amp; $doc.getObject('SOPManager.Code.ControlledDocumentClass').getValue('isInReview') == 1)true#{else}false#end</parameters>
     </property>
     <property>
       <scope>wiki</scope>
