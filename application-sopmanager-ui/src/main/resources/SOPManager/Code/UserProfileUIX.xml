@@ -165,27 +165,21 @@
     <property>
       <content>{{velocity}}
 = $services.localization.render('sopManager.name') =
-
 #set ($currentUser = $doc.fullName)
 #set ($properties = 'doc.title,status,revisionOwner,revisedBy,approvedBy,revisionPlannedDate,pDFSecondaryTargetLocation,tags')
 #set ($sourceParameters = 'className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage')
-
 #set ($ownDocs = $services.query.xwql(
   'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.revisionOwner = :currentUser'
 ).bindValue('currentUser', $currentUser).setLimit(1).execute())
-
 #set ($reviewDocs = $services.query.xwql(
   'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.revisedBy = :currentUser'
 ).bindValue('currentUser', $currentUser).setLimit(1).execute())
-
 #set ($approveDocs = $services.query.xwql(
   'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.approvedBy = :currentUser'
 ).bindValue('currentUser', $currentUser).setLimit(1).execute())
-
 #if ($ownDocs.size() &gt; 0 || $reviewDocs.size() &gt; 0 || $approveDocs.size() &gt; 0)
   #if ($ownDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.ownedPages') ==
-
     {{liveData
       id="ownerTable"
       properties="$properties"
@@ -208,9 +202,9 @@
   #else
     {{info}}$services.localization.render('sopManager.userProfile.ownedPages.noResults'){{/info}}
   #end
+
   #if ($reviewDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.pagesToReview') ==
-
     {{liveData
       id="reviewerTable"
       properties="$properties"
@@ -233,9 +227,9 @@
   #else
     {{info}}$services.localization.render('sopManager.userProfile.pagesToReview.noResults'){{/info}}
   #end
+
   #if ($approveDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.pagesToApprove') ==
-
     {{liveData
       id="approvalTable"
       properties="$properties"
