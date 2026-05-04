@@ -180,7 +180,7 @@
 {{/velocity}}</content>
     </property>
     <property>
-      <extensionPointId>org.xwiki.platform.menu.content</extensionPointId>
+      <extensionPointId>org.xwiki.plaftorm.menu.content</extensionPointId>
     </property>
     <property>
       <name>org.xwiki.platform.menu.content.sopManagerBacklink</name>
