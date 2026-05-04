@@ -57,9 +57,6 @@ sopManager.reviewPage.approve.label=Approve
 sopManager.reviewPage.approve.title=Approve
 sopManager.reviewPage.approve.error=Please ensure that the revision owner and the review user are assigned, so they can be notified about this action.
 sopManager.reviewPage.approve.success=The document was approved and « {0} » and « {1} » will receive soon a notification.
-sopManager.reviewPage.generatePDF.label=Generate PDF
-sopManager.reviewPage.generatePDF.title=Generate PDF
-sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
 sopManager.reviewPage.startNewRevision.label=Start a new revision
 sopManager.reviewPage.startNewRevision.title=Start a new revision
 sopManager.reviewPage.startNewRevision.success=A new revision has been started.
@@ -110,6 +107,7 @@ sopManager.defaultPDFExportManager.error.missingTemporaryFile=The PDF export fin
 sopManager.defaultFileManagerStorageManager.saveDocument=Store generated PDF in the File Manager
 sopManager.defaultFileManagerStorageManager.saveFolder=Create / update File Manager folder
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to store the generated PDF in the File Manager for [{0}].
+sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>

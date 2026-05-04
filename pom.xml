@@ -51,4 +51,27 @@
       <name>Alex Cotiuga</name>
     </developer>
   </developers>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
+        <configuration>
+          <analysisConfiguration><![CDATA[
+      {
+        "revapi": {
+          "ignore": [
+            {
+  "code": "java.method.removed",
+  "old": "method java.lang.String org.xwiki.contrib.sopmanager.script.SOPScriptService::exportAndAttachPDF(org.xwiki.model.reference.DocumentReference, org.xwiki.model.reference.DocumentReference)",
+  "justification": "This script service method was removed because PDF export is no longer exposed through this API in this form and the workflow now uses the updated internal integration."
+}
+          ]
+        }
+      }
+    ]]></analysisConfiguration>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

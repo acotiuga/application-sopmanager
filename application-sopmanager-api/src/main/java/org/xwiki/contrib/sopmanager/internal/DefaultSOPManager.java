@@ -21,9 +21,7 @@ package org.xwiki.contrib.sopmanager.internal;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -35,17 +33,14 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
+import org.xwiki.contrib.sopmanager.PDFExportManager;
 import org.xwiki.contrib.sopmanager.SOPManager;
-import org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent;
-import org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent;
-import org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent;
-import org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent;
+import org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.LocalDocumentReference;
-import org.xwiki.observation.ObservationManager;
 import org.xwiki.security.authorization.ReadableSecurityRule;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.security.authorization.RuleState;
@@ -103,8 +98,6 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String UNKNOWN_WORKFLOW_ACTION = "Unknown workflow action.";
 
-    private static final String EVENT_SOURCE = "org.xwiki.contrib:application-sopmanager-api";
-
     private static final String IS_IN_REVIEW = "isInReview";
 
     @Inject
@@ -118,13 +111,16 @@ public class DefaultSOPManager implements SOPManager
     private Logger logger;
 
     @Inject
-    private ObservationManager observationManager;
+    private SOPWorkflowEventNotifier workflowEventNotifier;
 
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
     @Inject
     private RightsWriter rightsWriter;
+
+    @Inject
+    private PDFExportManager pdfExportManager;
 
     /**
      * Allows to set rules on page objects without saving them to the database yet.
@@ -282,9 +278,7 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
         addEditRight(rules, revisedByUser);
 
-        Set<String> target = new HashSet<>();
-        target.add(serializer.serialize(revisedByUser));
-        observationManager.notify(new SubmittedForReviewEvent(target), EVENT_SOURCE, sopDoc);
+        workflowEventNotifier.notifySubmittedForReview(sopDoc, revisedByUser);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.success",
             getUserDisplayName(revisedByUser));
@@ -302,9 +296,7 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
         addEditRight(rules, revisionOwner);
 
-        Set<String> target = new HashSet<>();
-        target.add(serializer.serialize(revisionOwner));
-        observationManager.notify(new ReturnedForChangesEvent(target), EVENT_SOURCE, sopDoc);
+        workflowEventNotifier.notifyReturnedForChanges(sopDoc, revisionOwner);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.success",
             getUserDisplayName(revisionOwner));
@@ -322,9 +314,7 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
         addEditRight(rules, approvedByUser);
 
-        Set<String> target = new HashSet<>();
-        target.add(serializer.serialize(approvedByUser));
-        observationManager.notify(new SubmittedForApprovalEvent(target), EVENT_SOURCE, sopDoc);
+        workflowEventNotifier.notifySubmittedForApproval(sopDoc, approvedByUser);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.success",
             getUserDisplayName(approvedByUser));
@@ -340,6 +330,10 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
 
+        DocumentReference pdfTemplateReference = currentStringDocRefResolver.resolve(sopObj.getLargeStringValue(
+            "pdfTemplate"));
+        pdfExportManager.exportAndAttachPDF(sopDoc.getDocumentReference(), pdfTemplateReference);
+
         sopObj.setStringValue(REVISION_NUMBER, incrementRevision(sopObj.getStringValue(REVISION_NUMBER)));
 
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
@@ -347,10 +341,7 @@ public class DefaultSOPManager implements SOPManager
 
         addEditRight(rules, revisionOwner);
 
-        Set<String> target = new HashSet<>();
-        target.add(serializer.serialize(revisionOwner));
-        target.add(serializer.serialize(revisedBy));
-        observationManager.notify(new ApprovedEvent(target), EVENT_SOURCE, sopDoc);
+        workflowEventNotifier.notifyApproved(sopDoc, revisionOwner, revisedBy);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
             getUserDisplayName(revisionOwner), getUserDisplayName(revisedBy));

@@ -57,9 +57,6 @@ sopManager.reviewPage.approve.label=Genehmigen
 sopManager.reviewPage.approve.title=Genehmigen
 sopManager.reviewPage.approve.error=Bitte stellen Sie sicher, dass sowohl der Revisionsverantwortliche als auch der Prüfer zugewiesen sind, damit sie über diese Aktion benachrichtigt werden können.
 sopManager.reviewPage.approve.success=Das Dokument wurde genehmigt und « {0} » sowie « {1} » werden in Kürze eine Benachrichtigung erhalten.
-sopManager.reviewPage.generatePDF.label=PDF erzeugen
-sopManager.reviewPage.generatePDF.title=PDF erzeugen
-sopManager.reviewPage.generatePDF.notAvailable=Die serverseitige PDF-Erzeugung ist in diesem Wiki nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.
 sopManager.reviewPage.startNewRevision.label=Neue Revision starten
 sopManager.reviewPage.startNewRevision.title=Neue Revision starten
 sopManager.reviewPage.startNewRevision.success=Eine neue Revision wurde gestartet.
@@ -122,5 +119,7 @@ sopManager.defaultPDFExportManager.error.attachFailed=Die erzeugte PDF konnte ni
 sopManager.defaultFileManagerStorageManager.saveDocument=Erzeugte PDF im File Manager speichern
 sopManager.defaultFileManagerStorageManager.saveFolder=File-Manager-Ordner erstellen / aktualisieren
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Die erzeugte PDF konnte für [{0}] nicht im File Manager gespeichert werden.
+
+sopManager.reviewPage.generatePDF.notAvailable=Die serverseitige PDF-Erzeugung ist in diesem Wiki nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.
   </content>
 </xwikidoc>

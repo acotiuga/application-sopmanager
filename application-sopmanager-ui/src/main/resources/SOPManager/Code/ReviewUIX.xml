@@ -42,11 +42,7 @@
   #set ($statusCode = 200)
 
   #try('sopException')
-    #if ($request.action == 'generatePDF')
-      #set ($message = $services.sopService.exportAndAttachPDF($request.document, $request.pdfTemplate))
-    #else
-      #set ($message = $services.sopService.updateDocumentReviewState($request.action, $request.document))
-    #end
+    #set ($message = $services.sopService.updateDocumentReviewState($request.action, $request.document))
   #end
 
   #if ("$!sopException" != '')
@@ -168,24 +164,15 @@
     var errorBox = $('.reviewNotificationError');
     var spinner = button.siblings('.fa-spinner');
 
-    // Build the data object first and append the pdfTemplate only if present.
     var data = {
       'action': action,
       'document': xm.document
     };
 
-    var pdfSelect = $('#pdfTemplateSelect');
-    if (pdfSelect.length) {
-      var pdfTemplateVal = pdfSelect.val();
-      if (pdfTemplateVal &amp;&amp; pdfTemplateVal.length &gt; 0) {
-        data.pdfTemplate = pdfTemplateVal;
-      }
-    }
-
     // Disable the clicked button for any action to prevent multiple clicks.
     button.prop('disabled', true);
-    // Show spinner only for generatePDF action.
-    if (action === 'generatePDF') {
+    // Show spinner only for the approve action.
+    if (action === 'approve') {
       if (spinner.length) {
         spinner.removeClass('hidden');
       }
@@ -585,7 +572,7 @@
             #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.approve.title'))" id="approve"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.approve.label'))
-            &lt;/button&gt;
+            &lt;/button&gt;&lt;span class="hidden fa fa-spinner fa-spin"&gt;&lt;/span&gt;
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.title'))" id="returnForChanges"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;

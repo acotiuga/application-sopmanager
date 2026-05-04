@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -41,12 +40,12 @@ import org.slf4j.Logger;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
 import org.xwiki.contrib.rights.WritableSecurityRule;
+import org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.DocumentReferenceResolver;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.model.reference.LocalDocumentReference;
-import org.xwiki.observation.ObservationManager;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.security.authorization.RuleState;
 import org.xwiki.test.junit5.mockito.ComponentTest;
@@ -79,7 +78,7 @@ class DefaultSOPManagerTest
     private Logger logger;
 
     @MockComponent
-    private ObservationManager observationManager;
+    private SOPWorkflowEventNotifier workflowEventNotifier;
 
     @MockComponent
     private RightsWriter rightsWriter;
@@ -168,10 +167,6 @@ class DefaultSOPManagerTest
         verify(this.sopObj).setStringValue("status", "approved");
         verify(this.rulesObjectWriter).persistRulesToObjects(any(), eq(this.sopDoc), any(), eq(this.context));
         verify(this.wiki).saveDocument(eq(this.sopDoc), eq("sopManager.reviewPage.approve"), eq(this.context));
-        verify(this.observationManager).notify(
-            argThat(event -> event.getClass().getSimpleName().equals("ApprovedEvent")),
-            eq("org.xwiki.contrib:application-sopmanager-api"),
-            eq(this.sopDoc)
-        );
+        verify(workflowEventNotifier).notifyApproved(sopDoc, revisionOwner, revisedBy);
     }
 }

@@ -2,6 +2,7 @@ org.xwiki.contrib.sopmanager.internal.DefaultFileManagerStorageManager
 org.xwiki.contrib.sopmanager.internal.DefaultPDFExportJobManager
 org.xwiki.contrib.sopmanager.internal.DefaultPDFExportManager
 org.xwiki.contrib.sopmanager.internal.DefaultSOPManager
+org.xwiki.contrib.sopmanager.internal.DefaultSOPWorkflowEventNotifier
 org.xwiki.contrib.sopmanager.internal.descriptor.ApprovedEventDescriptor
 org.xwiki.contrib.sopmanager.internal.descriptor.ReturnedForChangesEventDescriptor
 org.xwiki.contrib.sopmanager.internal.descriptor.SubmittedForApprovalEventDescriptor
