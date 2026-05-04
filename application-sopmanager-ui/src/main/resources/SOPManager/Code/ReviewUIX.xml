@@ -188,10 +188,6 @@
       if (errorBox.is(':visible')) {
         errorBox.toggleClass('hidden');
       }
-      setTimeout(function () {
-        const r = Math.floor(Math.random() * 100);
-        window.location = window.location.pathname + '?r=' + r + '#SOPReviewPages';
-      }, 3000);
     }).fail(function (xhr) {
       var errorBoxContent = errorBox.find('.box div p');
       errorBoxContent.text(xhr.responseJSON.message);
@@ -501,7 +497,6 @@
           #set ($hiddenFields = ['status', 'previousRevisions', 'revisionOwner', 'isInReview'])
           #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revisionNumber'])
           ## Do not display status or previousRevisions.
-          ## When in draft state, also hide approvedBy.
           #foreach ($property in $xclass.properties)
             #set ($name = $property.name)
             #if (!$hiddenFields.contains($name))
