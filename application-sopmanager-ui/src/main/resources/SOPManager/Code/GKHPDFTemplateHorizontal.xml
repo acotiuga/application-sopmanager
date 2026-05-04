@@ -170,7 +170,7 @@
 #set ($releaseDate = '')
 #set ($approvedBy = '')
 #set ($revisedBy = '')
-#set ($revision = '')
+#set ($revisionNumber = '')
 #set ($plannedRevisionDate = '')
 
 #if ($controlledObj)
@@ -181,7 +181,7 @@
 
   #set ($approvedBy = $!controlledObj.getValue('approvedBy'))
   #set ($revisedBy = $!controlledObj.getValue('revisedBy'))
-  #set ($revision = $!controlledObj.getValue('revision'))
+  #set ($revisionNumber = $!controlledObj.getValue('revisionNumber'))
 
   #set ($plannedRevisionDateValue = $controlledObj.getValue('revisionPlannedDate'))
   #if ($plannedRevisionDateValue)
@@ -189,7 +189,7 @@
   #end
 #end
 
-#set ($fieldsToDisplay = ['releaseDate', 'approvedBy', 'revisedBy', 'revision', 'revisionPlannedDate'])
+#set ($fieldsToDisplay = ['releaseDate', 'approvedBy', 'revisedBy', 'revisionNumber', 'revisionPlannedDate'])
 
 {{html clean="false"}}
 &lt;table class="sop-pdf-footer-table"&gt;
@@ -205,7 +205,7 @@
     &lt;td&gt;$escapetool.xml($releaseDate)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($approvedBy)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($revisedBy)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($revision)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($revisionNumber)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($plannedRevisionDate)&lt;/td&gt;
     &lt;td&gt;
       $escapetool.xml($services.localization.render('sopManager.pdfExport.page')) &lt;span class="pdf-page-number"&gt;&lt;/span&gt; / &lt;span class="pdf-page-count"&gt;&lt;/span&gt;

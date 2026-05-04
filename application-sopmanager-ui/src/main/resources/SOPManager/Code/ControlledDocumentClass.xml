@@ -224,16 +224,16 @@
     <revisionNumber>
       <customDisplay/>
       <disabled>0</disabled>
-      <hint>The revision number of the current document.</hint>
+      <hint>The revision number is automatically increased by 1 by the system; no manual update is needed.</hint>
       <name>revisionNumber</name>
       <number>5</number>
-      <picker>0</picker>
+      <numberType>integer</numberType>
       <prettyName>Revision number</prettyName>
       <size>30</size>
       <unmodifiable>0</unmodifiable>
       <validationMessage/>
       <validationRegExp/>
-      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      <classType>com.xpn.xwiki.objects.classes.NumberClass</classType>
     </revisionNumber>
     <revisionOwner>
       <cache>0</cache>

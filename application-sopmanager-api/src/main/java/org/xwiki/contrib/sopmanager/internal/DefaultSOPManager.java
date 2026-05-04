@@ -152,6 +152,7 @@ public class DefaultSOPManager implements SOPManager
                 sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
+                sopObj.setIntValue(REVISION_NUMBER, 1);
                 sopObj.setStringValue(STATUS, DRAFT);
                 sopObj.setIntValue(IS_IN_REVIEW, 1);
                 List<ReadableSecurityRule> rules = new ArrayList<>();
@@ -334,7 +335,7 @@ public class DefaultSOPManager implements SOPManager
             "pdfTemplate"));
         pdfExportManager.exportAndAttachPDF(sopDoc.getDocumentReference(), pdfTemplateReference);
 
-        sopObj.setStringValue(REVISION_NUMBER, incrementRevision(sopObj.getStringValue(REVISION_NUMBER)));
+        sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
 
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
         DocumentReference revisedBy = currentStringDocRefResolver.resolve(revisedByString);
@@ -345,19 +346,6 @@ public class DefaultSOPManager implements SOPManager
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
             getUserDisplayName(revisionOwner), getUserDisplayName(revisedBy));
-    }
-
-    private String incrementRevision(String revision)
-    {
-        if (StringUtils.isBlank(revision)) {
-            return "1";
-        }
-
-        try {
-            return String.valueOf(Integer.parseInt(revision.trim()) + 1);
-        } catch (NumberFormatException e) {
-            return revision.trim() + "1";
-        }
     }
 
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)

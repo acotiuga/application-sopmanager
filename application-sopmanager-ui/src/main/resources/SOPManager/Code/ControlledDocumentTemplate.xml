@@ -223,7 +223,7 @@
       <revisionNumber>
         <customDisplay/>
         <disabled>0</disabled>
-        <hint>The revision number of the current document.</hint>
+        <hint>The revision number is automatically increased by 1 by the system; no manual update is needed.</hint>
         <name>revisionNumber</name>
         <number>5</number>
         <picker>0</picker>

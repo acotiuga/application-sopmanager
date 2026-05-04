@@ -499,7 +499,7 @@
           #set ($generalEditing = $editing)
           #set ($propertiesToDisplay = [])
           #set ($hiddenFields = ['status', 'previousRevisions', 'revisionOwner', 'isInReview'])
-          #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revision'])
+          #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revisionNumber'])
           ## Do not display status or previousRevisions.
           ## When in draft state, also hide approvedBy.
           #foreach ($property in $xclass.properties)

@@ -70,8 +70,6 @@ SOPManager.Code.ControlledDocumentClass_status_draft=Draft
 SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Submitted for review
 SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Submitted for approval
 SOPManager.Code.ControlledDocumentClass_status_approved=Approved
-SOPManager.Code.ControlledDocumentClass_revisionNumber=Revision number
-SOPManager.Code.ControlledDocumentClass_revisionNumber_hint=Enter the revision identifier for this document.
 
 sopManager.pdfExport.page=Page
 sopManager.userProfile.ownedPages=Owned pages
