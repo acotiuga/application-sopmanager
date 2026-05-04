@@ -19,9 +19,12 @@
  */
 package org.xwiki.contrib.sopmanager;
 
+import java.util.List;
+
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
+import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
 
 /**
@@ -36,33 +39,39 @@ public interface SOPWorkflowEventNotifier
     /**
      * Notifies that a document has been submitted for review.
      *
+     * @param context the current XWiki context
      * @param document the document that has been submitted for review
-     * @param userReference the reference of the user who submitted the document for review
+     * @param groupReferences the references of the groups whose users will be notified
      */
-    void notifySubmittedForReview(XWikiDocument document, DocumentReference userReference);
+    void notifySubmittedForReview(XWikiContext context, XWikiDocument document,
+        List<DocumentReference> groupReferences);
 
     /**
      * Notifies that a document has been returned for changes.
      *
      * @param document the document that has been returned for changes
-     * @param userReference the reference of the user who returned the document for changes
+     * @param userReference the reference of the user who will be notified
      */
     void notifyReturnedForChanges(XWikiDocument document, DocumentReference userReference);
 
     /**
      * Notifies that a document has been submitted for approval.
      *
+     * @param context the current XWiki context
      * @param document the document that has been submitted for approval
-     * @param userReference the reference of the user who submitted the document for approval
+     * @param groupReferences the references of the groups whose users will be notified
      */
-    void notifySubmittedForApproval(XWikiDocument document, DocumentReference userReference);
+    void notifySubmittedForApproval(XWikiContext context, XWikiDocument document,
+        List<DocumentReference> groupReferences);
 
     /**
      * Notifies that a document has been approved.
      *
+     * @param context the current XWiki context
      * @param document the document that has been approved
      * @param revisionOwner the reference of the user who owns the revision of the document that has been approved
-     * @param revisedBy the reference of the user who made the revision of the document that has been approved
+     * @param groupReferences the references of the groups whose users will be notified approved
      */
-    void notifyApproved(XWikiDocument document, DocumentReference revisionOwner, DocumentReference revisedBy);
+    void notifyApproved(XWikiContext context, XWikiDocument document, DocumentReference revisionOwner,
+        List<DocumentReference> groupReferences);
 }

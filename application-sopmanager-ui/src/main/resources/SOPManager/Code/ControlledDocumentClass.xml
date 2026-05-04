@@ -52,20 +52,20 @@
     <defaultWeb/>
     <nameField/>
     <validationScript/>
-    <approvedBy>
+    <approverGroups>
       <cache>0</cache>
       <customDisplay/>
       <defaultValue/>
       <disabled>0</disabled>
       <displayType>input</displayType>
       <freeText/>
-      <hint>Specify the user who needs to approve this document.</hint>
+      <hint>Select the groups whose members are responsible for approving this document. The approvers will be notified when the document is sent for approval.</hint>
       <largeStorage>0</largeStorage>
       <multiSelect>0</multiSelect>
-      <name>approvedBy</name>
+      <name>approverGroups</name>
       <number>3</number>
       <picker>1</picker>
-      <prettyName>Approval user</prettyName>
+      <prettyName>Approver groups</prettyName>
       <relationalStorage>0</relationalStorage>
       <separator> </separator>
       <separators/>
@@ -75,8 +75,8 @@
       <usesList>0</usesList>
       <validationMessage/>
       <validationRegExp/>
-      <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
-    </approvedBy>
+      <classType>com.xpn.xwiki.objects.classes.GroupsClass</classType>
+    </approverGroups>
     <isInReview>
       <customDisplay/>
       <defaultValue/>
@@ -171,7 +171,7 @@
       <dateFormat>dd/MM/yyyy</dateFormat>
       <disabled>0</disabled>
       <emptyIsToday>1</emptyIsToday>
-      <hint>This field holds the release date of the current approved revision. By default, it is automatically set to today.</hint>
+      <hint>The planned completion date for the current release process. Automatically set to today, but you may choose any future date to reflect your release schedule.</hint>
       <name>releaseDate</name>
       <number>1</number>
       <picker>1</picker>
@@ -182,21 +182,21 @@
       <validationRegExp/>
       <classType>com.xpn.xwiki.objects.classes.DateClass</classType>
     </releaseDate>
-    <revisedBy>
+    <reviewerGroups>
       <cache>0</cache>
       <customDisplay/>
       <defaultValue/>
       <disabled>0</disabled>
       <displayType>input</displayType>
       <freeText/>
-      <hint>By default, the user to review this document is set to the current user.</hint>
+      <hint>Select the groups whose members will review this document. Reviewers will be notified when the document is sent for review and again once it has been approved.</hint>
       <largeStorage>0</largeStorage>
-      <multiSelect>0</multiSelect>
-      <name>revisedBy</name>
+      <multiSelect>1</multiSelect>
+      <name>reviewerGroups</name>
       <number>2</number>
       <picker>1</picker>
-      <prettyName>Review user</prettyName>
-      <relationalStorage>0</relationalStorage>
+      <prettyName>Reviewer groups</prettyName>
+      <relationalStorage>1</relationalStorage>
       <separator> </separator>
       <separators/>
       <size>20</size>
@@ -205,8 +205,8 @@
       <usesList>0</usesList>
       <validationMessage/>
       <validationRegExp/>
-      <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
-    </revisedBy>
+      <classType>com.xpn.xwiki.objects.classes.GroupsClass</classType>
+    </reviewerGroups>
     <revisionId>
       <customDisplay/>
       <disabled>0</disabled>
@@ -265,7 +265,7 @@
       <dateFormat>dd/MM/yyyy</dateFormat>
       <disabled>0</disabled>
       <emptyIsToday>1</emptyIsToday>
-      <hint>Select the planned date for the next revision.</hint>
+      <hint>Set the planned completion date for the next revision. Use this to indicate when the upcoming revision is expected to be finished.</hint>
       <name>revisionPlannedDate</name>
       <number>6</number>
       <picker>1</picker>

@@ -168,8 +168,8 @@
 #set ($xclass = $controlledObj.xWikiClass)
 
 #set ($releaseDate = '')
-#set ($approvedBy = '')
-#set ($revisedBy = '')
+#set ($approverGroups = '')
+#set ($reviewerGroups = '')
 #set ($revisionNumber = '')
 #set ($plannedRevisionDate = '')
 
@@ -179,8 +179,8 @@
     #set ($releaseDate = $datetool.format('dd.MM.yyyy', $releaseDateValue))
   #end
 
-  #set ($approvedBy = $!controlledObj.getValue('approvedBy'))
-  #set ($revisedBy = $!controlledObj.getValue('revisedBy'))
+  #set ($approverGroups = $!controlledObj.getValue('approverGroups'))
+  #set ($reviewerGroups = $!controlledObj.getValue('reviewerGroups'))
   #set ($revisionNumber = $!controlledObj.getValue('revisionNumber'))
 
   #set ($plannedRevisionDateValue = $controlledObj.getValue('revisionPlannedDate'))
@@ -189,7 +189,7 @@
   #end
 #end
 
-#set ($fieldsToDisplay = ['releaseDate', 'approvedBy', 'revisedBy', 'revisionNumber', 'revisionPlannedDate'])
+#set ($fieldsToDisplay = ['releaseDate', 'approverGroups', 'reviewerGroups', 'revisionNumber', 'revisionPlannedDate'])
 
 {{html clean="false"}}
 &lt;table class="sop-pdf-footer-table"&gt;
@@ -203,8 +203,8 @@
   &lt;/tr&gt;
   &lt;tr&gt;
     &lt;td&gt;$escapetool.xml($releaseDate)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($approvedBy)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($revisedBy)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($approverGroups)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($reviewerGroups)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($revisionNumber)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($plannedRevisionDate)&lt;/td&gt;
     &lt;td&gt;

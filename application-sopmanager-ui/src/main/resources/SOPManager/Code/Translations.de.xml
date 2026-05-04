@@ -67,10 +67,10 @@ sopManager.reviewPage.submitForApproval=Zur Genehmigung eingereicht.
 
 SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
 SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Das geplante Abschlussdatum für den aktuellen Freigabeprozess. Wird automatisch auf heute gesetzt, kann jedoch auf ein beliebiges zukünftiges Datum angepasst werden, um Ihren Freigabeplan widerzuspiegeln.
-SOPManager.Code.ControlledDocumentClass_approvedBy=Freigabe durch
-SOPManager.Code.ControlledDocumentClass_approvedBy_hint=Geben Sie den Benutzer an, der dieses Dokument genehmigen soll.
-SOPManager.Code.ControlledDocumentClass_revisedBy=Überarbeitet von
-SOPManager.Code.ControlledDocumentClass_revisedBy_hint=Standardmäßig ist der Benutzer, der dieses Dokument prüfen soll, auf den aktuellen Benutzer festgelegt.
+SOPManager.Code.ControlledDocumentClass_approverGroups=Genehmigergruppen
+SOPManager.Code.ControlledDocumentClass_approverGroups_hint=Wählen Sie die Gruppen aus, deren Mitglieder für die Genehmigung dieses Dokuments verantwortlich sind. Die Genehmigenden werden benachrichtigt, sobald das Dokument zur Genehmigung eingereicht wird.
+SOPManager.Code.ControlledDocumentClass_reviewerGroups=Rezensentengruppen
+SOPManager.Code.ControlledDocumentClass_reviewerGroups_hint=Wählen Sie die Gruppen aus, deren Mitglieder dieses Dokument prüfen werden. Die Rezensenten werden benachrichtigt, sobald das Dokument zur Prüfung eingereicht wird und erneut, wenn es genehmigt wurde.
 SOPManager.Code.ControlledDocumentClass_revisionNumber=Revisionsnummer
 SOPManager.Code.ControlledDocumentClass_revisionNumber_hint=Die Revisionsnummer wird vom System automatisch um 1 erhöht; eine manuelle Aktualisierung ist nicht erforderlich.
 SOPManager.Code.ControlledDocumentClass_revisionPlannedDate=Revision geplant

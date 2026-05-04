@@ -20,6 +20,7 @@
 package org.xwiki.contrib.sopmanager.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -67,9 +68,9 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String STATUS = "status";
 
-    private static final String APPROVED_BY = "approvedBy";
+    private static final String APPROVER_GROUPS = "approverGroups";
 
-    private static final String REVISED_BY = "revisedBy";
+    private static final String REVIEWER_GROUPS = "reviewerGroups";
 
     private static final String XWIKI = "XWiki";
 
@@ -99,6 +100,8 @@ public class DefaultSOPManager implements SOPManager
     private static final String UNKNOWN_WORKFLOW_ACTION = "Unknown workflow action.";
 
     private static final String IS_IN_REVIEW = "isInReview";
+
+    private static final String SEPARATOR = ",";
 
     @Inject
     private ContextualLocalizationManager localizationManager;
@@ -156,7 +159,7 @@ public class DefaultSOPManager implements SOPManager
                 sopObj.setStringValue(STATUS, DRAFT);
                 sopObj.setIntValue(IS_IN_REVIEW, 1);
                 List<ReadableSecurityRule> rules = new ArrayList<>();
-                addEditRight(rules, context.getUserReference());
+                addUserEditRight(rules, context.getUserReference());
 
                 rulesObjectWriter.persistRulesToObjects(rules, sopDoc, RIGHTS_CLASS_REF, context);
                 xWiki.saveDocument(sopDoc, localizationManager.getTranslationPlain("sopManager.addPage.added"),
@@ -189,7 +192,7 @@ public class DefaultSOPManager implements SOPManager
 
             switch (action) {
                 case SUBMIT_FOR_REVIEW:
-                    successMessage = handleSubmitForReview(sopDoc, sopObj, rules);
+                    successMessage = handleSubmitForReview(context, sopDoc, sopObj, rules);
                     status = SUBMITTED_FOR_REVIEW;
                     break;
                 case RETURN_FOR_CHANGES:
@@ -197,11 +200,11 @@ public class DefaultSOPManager implements SOPManager
                     status = RETURNED_FOR_CHANGES;
                     break;
                 case SUBMIT_FOR_APPROVAL:
-                    successMessage = handleSubmitForApproval(sopDoc, sopObj, rules);
+                    successMessage = handleSubmitForApproval(context, sopDoc, sopObj, rules);
                     status = SUBMITTED_FOR_APPROVAL;
                     break;
                 case APPROVE:
-                    successMessage = handleApprove(sopDoc, sopObj, rules);
+                    successMessage = handleApprove(context, sopDoc, sopObj, rules);
                     status = APPROVED;
                     break;
                 case START_NEW_REVISION:
@@ -267,22 +270,28 @@ public class DefaultSOPManager implements SOPManager
         return sopObj;
     }
 
-    private String handleSubmitForReview(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+    private String handleSubmitForReview(XWikiContext context, XWikiDocument sopDoc, BaseObject sopObj,
+        List<ReadableSecurityRule> rules)
         throws XWikiException
     {
-        String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
-        if (StringUtils.isBlank(revisedByString)) {
+        String reviewerGroupsString = sopObj.getLargeStringValue(REVIEWER_GROUPS);
+        if (StringUtils.isBlank(reviewerGroupsString)) {
             throw new IllegalArgumentException(
                 localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.error"));
         }
 
-        DocumentReference revisedByUser = currentStringDocRefResolver.resolve(revisedByString);
-        addEditRight(rules, revisedByUser);
+        List<DocumentReference> reviewerGroupsRef =
+            Arrays.stream(reviewerGroupsString.split(SEPARATOR))
+                .filter(s -> !s.isBlank())
+                .map(group -> currentStringDocRefResolver.resolve(group))
+                .toList();
 
-        workflowEventNotifier.notifySubmittedForReview(sopDoc, revisedByUser);
+        addGroupsEditRight(rules, reviewerGroupsRef);
+
+        workflowEventNotifier.notifySubmittedForReview(context, sopDoc, reviewerGroupsRef);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.success",
-            getUserDisplayName(revisedByUser));
+            reviewerGroupsString);
     }
 
     private String handleReturnForChanges(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
@@ -295,7 +304,7 @@ public class DefaultSOPManager implements SOPManager
         }
 
         DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
-        addEditRight(rules, revisionOwner);
+        addUserEditRight(rules, revisionOwner);
 
         workflowEventNotifier.notifyReturnedForChanges(sopDoc, revisionOwner);
 
@@ -303,30 +312,37 @@ public class DefaultSOPManager implements SOPManager
             getUserDisplayName(revisionOwner));
     }
 
-    private String handleSubmitForApproval(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+    private String handleSubmitForApproval(XWikiContext context, XWikiDocument sopDoc, BaseObject sopObj,
+        List<ReadableSecurityRule> rules)
         throws XWikiException
     {
-        String approvedByString = sopObj.getLargeStringValue(APPROVED_BY);
-        if (StringUtils.isBlank(approvedByString)) {
+        String approverGroupsString = sopObj.getLargeStringValue(APPROVER_GROUPS);
+        if (StringUtils.isBlank(approverGroupsString)) {
             throw new IllegalArgumentException(
                 localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.error"));
         }
 
-        DocumentReference approvedByUser = currentStringDocRefResolver.resolve(approvedByString);
-        addEditRight(rules, approvedByUser);
+        List<DocumentReference> approverGroupRefs =
+            Arrays.stream(approverGroupsString.split(SEPARATOR))
+                .filter(s -> !s.isBlank())
+                .map(group -> currentStringDocRefResolver.resolve(group))
+                .toList();
 
-        workflowEventNotifier.notifySubmittedForApproval(sopDoc, approvedByUser);
+        addGroupsEditRight(rules, approverGroupRefs);
+
+        workflowEventNotifier.notifySubmittedForApproval(context, sopDoc, approverGroupRefs);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.success",
-            getUserDisplayName(approvedByUser));
+            approverGroupsString);
     }
 
-    private String handleApprove(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
+    private String handleApprove(XWikiContext context, XWikiDocument sopDoc, BaseObject sopObj,
+        List<ReadableSecurityRule> rules)
         throws XWikiException
     {
         String revisionOwnerString = sopObj.getLargeStringValue(REVISION_OWNER);
-        String revisedByString = sopObj.getLargeStringValue(REVISED_BY);
-        if (StringUtils.isBlank(revisionOwnerString) && StringUtils.isBlank(revisedByString)) {
+        String reviewerGroupsString = sopObj.getLargeStringValue(REVIEWER_GROUPS);
+        if (StringUtils.isBlank(revisionOwnerString) && StringUtils.isBlank(reviewerGroupsString)) {
             throw new IllegalArgumentException(
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
@@ -337,22 +353,26 @@ public class DefaultSOPManager implements SOPManager
 
         sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
 
-        DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
-        DocumentReference revisedBy = currentStringDocRefResolver.resolve(revisedByString);
+        DocumentReference revisionOwnerRef = currentStringDocRefResolver.resolve(revisionOwnerString);
+        List<DocumentReference> reviewerGroupsRef =
+            Arrays.stream(reviewerGroupsString.split(SEPARATOR))
+                .filter(s -> !s.isBlank())
+                .map(group -> currentStringDocRefResolver.resolve(group))
+                .toList();
 
-        addEditRight(rules, revisionOwner);
+        addUserEditRight(rules, revisionOwnerRef);
 
-        workflowEventNotifier.notifyApproved(sopDoc, revisionOwner, revisedBy);
+        workflowEventNotifier.notifyApproved(context, sopDoc, revisionOwnerRef, reviewerGroupsRef);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
-            getUserDisplayName(revisionOwner), getUserDisplayName(revisedBy));
+            getUserDisplayName(revisionOwnerRef));
     }
 
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)
     {
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
         sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(revisionOwner));
-        addEditRight(rules, revisionOwner);
+        addUserEditRight(rules, revisionOwner);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.startNewRevision.success");
     }
@@ -383,8 +403,13 @@ public class DefaultSOPManager implements SOPManager
         return fullName.isEmpty() ? serializer.serialize(userReference) : fullName;
     }
 
-    private void addEditRight(List<ReadableSecurityRule> rules, DocumentReference userReference)
+    private void addUserEditRight(List<ReadableSecurityRule> rules, DocumentReference userReference)
     {
         rules.add(rightsWriter.createRule(null, List.of(userReference), List.of(Right.EDIT), RuleState.ALLOW));
+    }
+
+    private void addGroupsEditRight(List<ReadableSecurityRule> rules, List<DocumentReference> groupsReferences)
+    {
+        rules.add(rightsWriter.createRule(groupsReferences, null, List.of(Right.EDIT), RuleState.ALLOW));
     }
 }
