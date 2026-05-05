@@ -164,6 +164,20 @@
     </property>
     <property>
       <footer>{{velocity}}
+#macro (extractDocumentNames $serializedRefs $output)
+  #set ($names = [])
+  #if (!$stringtool.isBlank($serializedRefs))
+    #foreach ($serializedRef in $serializedRefs.split(','))
+      #set ($serializedRef = $serializedRef.trim())
+      #if (!$stringtool.isBlank($serializedRef))
+        #set ($docRef = $services.model.resolveDocument($serializedRef))
+        #set ($discard = $names.add($docRef.name))
+      #end
+    #end
+  #end
+  #set ($discard = $output.add($stringtool.join($names, ',')))
+#end
+
 #set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
 #set ($xclass = $controlledObj.xWikiClass)
 
@@ -191,6 +205,14 @@
 
 #set ($fieldsToDisplay = ['releaseDate', 'approverGroups', 'reviewerGroups', 'revisionNumber', 'revisionPlannedDate'])
 
+
+#set ($approverGroupsOutput = [])
+#set ($reviewerGroupsOutput = [])
+#extractDocumentNames($approverGroups $approverGroupsOutput)
+#extractDocumentNames($reviewerGroups $reviewerGroupsOutput)
+#set ($approverGroupsString = $approverGroupsOutput.get(0))
+#set ($reviewerGroupsString = $reviewerGroupsOutput.get(0))
+
 {{html clean="false"}}
 &lt;table class="sop-pdf-footer-table"&gt;
   &lt;tr&gt;
@@ -203,8 +225,8 @@
   &lt;/tr&gt;
   &lt;tr&gt;
     &lt;td&gt;$escapetool.xml($releaseDate)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($approverGroups)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($reviewerGroups)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($approverGroupsString)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($reviewerGroupsString)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($revisionNumber)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($plannedRevisionDate)&lt;/td&gt;
     &lt;td&gt;
@@ -361,9 +383,9 @@
     <property>
       <code>@media print {
   @page {
-  margin-top: 28mm;
+  margin-top: 25mm;
   margin-right: 15mm;
-  margin-bottom: 28mm;
+  margin-bottom: 45mm;
   margin-left: 15mm;
 }
 
