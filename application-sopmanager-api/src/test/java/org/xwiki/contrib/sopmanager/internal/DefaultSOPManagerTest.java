@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
 import org.xwiki.contrib.rights.WritableSecurityRule;
+import org.xwiki.contrib.sopmanager.PDFExportManager;
 import org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
@@ -81,6 +82,9 @@ class DefaultSOPManagerTest
     private SOPWorkflowEventNotifier workflowEventNotifier;
 
     @MockComponent
+    private PDFExportManager pdfExportManager;
+
+    @MockComponent
     private RightsWriter rightsWriter;
 
     @MockComponent
@@ -100,9 +104,13 @@ class DefaultSOPManagerTest
     private Provider<XWikiContext> xcontextProvider;
 
     private XWikiContext context;
+
     private XWiki wiki;
+
     private XWikiDocument sopDoc;
+
     private BaseObject sopObj;
+
     private DocumentReference currentUser;
 
     @BeforeEach
@@ -135,38 +143,45 @@ class DefaultSOPManagerTest
     {
         DocumentReference documentReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
         DocumentReference revisionOwner = new DocumentReference("xwiki", List.of("XWiki"), "RevisionOwner");
-        DocumentReference revisedBy = new DocumentReference("xwiki", List.of("XWiki"), "RevisedBy");
+        DocumentReference reviewerGroups = new DocumentReference("xwiki", List.of("XWiki"), "ReviewerGroups");
+        DocumentReference pdfTemplate = new DocumentReference("xwiki", List.of("SOPManager", "Code"),
+            "GKHPDFTemplateVertical");
 
         XWikiDocument revisionOwnerDoc = mock(XWikiDocument.class);
-        XWikiDocument revisedByDoc = mock(XWikiDocument.class);
+        XWikiDocument reviewerGroupsDoc = mock(XWikiDocument.class);
 
         when(this.wiki.getDocument(documentReference, this.context)).thenReturn(this.sopDoc);
         when(this.wiki.getDocument(revisionOwner, this.context)).thenReturn(revisionOwnerDoc);
-        when(this.wiki.getDocument(revisedBy, this.context)).thenReturn(revisedByDoc);
+        when(this.wiki.getDocument(reviewerGroups, this.context)).thenReturn(reviewerGroupsDoc);
 
         when(this.sopDoc.getXObject(SOP_CLASS)).thenReturn(this.sopObj);
 
         when(this.sopObj.getStringValue("status")).thenReturn("submittedForApproval");
         when(this.sopObj.getStringValue("revisionNumber")).thenReturn(null);
         when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.RevisionOwner");
-        when(this.sopObj.getLargeStringValue("revisedBy")).thenReturn("xwiki:XWiki.RevisedBy");
+        when(this.sopObj.getLargeStringValue("reviewerGroups")).thenReturn("xwiki:XWiki.ReviewerGroups");
+        when(this.sopObj.getLargeStringValue("pdfTemplate"))
+            .thenReturn("xwiki:SOPManager.Code.GKHPDFTemplateVertical");
 
         when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.RevisionOwner")).thenReturn(revisionOwner);
-        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.RevisedBy")).thenReturn(revisedBy);
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.ReviewerGroups")).thenReturn(reviewerGroups);
+        when(this.currentStringDocRefResolver.resolve("xwiki:SOPManager.Code.GKHPDFTemplateVertical"))
+            .thenReturn(pdfTemplate);
 
         when(this.serializer.serialize(revisionOwner)).thenReturn("xwiki:XWiki.RevisionOwner");
-        when(this.serializer.serialize(revisedBy)).thenReturn("xwiki:XWiki.RevisedBy");
+        when(this.serializer.serialize(reviewerGroups)).thenReturn("xwiki:XWiki.ReviewerGroups");
 
         when(revisionOwnerDoc.getXObject(new LocalDocumentReference("XWiki", "XWikiUsers"))).thenReturn(null);
-        when(revisedByDoc.getXObject(new LocalDocumentReference("XWiki", "XWikiUsers"))).thenReturn(null);
+        when(reviewerGroupsDoc.getXObject(new LocalDocumentReference("XWiki", "XWikiUsers"))).thenReturn(null);
 
         String result = this.sopManager.updateDocumentReviewState("approve", documentReference);
 
         assertEquals("sopManager.reviewPage.approve.success", result);
-        verify(this.sopObj).setStringValue("revisionNumber", "1");
+        verify(this.sopObj).setIntValue("revisionNumber", 1);
+        verify(this.pdfExportManager).exportAndAttachPDF(this.sopDoc.getDocumentReference(), pdfTemplate);
         verify(this.sopObj).setStringValue("status", "approved");
         verify(this.rulesObjectWriter).persistRulesToObjects(any(), eq(this.sopDoc), any(), eq(this.context));
         verify(this.wiki).saveDocument(eq(this.sopDoc), eq("sopManager.reviewPage.approve"), eq(this.context));
-        verify(workflowEventNotifier).notifyApproved(sopDoc, revisionOwner, revisedBy);
+        verify(workflowEventNotifier).notifyApproved(context, sopDoc, revisionOwner, List.of(reviewerGroups));
     }
 }
