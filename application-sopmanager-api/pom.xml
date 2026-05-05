@@ -31,7 +31,7 @@
   <name>SOP Manager Application - API</name>
   <packaging>jar</packaging>
   <properties>
-    <xwiki.jacoco.instructionRatio>0.50</xwiki.jacoco.instructionRatio>
+    <xwiki.jacoco.instructionRatio>0.75</xwiki.jacoco.instructionRatio>
   </properties>
   <dependencies>
     <dependency>
@@ -95,4 +95,40 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
+        <configuration>
+          <analysisConfiguration><![CDATA[
+[
+  {
+    "extension": "revapi.differences",
+    "configuration": {
+      "ignore": true,
+      "differences": [
+        {
+          "code": "java.method.removed",
+          "old": "method java.lang.String org.xwiki.contrib.sopmanager.script.SOPScriptService::exportAndAttachPDF(org.xwiki.model.reference.DocumentReference, org.xwiki.model.reference.DocumentReference)",
+          "justification": "This script service method was removed because PDF export is no longer exposed through this API in this form and the workflow now uses the updated internal integration."
+        },
+        {
+          "code": "java.method.parameterTypeChanged",
+          "classQualifiedName": "org.xwiki.contrib.sopmanager.PDFExportManager",
+          "methodName": "exportAndAttachPDF",
+          "parameterIndex": "0",
+          "oldType": "org.xwiki.model.reference.DocumentReference",
+          "newType": "com.xpn.xwiki.doc.XWikiDocument",
+          "justification": "The PDF export API now receives the already loaded XWikiDocument instead of a DocumentReference so the generated PDF can be attached to the same document instance that is later saved by the workflow. This avoids loading and saving a second document instance during approval and keeps the attachment, workflow metadata, rights changes, and final save operation consistent."
+        }
+      ]
+    }
+  }
+]
+        ]]></analysisConfiguration>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

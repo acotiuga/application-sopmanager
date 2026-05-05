@@ -22,6 +22,8 @@ package org.xwiki.contrib.sopmanager;
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
+import com.xpn.xwiki.doc.XWikiDocument;
+
 /**
  * PDF Export Manager allowing to export review pages list to PDF.
  *
@@ -34,9 +36,9 @@ public interface PDFExportManager
     /**
      * Exports the given document to PDF and attaches the generated PDF to the document.
      *
-     * @param documentReference the reference of the document to export and attach the PDF to
+     * @param document the document to export and attach the PDF to
      * @param pdfTemplateReference the document reference of the PDF template to use
      * @return the URL of the attached PDF
      */
-    String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference);
+    String exportAndAttachPDF(XWikiDocument document, DocumentReference pdfTemplateReference);
 }

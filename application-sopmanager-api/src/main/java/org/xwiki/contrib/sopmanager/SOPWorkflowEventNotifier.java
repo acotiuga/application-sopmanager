@@ -24,7 +24,6 @@ import java.util.List;
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
-import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
 
 /**
@@ -39,12 +38,10 @@ public interface SOPWorkflowEventNotifier
     /**
      * Notifies that a document has been submitted for review.
      *
-     * @param context the current XWiki context
      * @param document the document that has been submitted for review
      * @param groupReferences the references of the groups whose users will be notified
      */
-    void notifySubmittedForReview(XWikiContext context, XWikiDocument document,
-        List<DocumentReference> groupReferences);
+    void notifySubmittedForReview(XWikiDocument document, List<DocumentReference> groupReferences);
 
     /**
      * Notifies that a document has been returned for changes.
@@ -57,21 +54,18 @@ public interface SOPWorkflowEventNotifier
     /**
      * Notifies that a document has been submitted for approval.
      *
-     * @param context the current XWiki context
      * @param document the document that has been submitted for approval
      * @param groupReferences the references of the groups whose users will be notified
      */
-    void notifySubmittedForApproval(XWikiContext context, XWikiDocument document,
-        List<DocumentReference> groupReferences);
+    void notifySubmittedForApproval(XWikiDocument document, List<DocumentReference> groupReferences);
 
     /**
      * Notifies that a document has been approved.
      *
-     * @param context the current XWiki context
      * @param document the document that has been approved
      * @param revisionOwner the reference of the user who owns the revision of the document that has been approved
      * @param groupReferences the references of the groups whose users will be notified approved
      */
-    void notifyApproved(XWikiContext context, XWikiDocument document, DocumentReference revisionOwner,
+    void notifyApproved(XWikiDocument document, DocumentReference revisionOwner,
         List<DocumentReference> groupReferences);
 }

@@ -79,13 +79,13 @@ public class DefaultPDFExportManager implements PDFExportManager
     private ContextualLocalizationManager localizationManager;
 
     @Override
-    public String exportAndAttachPDF(DocumentReference documentReference, DocumentReference pdfTemplateReference)
+    public String exportAndAttachPDF(XWikiDocument attachmentDoc, DocumentReference pdfTemplateReference)
     {
         XWikiContext context = xcontextProvider.get();
         XWikiDocument previousDoc = context.getDoc();
 
         try {
-            XWikiDocument attachmentDoc = context.getWiki().getDocument(documentReference, context);
+            DocumentReference documentReference = attachmentDoc.getDocumentReference();
             context.setDoc(attachmentDoc);
 
             PDFExportJobRequest request = createExportRequest(documentReference, context, pdfTemplateReference);
@@ -111,7 +111,7 @@ public class DefaultPDFExportManager implements PDFExportManager
                 attachmentName);
         } catch (Exception e) {
             throw new RuntimeException(localizationManager.getTranslationPlain(
-                "sopManager.defaultPDFExportManager.error.attachFailed", documentReference), e);
+                "sopManager.defaultPDFExportManager.error.attachFailed", attachmentDoc.getDocumentReference()), e);
         } finally {
             context.setDoc(previousDoc);
         }
@@ -144,7 +144,7 @@ public class DefaultPDFExportManager implements PDFExportManager
         return request;
     }
 
-    private XWikiAttachment createAttachment(File pdfFile, String attachmentName, XWikiContext context) throws Exception
+    XWikiAttachment createAttachment(File pdfFile, String attachmentName, XWikiContext context) throws Exception
     {
         try (InputStream is = new FileInputStream(pdfFile)) {
             XWikiAttachment attachment = new XWikiAttachment();

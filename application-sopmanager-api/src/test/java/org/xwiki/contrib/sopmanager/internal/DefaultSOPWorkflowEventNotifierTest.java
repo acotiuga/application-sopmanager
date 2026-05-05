@@ -26,10 +26,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import javax.inject.Named;
+import javax.inject.Provider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,9 @@ import com.xpn.xwiki.objects.BaseObject;
 
 /**
  * Unit tests for {@link DefaultSOPWorkflowEventNotifier}.
+ *
+ * @version $Id$
+ * @since 1.0
  */
 @ComponentTest
 class DefaultSOPWorkflowEventNotifierTest
@@ -71,29 +76,28 @@ class DefaultSOPWorkflowEventNotifierTest
     private ObservationManager observationManager;
 
     @MockComponent
+    private Provider<XWikiContext> xcontextProvider;
+
+    @MockComponent
     private EntityReferenceSerializer<String> serializer;
 
     @MockComponent
     @Named("current")
     private DocumentReferenceResolver<String> currentStringDocRefResolver;
 
-    private XWikiDocument document;
-
-    private DocumentReference reviewer;
-
-    private DocumentReference approver;
-
-    private DocumentReference owner;
-
     private XWikiContext context;
 
     private XWiki wiki;
 
+    private XWikiDocument document;
+
     private XWikiDocument groupDocument;
 
-    private BaseObject groupObject;
-
     private DocumentReference groupReference;
+
+    private DocumentReference reviewer;
+
+    private DocumentReference owner;
 
     @BeforeEach
     void setUp()
@@ -102,77 +106,94 @@ class DefaultSOPWorkflowEventNotifierTest
         this.wiki = mock(XWiki.class);
         this.document = mock(XWikiDocument.class);
         this.groupDocument = mock(XWikiDocument.class);
-        this.groupObject = mock(BaseObject.class);
-        this.reviewer = new DocumentReference("xwiki", List.of("XWiki"), "Reviewer");
-        this.approver = new DocumentReference("xwiki", List.of("XWiki"), "Approver");
-        this.owner = new DocumentReference("xwiki", List.of("XWiki"), "Owner");
-        this.groupReference = new DocumentReference("xwiki", List.of("XWiki"), "ReviewerGroup");
 
+        this.groupReference = new DocumentReference("xwiki", List.of("XWiki"), "ReviewerGroup");
+        this.reviewer = new DocumentReference("xwiki", List.of("XWiki"), "Reviewer");
+        this.owner = new DocumentReference("xwiki", List.of("XWiki"), "Owner");
+
+        when(this.xcontextProvider.get()).thenReturn(this.context);
         when(this.context.getWiki()).thenReturn(this.wiki);
-        when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(List.of(this.groupObject));
-        when(this.groupObject.getStringValue("member")).thenReturn("xwiki:XWiki.Reviewer");
+    }
+
+    @Test
+    void notifySubmittedForReviewUsesTrimmedDirectGroupMembers() throws Exception
+    {
+        BaseObject reviewerObject = mock(BaseObject.class);
+        BaseObject blankObject = mock(BaseObject.class);
+
+        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
+        when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(Arrays.asList(reviewerObject, null,
+            blankObject));
+
+        when(reviewerObject.getStringValue("member")).thenReturn(" xwiki:XWiki.Reviewer ");
+        when(blankObject.getStringValue("member")).thenReturn(" ");
+
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.Reviewer")).thenReturn(this.reviewer);
+        when(this.serializer.serialize(this.reviewer)).thenReturn("xwiki:XWiki.Reviewer");
+
+        this.notifier.notifySubmittedForReview(this.document, List.of(this.groupReference));
+
+        SubmittedForReviewEvent event = captureEvent(SubmittedForReviewEvent.class);
+
+        assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
+        verify(this.currentStringDocRefResolver).resolve("xwiki:XWiki.Reviewer");
+        verify(this.serializer).serialize(this.reviewer);
+    }
+
+    @Test
+    void notifySubmittedForApprovalAllowsEmptyGroupDocuments() throws Exception
+    {
+        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
+        when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(null);
+
+        this.notifier.notifySubmittedForApproval(this.document, List.of(this.groupReference));
+
+        SubmittedForApprovalEvent event = captureEvent(SubmittedForApprovalEvent.class);
+
+        assertEquals(Set.of(), event.getTarget());
+    }
+
+    @Test
+    void notifyReturnedForChangesTargetsRevisionOwnerOnly()
+    {
+        when(this.serializer.serialize(this.owner)).thenReturn("xwiki:XWiki.Owner");
+
+        this.notifier.notifyReturnedForChanges(this.document, this.owner);
+
+        ReturnedForChangesEvent event = captureEvent(ReturnedForChangesEvent.class);
+
+        assertEquals(Set.of("xwiki:XWiki.Owner"), event.getTarget());
+        verify(this.serializer).serialize(this.owner);
+    }
+
+    @Test
+    void notifyApprovedTargetsRevisionOwnerAndReviewerGroupMembers() throws Exception
+    {
+        BaseObject reviewerObject = mock(BaseObject.class);
+
+        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
+        when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(List.of(reviewerObject));
+
+        when(reviewerObject.getStringValue("member")).thenReturn("xwiki:XWiki.Reviewer");
         when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.Reviewer")).thenReturn(this.reviewer);
 
         when(this.serializer.serialize(this.reviewer)).thenReturn("xwiki:XWiki.Reviewer");
-        when(this.serializer.serialize(this.approver)).thenReturn("xwiki:XWiki.Approver");
         when(this.serializer.serialize(this.owner)).thenReturn("xwiki:XWiki.Owner");
-    }
 
-    @Test
-    void notifySubmittedForReview() throws Exception
-    {
-        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
+        this.notifier.notifyApproved(this.document, this.owner, List.of(this.groupReference));
 
-        this.notifier.notifySubmittedForReview(this.context, this.document, List.of(this.groupReference));
+        ApprovedEvent event = captureEvent(ApprovedEvent.class);
 
-        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(this.observationManager).notify((Event) eventCaptor.capture(), eq(EVENT_SOURCE), eq(this.document));
-        verify(this.serializer).serialize(this.reviewer);
-
-        SubmittedForReviewEvent event = assertInstanceOf(SubmittedForReviewEvent.class, eventCaptor.getValue());
-        assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
-    }
-
-    @Test
-    void notifyReturnedForChanges()
-    {
-        this.notifier.notifyReturnedForChanges(this.document, this.owner);
-
-        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(this.observationManager).notify((Event) eventCaptor.capture(), eq(EVENT_SOURCE), eq(this.document));
-        verify(this.serializer).serialize(this.owner);
-
-        assertInstanceOf(ReturnedForChangesEvent.class, eventCaptor.getValue());
-    }
-
-    @Test
-    void notifySubmittedForApproval() throws Exception
-    {
-        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
-
-        this.notifier.notifySubmittedForApproval(this.context, this.document, List.of(this.groupReference));
-
-        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(this.observationManager).notify((Event) eventCaptor.capture(), eq(EVENT_SOURCE), eq(this.document));
-        verify(this.serializer).serialize(this.reviewer);
-
-        SubmittedForApprovalEvent event = assertInstanceOf(SubmittedForApprovalEvent.class, eventCaptor.getValue());
-        assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
-    }
-
-    @Test
-    void notifyApproved() throws Exception
-    {
-        when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
-
-        this.notifier.notifyApproved(this.context, this.document, this.owner, List.of(this.groupReference));
-
-        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(this.observationManager).notify((Event) eventCaptor.capture(), eq(EVENT_SOURCE), eq(this.document));
-        verify(this.serializer).serialize(this.owner);
-        verify(this.serializer).serialize(this.reviewer);
-
-        ApprovedEvent event = assertInstanceOf(ApprovedEvent.class, eventCaptor.getValue());
         assertEquals(Set.of("xwiki:XWiki.Owner", "xwiki:XWiki.Reviewer"), event.getTarget());
+        verify(this.serializer).serialize(this.owner);
+        verify(this.serializer).serialize(this.reviewer);
+    }
+
+    private <T extends Event> T captureEvent(Class<T> eventClass)
+    {
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(this.observationManager).notify(eventCaptor.capture(), eq(EVENT_SOURCE), eq(this.document));
+
+        return assertInstanceOf(eventClass, eventCaptor.getValue());
     }
 }

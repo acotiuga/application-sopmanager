@@ -20,7 +20,8 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.xwiki.contrib</groupId>
@@ -51,27 +52,4 @@
       <name>Alex Cotiuga</name>
     </developer>
   </developers>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.revapi</groupId>
-        <artifactId>revapi-maven-plugin</artifactId>
-        <configuration>
-          <analysisConfiguration><![CDATA[
-      {
-        "revapi": {
-          "ignore": [
-            {
-  "code": "java.method.removed",
-  "old": "method java.lang.String org.xwiki.contrib.sopmanager.script.SOPScriptService::exportAndAttachPDF(org.xwiki.model.reference.DocumentReference, org.xwiki.model.reference.DocumentReference)",
-  "justification": "This script service method was removed because PDF export is no longer exposed through this API in this form and the workflow now uses the updated internal integration."
-}
-          ]
-        }
-      }
-    ]]></analysisConfiguration>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

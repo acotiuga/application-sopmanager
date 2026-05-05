@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,6 +66,9 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
     private ObservationManager observationManager;
 
     @Inject
+    private Provider<XWikiContext> xcontextProvider;
+
+    @Inject
     @Named("current")
     private DocumentReferenceResolver<String> currentStringDocRefResolver;
 
@@ -72,12 +76,9 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
     private EntityReferenceSerializer<String> serializer;
 
     @Override
-    public void notifySubmittedForReview(XWikiContext context, XWikiDocument document,
-        List<DocumentReference> groupReferences)
+    public void notifySubmittedForReview(XWikiDocument document, List<DocumentReference> groupReferences)
     {
-        //Set<String> target = Set.of(serializer.serialize(userReference));
-
-        Set<String> target = getGroupMembers(groupReferences, context);
+        Set<String> target = getGroupMembers(groupReferences, xcontextProvider.get());
 
         observationManager.notify(new SubmittedForReviewEvent(target), EVENT_SOURCE, document);
     }
@@ -90,10 +91,9 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
     }
 
     @Override
-    public void notifySubmittedForApproval(XWikiContext context, XWikiDocument document,
-        List<DocumentReference> groupReferences)
+    public void notifySubmittedForApproval(XWikiDocument document, List<DocumentReference> groupReferences)
     {
-        Set<String> target = getGroupMembers(groupReferences, context);
+        Set<String> target = getGroupMembers(groupReferences, xcontextProvider.get());
 
         observationManager.notify(new SubmittedForApprovalEvent(target), EVENT_SOURCE, document);
     }
@@ -107,9 +107,9 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
             try {
                 XWikiDocument groupDoc = xwiki.getDocument(groupRef, context);
 
-                // Get all XWiki.XWikiGroup objects
+                // Get all XWiki.XWikiGroup objects.
                 List<BaseObject> groupObjects = groupDoc.getXObjects(GROUPS_CLASS_REF);
-                if (groupObjects.isEmpty()) {
+                if (groupObjects == null || groupObjects.isEmpty()) {
                     continue;
                 }
 
@@ -117,7 +117,7 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
                     if (groupObj == null) {
                         continue;
                     }
-                    String member = groupObj.getStringValue("member");
+                    String member = StringUtils.trimToNull(groupObj.getStringValue("member"));
                     if (StringUtils.isNotBlank(member)) {
                         // Make sure the XWiki.Admin is serialized as xwiki:XWiki.Admin.
                         members.add(serializer.serialize(currentStringDocRefResolver.resolve(member)));
@@ -132,10 +132,10 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
     }
 
     @Override
-    public void notifyApproved(XWikiContext context, XWikiDocument document, DocumentReference revisionOwner,
+    public void notifyApproved(XWikiDocument document, DocumentReference revisionOwner,
         List<DocumentReference> groupReferences)
     {
-        Set<String> target = getGroupMembers(groupReferences, context);
+        Set<String> target = getGroupMembers(groupReferences, xcontextProvider.get());
         target.add(serializer.serialize(revisionOwner));
         observationManager.notify(new ApprovedEvent(target), EVENT_SOURCE, document);
     }
