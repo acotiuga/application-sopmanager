@@ -37,9 +37,6 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
   <content>{{velocity}}
-#if (!$hasAdmin)
-  $response.sendRedirect($xwiki.getURL($xcontext.user, 'view', 'category=sopManager'))
-#end
 {{liveData
   id="sopManagerTable"
   properties="doc.title,status,reviewerGroups,approverGroups,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
