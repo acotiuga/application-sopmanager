@@ -188,6 +188,10 @@
       if (errorBox.is(':visible')) {
         errorBox.toggleClass('hidden');
       }
+      setTimeout(function () {
+        const r = Math.floor(Math.random() * 100);
+        window.location = window.location.pathname + '?r=' + r + '#SOPReviewPages';
+      }, 5000);
     }).fail(function (xhr) {
       var errorBoxContent = errorBox.find('.box div p');
       errorBoxContent.text(xhr.responseJSON.message);
