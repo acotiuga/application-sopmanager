@@ -60,6 +60,10 @@ public class DefaultPDFExportManager implements PDFExportManager
     private static final LocalDocumentReference CONTROLLED_DOC_CLASS =
         new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
 
+    private static final String PDF_EXTENSION = ".pdf";
+
+    private static final String UNDERLINE_SEPARATOR = "_";
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -94,9 +98,16 @@ public class DefaultPDFExportManager implements PDFExportManager
 
             BaseObject controlledObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
             String revisionId = controlledObj != null ? controlledObj.getStringValue("revisionId").trim() : "";
-            String attachmentBaseName = attachmentDoc.getTitle() + ".pdf";
+            int revisionNumber = controlledObj != null ? controlledObj.getIntValue("revisionNumber") : 0;
 
-            String attachmentName = revisionId.isEmpty() ? attachmentBaseName : revisionId + "_" + attachmentBaseName;
+            String attachmentBaseName = attachmentDoc.getTitle() + UNDERLINE_SEPARATOR + revisionNumber + PDF_EXTENSION;
+            String fileManagerAttachmentBaseName = attachmentDoc.getTitle() + PDF_EXTENSION;
+
+            String attachmentName =
+                revisionId.isEmpty() ? attachmentBaseName : revisionId + UNDERLINE_SEPARATOR + attachmentBaseName;
+            String fileManagerAttachmentName = revisionId.isEmpty()
+                ? fileManagerAttachmentBaseName
+                : revisionId + UNDERLINE_SEPARATOR + fileManagerAttachmentBaseName;
 
             XWikiAttachment attachment = createAttachment(pdfFile, attachmentName, context);
 
@@ -105,7 +116,9 @@ public class DefaultPDFExportManager implements PDFExportManager
             context.getWiki().saveDocument(attachmentDoc,
                 localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.saveDocument"), context);
 
-            fileManagerStorageManager.storeAttachment(documentReference, attachment, attachmentName);
+            attachment.setFilename(fileManagerAttachmentName);
+            fileManagerStorageManager.storeAttachment(documentReference, attachment, fileManagerAttachmentName,
+                revisionNumber);
 
             return localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
                 attachmentName);

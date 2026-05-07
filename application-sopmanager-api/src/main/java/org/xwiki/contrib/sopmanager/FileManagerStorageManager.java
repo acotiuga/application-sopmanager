@@ -39,6 +39,8 @@ public interface FileManagerStorageManager
      * @param sourceDocumentReference the reference of the document to link the attachment to
      * @param attachment the attachment to store
      * @param fileName the name of the file to store
+     * @param revisionNumber the revision number of the document
      */
-    void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName);
+    void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName,
+        int revisionNumber);
 }

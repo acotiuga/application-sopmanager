@@ -79,6 +79,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private static final LocalDocumentReference BACKLINK_CLASS =
         new LocalDocumentReference(List.of("SOPManager", "Code"), "OriginalDocumentBacklinkClass");
 
+    private static final String BACKLINK = "backlink";
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -100,10 +102,10 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private ContextualLocalizationManager localizationManager;
 
     @Override
-    public void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName)
+    public void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName,
+        int revisionNumber)
     {
         XWikiContext context = xcontextProvider.get();
-        XWiki xwiki = context.getWiki();
 
         try {
             String wikiName = sourceDocumentReference.getWikiReference().getName();
@@ -116,12 +118,10 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
                     getOrCreateFileManagerFolder(folderName, parentFolderReference, wikiName, context);
             }
 
-            DocumentReference fileReference = uniqueDocRefGenerator.generate(
-                new SpaceReference(wikiName, FILE_MANAGER_SPACE),
-                new DocumentNameSequence(fileName)
-            );
+            XWikiDocument fileDoc =
+                getFileManagerFileDocumentForStorage(context, wikiName, fileName, parentFolderReference,
+                    sourceDocumentReference, revisionNumber);
 
-            XWikiDocument fileDoc = xwiki.getDocument(fileReference, context);
             fileDoc.setTitle(fileName);
 
             if (fileDoc.getXObject(FILE_CLASS) == null) {
@@ -151,18 +151,66 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             tagObject.setDBStringListValue("tags", tags);
 
             String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
-            backlinkObject.setStringValue("backlink", serializedBacklink);
+            backlinkObject.setStringValue(BACKLINK, serializedBacklink);
 
+            attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
+
             fileDoc.setCreatorReference(context.getUserReference());
             fileDoc.setAuthorReference(context.getUserReference());
-            xwiki.saveDocument(fileDoc,
+            context.getWiki().saveDocument(fileDoc,
                 localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"),
                 context);
         } catch (Exception e) {
             throw new RuntimeException(localizationManager.getTranslationPlain(
                 "sopManager.defaultFileManagerStorageManager.error.storeAttachment", sourceDocumentReference), e);
         }
+    }
+
+    XWikiDocument getFileManagerFileDocumentForStorage(XWikiContext context, String wikiName, String fileName,
+        DocumentReference parentFolderReference, DocumentReference sourceDocumentReference, int revisionNumber)
+        throws XWikiException, QueryException
+    {
+        XWiki xwiki = context.getWiki();
+
+        DocumentReference existingFileReference = findExistingFile(fileName, parentFolderReference, context);
+        DocumentReference fileReference;
+        if (existingFileReference != null) {
+            XWikiDocument existingFileDoc = xwiki.getDocument(existingFileReference, context);
+
+            if (!isLinkedToSourceDocument(existingFileDoc, sourceDocumentReference)) {
+                throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                    "A File Manager document already exists but is not linked to the current SOP document.");
+            }
+
+            if (revisionNumber < 2) {
+                throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                    "A File Manager document already exists for the first SOP revision.");
+            }
+
+            xwiki.deleteDocument(existingFileDoc, context);
+            fileReference = existingFileReference;
+        } else {
+            fileReference = this.uniqueDocRefGenerator.generate(
+                new SpaceReference(wikiName, FILE_MANAGER_SPACE),
+                new DocumentNameSequence(fileName)
+            );
+        }
+
+        return xwiki.getDocument(fileReference, context);
+    }
+
+    private boolean isLinkedToSourceDocument(XWikiDocument fileDoc, DocumentReference sourceDocumentReference)
+    {
+        BaseObject backlinkObject = fileDoc.getXObject(BACKLINK_CLASS);
+        if (backlinkObject == null) {
+            return false;
+        }
+
+        String backlink = backlinkObject.getStringValue(BACKLINK);
+        String expectedBacklink = this.localEntityReferenceSerializer.serialize(sourceDocumentReference);
+
+        return expectedBacklink.equals(backlink);
     }
 
     DocumentReference getOrCreateFileManagerFolder(String folderName, DocumentReference parentFolderReference,
@@ -205,27 +253,35 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     DocumentReference findExistingFolder(String folderName, DocumentReference parentFolderReference,
         XWikiContext context) throws QueryException, XWikiException
     {
-        String hql =
-            "select distinct doc.fullName "
-                + "from XWikiDocument doc, BaseObject obj "
-                + "where doc.fullName = obj.name "
-                + "and obj.className = :folderClass "
-                + "and doc.space = :space "
-                + "and doc.title = :title";
+        return findExistingFileManagerDocument(folderName, FOLDER_CLASS, parentFolderReference, context);
+    }
 
-        Query query = queryManager.createQuery(hql, Query.HQL);
-        query.bindValue("folderClass", localEntityReferenceSerializer.serialize(FOLDER_CLASS));
+    DocumentReference findExistingFile(String fileName, DocumentReference parentFolderReference, XWikiContext context)
+        throws QueryException, XWikiException
+    {
+        return findExistingFileManagerDocument(fileName, FILE_CLASS, parentFolderReference, context);
+    }
+
+    DocumentReference findExistingFileManagerDocument(String title, LocalDocumentReference classReference,
+        DocumentReference parentReference, XWikiContext context) throws QueryException, XWikiException
+    {
+        String hql =
+            "select distinct doc.fullName from XWikiDocument doc, BaseObject obj where doc.fullName = obj.name "
+                + "and obj.className = :className and doc.space = :space and doc.title = :title";
+
+        Query query = this.queryManager.createQuery(hql, Query.HQL);
+        query.bindValue("className", this.localEntityReferenceSerializer.serialize(classReference));
         query.bindValue("space", FILE_MANAGER_SPACE);
-        query.bindValue("title", folderName);
+        query.bindValue("title", title);
 
         List<String> documentNames = query.execute();
 
-        EntityReference expectedParent = parentFolderReference != null
-            ? parentFolderReference.getLocalDocumentReference()
+        EntityReference expectedParent = parentReference != null
+            ? parentReference.getLocalDocumentReference()
             : FILE_MANAGER_REFERENCE;
 
         for (String documentName : documentNames) {
-            DocumentReference candidateReference = documentReferenceResolver.resolve(documentName);
+            DocumentReference candidateReference = this.documentReferenceResolver.resolve(documentName);
             XWikiDocument candidateDoc = context.getWiki().getDocument(candidateReference, context);
             if (candidateDoc == null) {
                 continue;
