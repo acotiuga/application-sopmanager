@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -405,8 +406,8 @@ public class DefaultSOPManager implements SOPManager
 
         return Arrays.stream(serializedReferences.split(SEPARATOR))
             .map(StringUtils::trimToNull)
-            .filter(reference -> reference != null)
-            .map(this.currentStringDocRefResolver::resolve)
+            .filter(Objects::nonNull)
+            .map(currentStringDocRefResolver::resolve)
             .toList();
     }
 }

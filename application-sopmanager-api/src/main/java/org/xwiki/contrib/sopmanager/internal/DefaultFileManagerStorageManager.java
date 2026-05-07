@@ -191,7 +191,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             xwiki.deleteDocument(existingFileDoc, context);
             fileReference = existingFileReference;
         } else {
-            fileReference = this.uniqueDocRefGenerator.generate(
+            fileReference = uniqueDocRefGenerator.generate(
                 new SpaceReference(wikiName, FILE_MANAGER_SPACE),
                 new DocumentNameSequence(fileName)
             );
@@ -208,7 +208,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
 
         String backlink = backlinkObject.getStringValue(BACKLINK);
-        String expectedBacklink = this.localEntityReferenceSerializer.serialize(sourceDocumentReference);
+        String expectedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
 
         return expectedBacklink.equals(backlink);
     }
@@ -269,8 +269,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             "select distinct doc.fullName from XWikiDocument doc, BaseObject obj where doc.fullName = obj.name "
                 + "and obj.className = :className and doc.space = :space and doc.title = :title";
 
-        Query query = this.queryManager.createQuery(hql, Query.HQL);
-        query.bindValue("className", this.localEntityReferenceSerializer.serialize(classReference));
+        Query query = queryManager.createQuery(hql, Query.HQL);
+        query.bindValue("className", localEntityReferenceSerializer.serialize(classReference));
         query.bindValue("space", FILE_MANAGER_SPACE);
         query.bindValue("title", title);
 
@@ -281,7 +281,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             : FILE_MANAGER_REFERENCE;
 
         for (String documentName : documentNames) {
-            DocumentReference candidateReference = this.documentReferenceResolver.resolve(documentName);
+            DocumentReference candidateReference = documentReferenceResolver.resolve(documentName);
             XWikiDocument candidateDoc = context.getWiki().getDocument(candidateReference, context);
             if (candidateDoc == null) {
                 continue;
