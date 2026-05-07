@@ -64,6 +64,8 @@ public class DefaultPDFExportManager implements PDFExportManager
 
     private static final String UNDERLINE_SEPARATOR = "_";
 
+    private static final String PDF_SECONDARY_TARGET_LOCATION = "pDFSecondaryTargetLocation";
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -92,33 +94,45 @@ public class DefaultPDFExportManager implements PDFExportManager
             DocumentReference documentReference = attachmentDoc.getDocumentReference();
             context.setDoc(attachmentDoc);
 
+            BaseObject sopObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
+            if (sopObj == null) {
+                throw new IllegalStateException(String.format(
+                    "Document [%s] is not a controlled SOP document.", documentReference));
+            }
+
             PDFExportJobRequest request = createExportRequest(documentReference, context, pdfTemplateReference);
 
             File pdfFile = pdfExportJobManager.export(request);
 
-            BaseObject controlledObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
-            String revisionId = controlledObj != null ? controlledObj.getStringValue("revisionId").trim() : "";
-            int revisionNumber = controlledObj != null ? controlledObj.getIntValue("revisionNumber") : 0;
+            String revisionId = sopObj.getStringValue("revisionId").trim();
+            int revisionNumber = sopObj.getIntValue("revisionNumber");
 
             String attachmentBaseName = attachmentDoc.getTitle() + UNDERLINE_SEPARATOR + revisionNumber + PDF_EXTENSION;
             String fileManagerAttachmentBaseName = attachmentDoc.getTitle() + PDF_EXTENSION;
 
-            String attachmentName =
-                revisionId.isEmpty() ? attachmentBaseName : revisionId + UNDERLINE_SEPARATOR + attachmentBaseName;
+            String attachmentName = revisionId.isEmpty()
+                ? attachmentBaseName
+                : revisionId + UNDERLINE_SEPARATOR + attachmentBaseName;
             String fileManagerAttachmentName = revisionId.isEmpty()
                 ? fileManagerAttachmentBaseName
                 : revisionId + UNDERLINE_SEPARATOR + fileManagerAttachmentBaseName;
 
-            XWikiAttachment attachment = createAttachment(pdfFile, attachmentName, context);
+            XWikiAttachment sourceAttachment = createAttachment(pdfFile, context);
+            sourceAttachment.setFilename(attachmentName);
 
-            attachmentDoc.setAttachment(attachment);
+            XWikiAttachment fileManagerAttachment = sourceAttachment.clone();
+            fileManagerAttachment.setFilename(fileManagerAttachmentName);
+
+            DocumentReference fileManagerReference = fileManagerStorageManager.storeAttachment(documentReference,
+                fileManagerAttachment, fileManagerAttachmentName, revisionNumber);
+
+            sopObj.setLargeStringValue(PDF_SECONDARY_TARGET_LOCATION,
+                defaultEntityReferenceSerializer.serialize(fileManagerReference));
+
+            attachmentDoc.setAttachment(sourceAttachment);
             attachmentDoc.setAuthorReference(context.getUserReference());
             context.getWiki().saveDocument(attachmentDoc,
                 localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.saveDocument"), context);
-
-            attachment.setFilename(fileManagerAttachmentName);
-            fileManagerStorageManager.storeAttachment(documentReference, attachment, fileManagerAttachmentName,
-                revisionNumber);
 
             return localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
                 attachmentName);
@@ -157,11 +171,10 @@ public class DefaultPDFExportManager implements PDFExportManager
         return request;
     }
 
-    XWikiAttachment createAttachment(File pdfFile, String attachmentName, XWikiContext context) throws Exception
+    XWikiAttachment createAttachment(File pdfFile, XWikiContext context) throws Exception
     {
         try (InputStream is = new FileInputStream(pdfFile)) {
             XWikiAttachment attachment = new XWikiAttachment();
-            attachment.setFilename(attachmentName);
             attachment.setContent(is);
             attachment.setAuthorReference(context.getUserReference());
             return attachment;

@@ -108,11 +108,23 @@
     "configuration": {
       "ignore": true,
       "differences": [
-        {
+      {
         "code": "java.method.numberOfParametersChanged",
         "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
         "new": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int)",
         "justification": "The File Manager storage API now receives the SOP revision number so it can safely distinguish the first archival operation from later revision updates. This is needed to prevent overwriting or deleting an unrelated existing File Manager document when revision 1 is being archived, while still allowing later SOP revisions to replace the previously archived PDF for the same controlled document."
+      },
+      {
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
+        "new": "method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int)",
+        "justification": "The File Manager storage API now receives the SOP revision number so it can apply safe replacement rules when archiving generated PDFs. The revision number is needed to prevent replacing an existing File Manager document during the first SOP archival operation, while still allowing later SOP revisions to update the existing archived File Manager document linked to the same controlled document."
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
+        "new": "method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int)",
+        "justification": "The File Manager storage API now returns the created or reused File Manager document reference so the controlled SOP document can store this reference in its workflow metadata and expose the archived PDF location from the SOP Manager pane."
       }
       ]
     }

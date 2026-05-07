@@ -102,8 +102,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private ContextualLocalizationManager localizationManager;
 
     @Override
-    public void storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment, String fileName,
-        int revisionNumber)
+    public DocumentReference storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment,
+        String fileName, int revisionNumber)
     {
         XWikiContext context = xcontextProvider.get();
 
@@ -161,6 +161,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             context.getWiki().saveDocument(fileDoc,
                 localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"),
                 context);
+            return fileDoc.getDocumentReference();
         } catch (Exception e) {
             throw new RuntimeException(localizationManager.getTranslationPlain(
                 "sopManager.defaultFileManagerStorageManager.error.storeAttachment", sourceDocumentReference), e);

@@ -163,6 +163,7 @@ class DefaultPDFExportManagerTest
         BaseObject controlledObj = mock(BaseObject.class);
         File pdfFile = createPDFFile();
         XWikiAttachment attachment = mock(XWikiAttachment.class);
+        XWikiAttachment fileManagerAttachment = mock(XWikiAttachment.class);
 
         when(this.attachmentDoc.getXObject(CONTROLLED_DOC_CLASS)).thenReturn(controlledObj);
         when(controlledObj.getStringValue("revisionId")).thenReturn("SOP-001");
@@ -172,7 +173,8 @@ class DefaultPDFExportManagerTest
         when(this.localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
             "SOP-001_Procedure_3.pdf")).thenReturn("Generated SOP-001_Procedure_3.pdf");
 
-        doReturn(attachment).when(testedManager).createAttachment(pdfFile, "SOP-001_Procedure_3.pdf", this.context);
+        doReturn(attachment).when(testedManager).createAttachment(pdfFile, this.context);
+        when(attachment.clone()).thenReturn(fileManagerAttachment);
 
         String result = testedManager.exportAndAttachPDF(this.attachmentDoc, this.pdfTemplateReference);
 
@@ -185,13 +187,14 @@ class DefaultPDFExportManagerTest
         verify(this.request).setBaseURL(this.baseURL);
         verify(this.request).setId(eq("export"), eq("pdf"), eq(this.documentReference.toString()), anyString());
 
-        verify(testedManager).createAttachment(pdfFile, "SOP-001_Procedure_3.pdf", this.context);
+        verify(testedManager).createAttachment(pdfFile, this.context);
+
         verify(this.attachmentDoc).setAttachment(attachment);
         verify(this.attachmentDoc).setAuthorReference(this.userReference);
 
-        verify(this.wiki).saveDocument(this.attachmentDoc, "Attach generated PDF", this.context);
-        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, attachment,
+        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
             "SOP-001_Procedure.pdf", 3);
+        verify(this.wiki).saveDocument(this.attachmentDoc, "Attach generated PDF", this.context);
 
         verify(this.context).setDoc(this.attachmentDoc);
         verify(this.context).setDoc(this.previousDoc);
@@ -206,6 +209,7 @@ class DefaultPDFExportManagerTest
 
         File pdfFile = createPDFFile();
         XWikiAttachment attachment = mock(XWikiAttachment.class);
+        XWikiAttachment fileManagerAttachment = mock(XWikiAttachment.class);
 
         when(this.attachmentDoc.getXObject(CONTROLLED_DOC_CLASS)).thenReturn(controlledObj);
         when(controlledObj.getStringValue("revisionId")).thenReturn("");
@@ -215,7 +219,8 @@ class DefaultPDFExportManagerTest
         when(this.localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
             "Procedure_2.pdf")).thenReturn("Generated Procedure_2.pdf");
 
-        doReturn(attachment).when(testedManager).createAttachment(pdfFile, "Procedure_2.pdf", this.context);
+        doReturn(attachment).when(testedManager).createAttachment(pdfFile, this.context);
+        when(attachment.clone()).thenReturn(fileManagerAttachment);
 
         String result = testedManager.exportAndAttachPDF(this.attachmentDoc, null);
 
@@ -228,11 +233,12 @@ class DefaultPDFExportManagerTest
         verify(this.request).setBaseURL(this.baseURL);
         verify(this.request).setId(eq("export"), eq("pdf"), eq(this.documentReference.toString()), anyString());
 
-        verify(testedManager).createAttachment(pdfFile, "Procedure_2.pdf", this.context);
+        verify(testedManager).createAttachment(pdfFile, this.context);
         verify(this.attachmentDoc).setAttachment(attachment);
         verify(this.attachmentDoc).setAuthorReference(this.userReference);
 
-        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, attachment, "Procedure.pdf", 2);
+        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
+            "Procedure.pdf", 2);
         verify(this.wiki).saveDocument(this.attachmentDoc, "Attach generated PDF", this.context);
 
         verify(this.context).setDoc(this.attachmentDoc);
@@ -257,7 +263,7 @@ class DefaultPDFExportManagerTest
             "sopManager.defaultPDFExportManager.error.attachFailed", this.documentReference))
             .thenReturn("Failed to attach generated PDF.");
 
-        doThrow(attachmentException).when(testedManager).createAttachment(pdfFile, "Procedure_4.pdf", this.context);
+        doThrow(attachmentException).when(testedManager).createAttachment(pdfFile, this.context);
 
         RuntimeException exception = assertThrows(RuntimeException.class,
             () -> testedManager.exportAndAttachPDF(this.attachmentDoc, this.pdfTemplateReference));
@@ -267,7 +273,7 @@ class DefaultPDFExportManagerTest
 
         verify(this.request).setDocuments(List.of(this.documentReference));
         verify(this.request).setTemplate(this.pdfTemplateReference);
-        verify(testedManager).createAttachment(pdfFile, "Procedure_4.pdf", this.context);
+        verify(testedManager).createAttachment(pdfFile, this.context);
 
         verify(this.attachmentDoc, never()).setAttachment(any(XWikiAttachment.class));
         verify(this.wiki, never()).saveDocument(eq(this.attachmentDoc), anyString(), eq(this.context));
