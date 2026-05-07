@@ -100,6 +100,7 @@ sopManager.afterContentHeaderNotification.inReview=Unter Überprüfung: Dieses D
 sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben
 sopManager.event.submittedForApprovalEvent.description=Eine Seite wurde zur Genehmigung eingereicht
+sopManager.event.approvedEvent.description=Eine Seite wurde genehmigt
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=wurde zur Überprüfung eingereicht
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=hat eine Seite zur Überprüfung eingereicht
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=wurde zur Überarbeitung zurückgegeben

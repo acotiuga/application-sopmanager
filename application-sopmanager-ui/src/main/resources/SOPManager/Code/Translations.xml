@@ -85,6 +85,7 @@ sopManager.afterContentHeaderNotification.inReview=**Under Review:** This docume
 sopManager.event.submittedForReviewEvent.description=A page is submitted for review
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes
 sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval
+sopManager.event.approvedEvent.description=A page is approved
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=submitted page for review
 notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=was returned for changes
