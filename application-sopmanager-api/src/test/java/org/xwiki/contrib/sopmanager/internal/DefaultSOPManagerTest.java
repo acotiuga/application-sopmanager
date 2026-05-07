@@ -41,7 +41,6 @@ import javax.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.slf4j.Logger;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
 import org.xwiki.contrib.rights.WritableSecurityRule;
@@ -121,6 +120,8 @@ class DefaultSOPManagerTest
 
     private XWiki wiki;
 
+    private XWikiDocument loadedDoc;
+
     private XWikiDocument sopDoc;
 
     private BaseObject sopObj;
@@ -134,6 +135,7 @@ class DefaultSOPManagerTest
     {
         this.context = mock(XWikiContext.class);
         this.wiki = mock(XWiki.class);
+        this.loadedDoc = mock(XWikiDocument.class);
         this.sopDoc = mock(XWikiDocument.class);
         this.sopObj = mock(BaseObject.class);
         this.documentReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
@@ -143,7 +145,8 @@ class DefaultSOPManagerTest
         when(this.context.getWiki()).thenReturn(this.wiki);
         when(this.context.getUserReference()).thenReturn(this.currentUser);
 
-        when(this.wiki.getDocument(this.documentReference, this.context)).thenReturn(this.sopDoc);
+        when(this.wiki.getDocument(this.documentReference, this.context)).thenReturn(this.loadedDoc);
+        when(this.loadedDoc.clone()).thenReturn(this.sopDoc);
         when(this.sopDoc.getXObject(SOP_CLASS)).thenReturn(this.sopObj);
 
         when(this.localizationManager.getTranslationPlain(anyString()))

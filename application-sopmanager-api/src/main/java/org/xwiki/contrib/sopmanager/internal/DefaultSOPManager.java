@@ -146,7 +146,7 @@ public class DefaultSOPManager implements SOPManager
         XWikiContext context = xcontextProvider.get();
         XWiki xWiki = context.getWiki();
         try {
-            XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
+            XWikiDocument sopDoc = xWiki.getDocument(documentReference, context).clone();
             BaseObject sopObj = sopDoc.getXObject(SOP_CONTROLLED_DOCUMENT_CLASS_REFERENCE);
             if (sopObj == null) {
                 return;
@@ -177,7 +177,7 @@ public class DefaultSOPManager implements SOPManager
         XWikiContext context = xcontextProvider.get();
         XWiki xWiki = context.getWiki();
         try {
-            XWikiDocument sopDoc = xWiki.getDocument(documentReference, context);
+            XWikiDocument sopDoc = xWiki.getDocument(documentReference, context).clone();
             BaseObject sopObj = getControlledDocumentObject(sopDoc, documentReference);
             if (sopObj == null) {
                 return localizationManager.getTranslationPlain("sopManager.defaultSOPManager.error.notInWorkflow");
