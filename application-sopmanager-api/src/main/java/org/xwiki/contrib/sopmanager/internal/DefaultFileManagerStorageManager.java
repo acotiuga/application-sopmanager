@@ -130,15 +130,15 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
                 fileDoc.newXObject(FILE_CLASS, context);
             }
 
-            BaseObject tagObject = fileDoc.getXObject(TAG_CLASS);
-            if (tagObject == null) {
-                tagObject = fileDoc.newXObject(TAG_CLASS, context);
-            }
+            BaseObject tagObject = getOrCreateXObject(fileDoc, TAG_CLASS, context);
 
             // Ensure backlink object exists and set backlink to the original source document.
-            BaseObject originalDetailsObj = fileDoc.getXObject(ORIGINAL_DETAILS_CLASS);
-            if (originalDetailsObj == null) {
-                originalDetailsObj = fileDoc.newXObject(ORIGINAL_DETAILS_CLASS, context);
+            BaseObject originalDetailsObj = getOrCreateXObject(fileDoc, ORIGINAL_DETAILS_CLASS, context);
+
+            String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
+            originalDetailsObj.setStringValue(BACKLINK, serializedBacklink);
+            if (sopTagsObject != null) {
+                originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
             }
 
             List<String> tags = new ArrayList<>();
@@ -151,12 +151,6 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             }
 
             tagObject.setDBStringListValue(TAGS, tags);
-
-            String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
-            originalDetailsObj.setStringValue(BACKLINK, serializedBacklink);
-            if (sopTagsObject != null) {
-                originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
-            }
 
             attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
@@ -171,6 +165,17 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             throw new RuntimeException(localizationManager.getTranslationPlain(
                 "sopManager.defaultFileManagerStorageManager.error.storeAttachment", sourceDocumentReference), e);
         }
+    }
+
+    private BaseObject getOrCreateXObject(XWikiDocument document, LocalDocumentReference classReference,
+        XWikiContext context) throws XWikiException
+    {
+        BaseObject object = document.getXObject(classReference);
+        if (object == null) {
+            object = document.newXObject(classReference, context);
+        }
+
+        return object;
     }
 
     XWikiDocument getFileManagerFileDocumentForStorage(XWikiContext context, String wikiName, String fileName,
