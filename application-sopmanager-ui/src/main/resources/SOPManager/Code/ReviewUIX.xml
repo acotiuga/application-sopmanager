@@ -498,9 +498,9 @@
           &lt;dl&gt;
           #set ($generalEditing = $editing)
           #set ($propertiesToDisplay = [])
-          #set ($hiddenFields = ['status', 'previousRevisions', 'revisionOwner', 'isInReview'])
+          #set ($hiddenFields = ['status', 'revisionOwner', 'isInReview'])
           #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revisionNumber'])
-          ## Do not display status or previousRevisions.
+          ## Do not display status.
           #foreach ($property in $xclass.properties)
             #set ($name = $property.name)
             #if (!$hiddenFields.contains($name))
@@ -538,17 +538,6 @@
         &lt;/div&gt;
       &lt;/div&gt;
       &lt;div class="col-md-6 reviewActions"&gt;
-        #if ("$!xobject.getValue('previousRevisions')" != '')
-          &lt;div class="xform"&gt;
-            &lt;dl&gt;
-              &lt;dt&gt;&lt;label&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.previousRevisions.label'))&lt;label&gt;&lt;dt&gt;
-              #foreach ($version in $jsontool.fromString($xobject.getValue('previousRevisions')))
-                &lt;p&gt;&lt;a href="$escapetool.xml($xwiki.getURL($version.get('url')))"&gt;$escapetool.xml($version.get('url'))&lt;/a&gt;&lt;/p&gt;
-              #end
-              &lt;dd&gt;&lt;/dd&gt;
-            &lt;/dl&gt;
-          &lt;/div&gt;
-        #end
         ## Add the review process actions buttons here.
         #if ($hasEdit)
           #set ($status = $xobject.getValue('status'))

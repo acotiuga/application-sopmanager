@@ -148,24 +148,6 @@
       <valueField/>
       <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
     </pdfTemplate>
-    <previousRevisions>
-      <contenttype>PureText</contenttype>
-      <customDisplay/>
-      <disabled>0</disabled>
-      <editor>---</editor>
-      <hint/>
-      <name>previousRevisions</name>
-      <number>9</number>
-      <picker>0</picker>
-      <prettyName>Previous revisions</prettyName>
-      <restricted>0</restricted>
-      <rows>5</rows>
-      <size>40</size>
-      <unmodifiable>0</unmodifiable>
-      <validationMessage/>
-      <validationRegExp/>
-      <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
-    </previousRevisions>
     <releaseDate>
       <customDisplay/>
       <dateFormat>dd/MM/yyyy</dateFormat>

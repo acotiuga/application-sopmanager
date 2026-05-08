@@ -60,7 +60,6 @@ sopManager.reviewPage.approve.success=The document was approved and « {0} » an
 sopManager.reviewPage.startNewRevision.label=Start a new revision
 sopManager.reviewPage.startNewRevision.title=Start a new revision
 sopManager.reviewPage.startNewRevision.success=A new revision has been started.
-sopManager.reviewPage.previousRevisions.label=Previous revisions PDFs
 sopManager.reviewPage.submitForReview=Submitted for review.
 sopManager.reviewPage.returnForChanges=Returned for changes.
 sopManager.reviewPage.submitForApproval=Submitted for approval.
