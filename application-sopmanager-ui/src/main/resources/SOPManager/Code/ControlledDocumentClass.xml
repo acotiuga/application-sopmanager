@@ -61,12 +61,12 @@
       <freeText/>
       <hint>Select the groups whose members are responsible for approving this document. The approvers will be notified when the document is sent for approval.</hint>
       <largeStorage>0</largeStorage>
-      <multiSelect>0</multiSelect>
+      <multiSelect>1</multiSelect>
       <name>approverGroups</name>
       <number>3</number>
       <picker>1</picker>
       <prettyName>Approver groups</prettyName>
-      <relationalStorage>0</relationalStorage>
+      <relationalStorage>1</relationalStorage>
       <separator> </separator>
       <separators/>
       <size>20</size>
