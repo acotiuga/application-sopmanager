@@ -154,7 +154,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
             String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
             originalDetailsObj.setStringValue(BACKLINK, serializedBacklink);
-            originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
+            if (sopTagsObject != null) {
+                originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
+            }
 
             attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
