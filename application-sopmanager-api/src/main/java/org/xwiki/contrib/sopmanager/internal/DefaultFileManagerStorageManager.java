@@ -76,10 +76,12 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private static final LocalDocumentReference TAG_CLASS =
         new LocalDocumentReference(List.of("XWiki"), "TagClass");
 
-    private static final LocalDocumentReference BACKLINK_CLASS =
-        new LocalDocumentReference(List.of("SOPManager", "Code"), "OriginalDocumentBacklinkClass");
+    private static final LocalDocumentReference ORIGINAL_DETAILS_CLASS =
+        new LocalDocumentReference(List.of("SOPManager", "Code"), "OriginalDocumentDetailsClass");
 
     private static final String BACKLINK = "backlink";
+
+    private static final String TAGS = "tags";
 
     @Inject
     private Provider<XWikiContext> xcontextProvider;
@@ -103,7 +105,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     @Override
     public DocumentReference storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment,
-        String fileName, int revisionNumber)
+        String fileName, int revisionNumber, BaseObject sopTagsObject)
     {
         XWikiContext context = xcontextProvider.get();
 
@@ -134,9 +136,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             }
 
             // Ensure backlink object exists and set backlink to the original source document.
-            BaseObject backlinkObject = fileDoc.getXObject(BACKLINK_CLASS);
-            if (backlinkObject == null) {
-                backlinkObject = fileDoc.newXObject(BACKLINK_CLASS, context);
+            BaseObject originalDetailsObj = fileDoc.getXObject(ORIGINAL_DETAILS_CLASS);
+            if (originalDetailsObj == null) {
+                originalDetailsObj = fileDoc.newXObject(ORIGINAL_DETAILS_CLASS, context);
             }
 
             List<String> tags = new ArrayList<>();
@@ -148,10 +150,11 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
                 fileDoc.setParentReference(FILE_MANAGER_REFERENCE);
             }
 
-            tagObject.setDBStringListValue("tags", tags);
+            tagObject.setDBStringListValue(TAGS, tags);
 
             String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
-            backlinkObject.setStringValue(BACKLINK, serializedBacklink);
+            originalDetailsObj.setStringValue(BACKLINK, serializedBacklink);
+            originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
 
             attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
@@ -203,7 +206,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     private boolean isLinkedToSourceDocument(XWikiDocument fileDoc, DocumentReference sourceDocumentReference)
     {
-        BaseObject backlinkObject = fileDoc.getXObject(BACKLINK_CLASS);
+        BaseObject backlinkObject = fileDoc.getXObject(ORIGINAL_DETAILS_CLASS);
         if (backlinkObject == null) {
             return false;
         }

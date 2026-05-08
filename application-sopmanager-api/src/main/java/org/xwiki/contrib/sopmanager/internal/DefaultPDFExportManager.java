@@ -26,6 +26,7 @@ import java.net.URL;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
@@ -60,6 +61,9 @@ public class DefaultPDFExportManager implements PDFExportManager
     private static final LocalDocumentReference CONTROLLED_DOC_CLASS =
         new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
 
+    private static final LocalDocumentReference TAG_CLASS =
+        new LocalDocumentReference(List.of("XWiki"), "TagClass");
+
     private static final String PDF_EXTENSION = ".pdf";
 
     private static final String UNDERLINE_SEPARATOR = "_";
@@ -76,7 +80,8 @@ public class DefaultPDFExportManager implements PDFExportManager
     private PDFExportJobRequestFactory requestFactory;
 
     @Inject
-    private EntityReferenceSerializer<String> defaultEntityReferenceSerializer;
+    @Named("local")
+    private EntityReferenceSerializer<String> localEntityReferenceSerializer;
 
     @Inject
     private FileManagerStorageManager fileManagerStorageManager;
@@ -85,16 +90,16 @@ public class DefaultPDFExportManager implements PDFExportManager
     private ContextualLocalizationManager localizationManager;
 
     @Override
-    public String exportAndAttachPDF(XWikiDocument attachmentDoc, DocumentReference pdfTemplateReference)
+    public String exportAndAttachPDF(XWikiDocument sopDoc, DocumentReference pdfTemplateReference)
     {
         XWikiContext context = xcontextProvider.get();
         XWikiDocument previousDoc = context.getDoc();
 
         try {
-            DocumentReference documentReference = attachmentDoc.getDocumentReference();
-            context.setDoc(attachmentDoc);
+            DocumentReference documentReference = sopDoc.getDocumentReference();
+            context.setDoc(sopDoc);
 
-            BaseObject sopObj = attachmentDoc.getXObject(CONTROLLED_DOC_CLASS);
+            BaseObject sopObj = sopDoc.getXObject(CONTROLLED_DOC_CLASS);
             if (sopObj == null) {
                 throw new IllegalStateException(String.format(
                     "Document [%s] is not a controlled SOP document.", documentReference));
@@ -107,8 +112,8 @@ public class DefaultPDFExportManager implements PDFExportManager
             String revisionId = sopObj.getStringValue("revisionId").trim();
             int revisionNumber = sopObj.getIntValue("revisionNumber");
 
-            String attachmentBaseName = attachmentDoc.getTitle() + UNDERLINE_SEPARATOR + revisionNumber + PDF_EXTENSION;
-            String fileManagerAttachmentBaseName = attachmentDoc.getTitle() + PDF_EXTENSION;
+            String attachmentBaseName = sopDoc.getTitle() + UNDERLINE_SEPARATOR + revisionNumber + PDF_EXTENSION;
+            String fileManagerAttachmentBaseName = sopDoc.getTitle() + PDF_EXTENSION;
 
             String attachmentName = revisionId.isEmpty()
                 ? attachmentBaseName
@@ -123,22 +128,23 @@ public class DefaultPDFExportManager implements PDFExportManager
             XWikiAttachment fileManagerAttachment = sourceAttachment.clone();
             fileManagerAttachment.setFilename(fileManagerAttachmentName);
 
+            BaseObject tags = sopDoc.getXObject(TAG_CLASS);
+
             DocumentReference fileManagerReference = fileManagerStorageManager.storeAttachment(documentReference,
-                fileManagerAttachment, fileManagerAttachmentName, revisionNumber);
+                fileManagerAttachment, fileManagerAttachmentName, revisionNumber, tags);
+            sopObj.set(PDF_SECONDARY_TARGET_LOCATION, localEntityReferenceSerializer.serialize(fileManagerReference),
+                context);
 
-            sopObj.setLargeStringValue(PDF_SECONDARY_TARGET_LOCATION,
-                defaultEntityReferenceSerializer.serialize(fileManagerReference));
-
-            attachmentDoc.setAttachment(sourceAttachment);
-            attachmentDoc.setAuthorReference(context.getUserReference());
-            context.getWiki().saveDocument(attachmentDoc,
+            sopDoc.setAttachment(sourceAttachment);
+            sopDoc.setAuthorReference(context.getUserReference());
+            context.getWiki().saveDocument(sopDoc,
                 localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.saveDocument"), context);
 
             return localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
                 attachmentName);
         } catch (Exception e) {
             throw new RuntimeException(localizationManager.getTranslationPlain(
-                "sopManager.defaultPDFExportManager.error.attachFailed", attachmentDoc.getDocumentReference()), e);
+                "sopManager.defaultPDFExportManager.error.attachFailed", sopDoc.getDocumentReference()), e);
         } finally {
             context.setDoc(previousDoc);
         }
@@ -158,7 +164,7 @@ public class DefaultPDFExportManager implements PDFExportManager
         EntityReference spaceReferences =
             documentReference.getLastSpaceReference().removeParent(documentReference.getWikiReference());
         URL baseURL = context.getURLFactory().createExternalURL(
-            defaultEntityReferenceSerializer.serialize(spaceReferences),
+            localEntityReferenceSerializer.serialize(spaceReferences),
             documentReference.getName(),
             "view",
             "",

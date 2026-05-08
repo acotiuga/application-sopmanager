@@ -164,7 +164,7 @@
     </property>
     <property>
       <content>{{velocity}}
-#set ($originalDocObj = $doc.getObject('SOPManager.Code.OriginalDocumentBacklinkClass'))
+#set ($originalDocObj = $doc.getObject('SOPManager.Code.OriginalDocumentDetailsClass'))
 #if ($originalDocObj)
   #set ($originalDocBacklink = $originalDocObj.getValue('backlink'))
   #set ($originalDocURL = $xwiki.getURL($originalDocBacklink))

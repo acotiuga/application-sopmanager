@@ -20,18 +20,18 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.6" reference="SOPManager.Code.OriginalDocumentBacklinkClass" locale="">
+<xwikidoc version="1.6" reference="SOPManager.Code.OriginalDocumentDetailsClass" locale="">
   <web>SOPManager.Code</web>
-  <name>OriginalDocumentBacklinkClass</name>
+  <name>OriginalDocumentDetailsClass</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
-  <parent>XWiki.XWikiClasses</parent>
+  <parent>WebHome</parent>
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <version>1.1</version>
-  <title>Original Document Backlink Class</title>
+  <title>Original Document Details Class</title>
   <comment/>
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
@@ -44,7 +44,7 @@
 #set ($defaultParent = $doc.fullName)
 {{/velocity}}</content>
   <class>
-    <name>SOPManager.Code.OriginalDocumentBacklinkClass</name>
+    <name>SOPManager.Code.OriginalDocumentDetailsClass</name>
     <customClass/>
     <customMapping/>
     <defaultViewSheet/>
@@ -80,9 +80,34 @@
       <valueField/>
       <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
     </backlink>
+    <sopTags>
+      <cache>0</cache>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>input</displayType>
+      <freeText/>
+      <hint/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>1</multiSelect>
+      <name>sopTags</name>
+      <number>2</number>
+      <picker>1</picker>
+      <prettyName>Tags</prettyName>
+      <relationalStorage>1</relationalStorage>
+      <separator> </separator>
+      <separators>|, </separators>
+      <size>1</size>
+      <sort/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <values/>
+      <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+    </sopTags>
   </class>
   <object>
-    <name>SOPManager.Code.OriginalDocumentBacklinkClass</name>
+    <name>SOPManager.Code.OriginalDocumentDetailsClass</name>
     <number>0</number>
     <className>XWiki.DocumentSheetBinding</className>
     <guid>6cf94b66-b41d-483a-85f3-f0b7096f9f85</guid>

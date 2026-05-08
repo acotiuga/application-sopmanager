@@ -199,7 +199,6 @@ class DefaultFileManagerStorageManagerTest
         doReturn(fileReference).when(storageManager).findExistingFile("Sandbox.pdf", null, this.context);
 
         when(this.wiki.getDocument(fileReference, this.context)).thenReturn(existingFileDoc, newFileDoc);
-        verify(this.uniqueDocRefGenerator, never()).generate(any(SpaceReference.class), any(DocumentNameSequence.class));
         when(existingFileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(backlinkObject);
         when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
         when(backlinkObject.getStringValue("backlink")).thenReturn("Sandbox.WebHome");
@@ -275,6 +274,7 @@ class DefaultFileManagerStorageManagerTest
         BaseObject fileObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
         BaseObject backlinkObject = mock(BaseObject.class);
+        BaseObject tagsObject = mock(BaseObject.class);
         XWikiAttachment attachment = mock(XWikiAttachment.class);
 
         DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox", "Marmota"), "Zorro");
@@ -291,7 +291,9 @@ class DefaultFileManagerStorageManagerTest
         when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class), any(DocumentNameSequence.class)))
             .thenReturn(fileReference);
         when(this.wiki.getDocument(fileReference, this.context)).thenReturn(fileDoc);
+        when(fileDoc.getDocumentReference()).thenReturn(fileReference);
         when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.Marmota.Zorro");
+        when(tagsObject.getListValue("tags")).thenReturn(List.of("test", "marmota"));
         when(this.localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
 
@@ -299,13 +301,17 @@ class DefaultFileManagerStorageManagerTest
         when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(this.context)))
             .thenReturn(fileObject, tagObject, backlinkObject);
 
-        storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf", 2);
+        DocumentReference result =
+            storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf", 2, tagsObject);
+
+        assertEquals(fileReference, result);
 
         verify(fileDoc).setTitle("Zorro.pdf");
         verify(fileDoc).setParentReference(
             marmotaFolderReference.removeParent(marmotaFolderReference.getWikiReference()));
         verify(tagObject).setDBStringListValue("tags", List.of("Marmota"));
         verify(backlinkObject).setStringValue("backlink", "Sandbox.Marmota.Zorro");
+        verify(backlinkObject).setDBStringListValue("sopTags", List.of("test", "marmota"));
         verify(fileDoc).setAttachment(attachment);
         verify(this.wiki).saveDocument(fileDoc, "Store generated PDF in File Manager", this.context);
     }

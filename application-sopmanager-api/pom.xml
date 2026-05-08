@@ -125,6 +125,17 @@
         "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
         "new": "method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int)",
         "justification": "The File Manager storage API now returns the created or reused File Manager document reference so the controlled SOP document can store this reference in its workflow metadata and expose the archived PDF location from the SOP Manager pane."
+      },{
+        "code": "java.method.numberOfParametersChanged",
+        "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
+        "new": "method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int, com.xpn.xwiki.objects.BaseObject)",
+        "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String)",
+        "new": "method org.xwiki.model.reference.DocumentReference org.xwiki.contrib.sopmanager.FileManagerStorageManager::storeAttachment(org.xwiki.model.reference.DocumentReference, com.xpn.xwiki.doc.XWikiAttachment, java.lang.String, int, com.xpn.xwiki.objects.BaseObject)",
+        "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
       }
       ]
     }

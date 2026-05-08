@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -40,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import javax.inject.Named;
 import javax.inject.Provider;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +79,11 @@ class DefaultPDFExportManagerTest
     private static final LocalDocumentReference CONTROLLED_DOC_CLASS =
         new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
 
+    private static final LocalDocumentReference TAG_CLASS =
+        new LocalDocumentReference(List.of("XWiki"), "TagClass");
+
+    private static final String PDF_SECONDARY_TARGET_LOCATION = "pDFSecondaryTargetLocation";
+
     @InjectMockComponents
     private DefaultPDFExportManager pdfExportManager;
 
@@ -90,7 +97,8 @@ class DefaultPDFExportManagerTest
     private PDFExportJobRequestFactory requestFactory;
 
     @MockComponent
-    private EntityReferenceSerializer<String> defaultEntityReferenceSerializer;
+    @Named("local")
+    private EntityReferenceSerializer<String> localEntityReferenceSerializer;
 
     @MockComponent
     private FileManagerStorageManager fileManagerStorageManager;
@@ -119,6 +127,8 @@ class DefaultPDFExportManagerTest
 
     private DocumentReference pdfTemplateReference;
 
+    private DocumentReference fileManagerReference;
+
     private URL baseURL;
 
     @BeforeEach
@@ -135,6 +145,7 @@ class DefaultPDFExportManagerTest
         this.userReference = new DocumentReference("xwiki", List.of("XWiki"), "Admin");
         this.pdfTemplateReference = new DocumentReference("xwiki", List.of("SOPManager", "Code"),
             "GKHPDFTemplateVertical");
+        this.fileManagerReference = new DocumentReference("xwiki", List.of("FileManager"), "ProcedurePDF");
         this.baseURL = new URL("https://example.org/xwiki/bin/view/SOPs/Quality/");
 
         when(this.xcontextProvider.get()).thenReturn(this.context);
@@ -147,7 +158,9 @@ class DefaultPDFExportManagerTest
         when(this.attachmentDoc.getTitle()).thenReturn("Procedure");
 
         when(this.requestFactory.createRequest()).thenReturn(this.request);
-        when(this.defaultEntityReferenceSerializer.serialize(any(EntityReference.class))).thenReturn("SOPs/Quality");
+        when(this.localEntityReferenceSerializer.serialize(any(EntityReference.class))).thenReturn("SOPs/Quality");
+        when(this.localEntityReferenceSerializer.serialize(this.fileManagerReference))
+            .thenReturn("FileManager.ProcedurePDF");
         when(this.urlFactory.createExternalURL(eq("SOPs/Quality"), eq("Procedure"), eq("view"), eq(""), eq(""),
             eq("xwiki"), eq(this.context))).thenReturn(this.baseURL);
 
@@ -161,15 +174,19 @@ class DefaultPDFExportManagerTest
         DefaultPDFExportManager testedManager = spy(this.pdfExportManager);
 
         BaseObject controlledObj = mock(BaseObject.class);
+        BaseObject tagsObj = mock(BaseObject.class);
         File pdfFile = createPDFFile();
         XWikiAttachment attachment = mock(XWikiAttachment.class);
         XWikiAttachment fileManagerAttachment = mock(XWikiAttachment.class);
 
         when(this.attachmentDoc.getXObject(CONTROLLED_DOC_CLASS)).thenReturn(controlledObj);
+        when(this.attachmentDoc.getXObject(TAG_CLASS)).thenReturn(tagsObj);
         when(controlledObj.getStringValue("revisionId")).thenReturn("SOP-001");
         when(controlledObj.getIntValue("revisionNumber")).thenReturn(3);
 
         when(this.pdfExportJobManager.export(this.request)).thenReturn(pdfFile);
+        when(this.fileManagerStorageManager.storeAttachment(this.documentReference, fileManagerAttachment,
+            "SOP-001_Procedure.pdf", 3, tagsObj)).thenReturn(this.fileManagerReference);
         when(this.localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
             "SOP-001_Procedure_3.pdf")).thenReturn("Generated SOP-001_Procedure_3.pdf");
 
@@ -188,12 +205,14 @@ class DefaultPDFExportManagerTest
         verify(this.request).setId(eq("export"), eq("pdf"), eq(this.documentReference.toString()), anyString());
 
         verify(testedManager).createAttachment(pdfFile, this.context);
+        verify(attachment).setFilename("SOP-001_Procedure_3.pdf");
+        verify(fileManagerAttachment).setFilename("SOP-001_Procedure.pdf");
+        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
+            "SOP-001_Procedure.pdf", 3, tagsObj);
+        verify(controlledObj).set(PDF_SECONDARY_TARGET_LOCATION, "FileManager.ProcedurePDF", this.context);
 
         verify(this.attachmentDoc).setAttachment(attachment);
         verify(this.attachmentDoc).setAuthorReference(this.userReference);
-
-        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
-            "SOP-001_Procedure.pdf", 3);
         verify(this.wiki).saveDocument(this.attachmentDoc, "Attach generated PDF", this.context);
 
         verify(this.context).setDoc(this.attachmentDoc);
@@ -206,7 +225,6 @@ class DefaultPDFExportManagerTest
         DefaultPDFExportManager testedManager = spy(this.pdfExportManager);
 
         BaseObject controlledObj = mock(BaseObject.class);
-
         File pdfFile = createPDFFile();
         XWikiAttachment attachment = mock(XWikiAttachment.class);
         XWikiAttachment fileManagerAttachment = mock(XWikiAttachment.class);
@@ -216,6 +234,8 @@ class DefaultPDFExportManagerTest
         when(controlledObj.getIntValue("revisionNumber")).thenReturn(2);
 
         when(this.pdfExportJobManager.export(this.request)).thenReturn(pdfFile);
+        when(this.fileManagerStorageManager.storeAttachment(eq(this.documentReference), eq(fileManagerAttachment),
+            eq("Procedure.pdf"), eq(2), isNull())).thenReturn(this.fileManagerReference);
         when(this.localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.success",
             "Procedure_2.pdf")).thenReturn("Generated Procedure_2.pdf");
 
@@ -234,11 +254,14 @@ class DefaultPDFExportManagerTest
         verify(this.request).setId(eq("export"), eq("pdf"), eq(this.documentReference.toString()), anyString());
 
         verify(testedManager).createAttachment(pdfFile, this.context);
+        verify(attachment).setFilename("Procedure_2.pdf");
+        verify(fileManagerAttachment).setFilename("Procedure.pdf");
+        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
+            "Procedure.pdf", 2, null);
+        verify(controlledObj).set(PDF_SECONDARY_TARGET_LOCATION, "FileManager.ProcedurePDF", this.context);
+
         verify(this.attachmentDoc).setAttachment(attachment);
         verify(this.attachmentDoc).setAuthorReference(this.userReference);
-
-        verify(this.fileManagerStorageManager).storeAttachment(this.documentReference, fileManagerAttachment,
-            "Procedure.pdf", 2);
         verify(this.wiki).saveDocument(this.attachmentDoc, "Attach generated PDF", this.context);
 
         verify(this.context).setDoc(this.attachmentDoc);
@@ -277,7 +300,7 @@ class DefaultPDFExportManagerTest
 
         verify(this.attachmentDoc, never()).setAttachment(any(XWikiAttachment.class));
         verify(this.wiki, never()).saveDocument(eq(this.attachmentDoc), anyString(), eq(this.context));
-        verify(this.fileManagerStorageManager, never()).storeAttachment(any(), any(), anyString(), anyInt());
+        verify(this.fileManagerStorageManager, never()).storeAttachment(any(), any(), anyString(), anyInt(), any());
 
         verify(this.context).setDoc(this.attachmentDoc);
         verify(this.context).setDoc(this.previousDoc);

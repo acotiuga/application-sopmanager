@@ -23,6 +23,7 @@ import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
 
 import com.xpn.xwiki.doc.XWikiAttachment;
+import com.xpn.xwiki.objects.BaseObject;
 
 /**
  * File Manager Storage Manager allowing to store PDF files in the File Manager.
@@ -40,8 +41,9 @@ public interface FileManagerStorageManager
      * @param attachment the attachment to store
      * @param fileName the name of the file to store
      * @param revisionNumber the revision number of the document
+     * @param tags the existing tags to be added to the document created in the File Manager
      * @return the reference of the document created in the File Manager
      */
     DocumentReference storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment,
-        String fileName, int revisionNumber);
+        String fileName, int revisionNumber, BaseObject tags);
 }
