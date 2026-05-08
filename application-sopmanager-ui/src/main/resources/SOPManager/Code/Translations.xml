@@ -86,14 +86,19 @@ sopManager.event.submittedForReviewEvent.description=A page is submitted for rev
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes
 sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval
 sopManager.event.approvedEvent.description=A page is approved
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=submitted page for review
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=was returned for changes
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description=returned page for changes
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description.by.1user=was submitted for approval
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=submitted page for approval
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=was approved
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=approved page
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description=submitted page for review
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.by.1user=was returned for changes
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description=returned page for changes
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.by.1user=was submitted for approval
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=submitted page for approval
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=was approved
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=approved page
+
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=This document has been submitted for review and requires your attention.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=This document has been returned with requested changes and requires your action.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.email=This document has been submitted for approval and awaits your decision.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.email=This document has been approved.
 
 sopManager.defaultSOPManager.error.invalidAction=Cannot perform action [{0}] when the document is in state [{1}].
 sopManager.defaultSOPManager.error.notInWorkflow=The document is not part of the SOP workflow.

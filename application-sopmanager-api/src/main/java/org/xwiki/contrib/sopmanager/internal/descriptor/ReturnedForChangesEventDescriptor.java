@@ -23,7 +23,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent;
+import org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent;
 import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
@@ -34,7 +34,7 @@ import org.xwiki.eventstream.RecordableEventDescriptor;
  */
 @Component
 @Singleton
-@Named("org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent")
+@Named("org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent")
 public class ReturnedForChangesEventDescriptor implements RecordableEventDescriptor
 {
     @Override

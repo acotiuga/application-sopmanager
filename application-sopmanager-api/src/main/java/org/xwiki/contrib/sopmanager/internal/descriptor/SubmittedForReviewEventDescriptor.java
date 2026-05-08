@@ -23,7 +23,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent;
+import org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent;
 import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
@@ -34,7 +34,7 @@ import org.xwiki.eventstream.RecordableEventDescriptor;
  */
 @Component
 @Singleton
-@Named("org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent")
+@Named("org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent")
 public class SubmittedForReviewEventDescriptor implements RecordableEventDescriptor
 {
     @Override

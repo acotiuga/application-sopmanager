@@ -17,19 +17,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.xwiki.contrib.sopmanager.internal.event;
+package org.xwiki.contrib.sopmanager.notification.event;
 
 import java.util.Set;
 
 import org.xwiki.eventstream.TargetableEvent;
 
 /**
- * Event fired when a document is submitted for approval.
+ * Event fired when a document is submitted for review.
  *
  * @version $Id$
  * @since 1.0
  */
-public class SubmittedForApprovalEvent implements TargetableEvent
+public class SubmittedForReviewEvent implements TargetableEvent
 {
     private final Set<String> target;
 
@@ -38,7 +38,7 @@ public class SubmittedForApprovalEvent implements TargetableEvent
      *
      * @param target the list of users targeted by the event.
      */
-    public SubmittedForApprovalEvent(Set<String> target)
+    public SubmittedForReviewEvent(Set<String> target)
     {
         this.target = target;
     }
@@ -52,6 +52,6 @@ public class SubmittedForApprovalEvent implements TargetableEvent
     @Override
     public boolean matches(Object otherEvent)
     {
-        return otherEvent instanceof SubmittedForApprovalEvent;
+        return otherEvent instanceof SubmittedForReviewEvent;
     }
 }

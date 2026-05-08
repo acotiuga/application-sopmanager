@@ -101,14 +101,19 @@ sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überp
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben
 sopManager.event.submittedForApprovalEvent.description=Eine Seite wurde zur Genehmigung eingereicht
 sopManager.event.approvedEvent.description=Eine Seite wurde genehmigt
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description.by.1user=wurde zur Überprüfung eingereicht
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForReviewEvent.description=hat eine Seite zur Überprüfung eingereicht
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description.by.1user=wurde zur Überarbeitung zurückgegeben
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ReturnedForChangesEvent.description=hat eine Seite zur Überarbeitung zurückgegeben
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description.by.1user=wurde zur Genehmigung eingereicht
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.SubmittedForApprovalEvent.description=hat eine Seite zur Genehmigung eingereicht
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description.by.1user=wurde genehmigt
-notifications.events.org.xwiki.contrib.sopmanager.internal.event.ApprovedEvent.description=hat eine Seite genehmigt
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=wurde zur Überprüfung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description=hat eine Seite zur Überprüfung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.by.1user=wurde zur Überarbeitung zurückgegeben
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description=hat eine Seite zur Überarbeitung zurückgegeben
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.by.1user=wurde zur Genehmigung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=hat eine Seite zur Genehmigung eingereicht
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=wurde genehmigt
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=hat eine Seite genehmigt
+
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=Dieses Dokument wurde zur Überprüfung eingereicht und erfordert Ihre Aufmerksamkeit.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=Dieses Dokument wurde mit Änderungsanforderungen zurückgesendet und erfordert Ihr Handeln.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.email=Dieses Dokument wurde zur Genehmigung eingereicht und wartet auf Ihre Entscheidung.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.email=Dieses Dokument wurde genehmigt.
 
 sopManager.defaultSOPManager.error.invalidAction=Die Aktion [{0}] kann nicht ausgeführt werden, wenn sich das Dokument im Status [{1}] befindet.
 sopManager.defaultSOPManager.error.notInWorkflow=Das Dokument ist kein Teil des SOP-Workflows.
