@@ -39,7 +39,7 @@
   <content>{{velocity}}
 {{liveData
   id="sopManagerTable"
-  properties="doc.title,status,reviewerGroups,approverGroups,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
+  properties="doc.title,status,reviewerGroups,approverGroups,releaseDate,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
   source="liveTable"
   sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
 }}
