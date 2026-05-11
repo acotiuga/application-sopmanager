@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Named;
@@ -219,6 +220,9 @@ class DefaultSOPManagerTest
             .thenReturn(pdfTemplate);
 
         when(this.serializer.serialize(revisionOwner)).thenReturn("xwiki:XWiki.RevisionOwner");
+
+        Date tomorrow = new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
+        when(this.sopObj.getDateValue("revisionPlannedDate")).thenReturn(tomorrow);
 
         String result = this.sopManager.updateDocumentReviewState("approve", this.documentReference);
 

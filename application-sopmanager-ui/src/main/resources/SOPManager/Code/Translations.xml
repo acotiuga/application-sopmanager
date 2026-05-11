@@ -85,14 +85,14 @@ sopManager.event.submittedForReviewEvent.description=A page is submitted for rev
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes
 sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval
 sopManager.event.approvedEvent.description=A page is approved
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
+notification.event.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description=submitted page for review
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.by.1user=was returned for changes
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description=returned page for changes
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.by.1user=was submitted for approval
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=submitted page for approval
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=was approved
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=approved page
+notification.event.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description.by.1user=was submitted for approval
+notification.event.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=submitted page for approval
+notification.event.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=was approved
+notification.event.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=approved page
 
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=This document has been submitted for review and requires your attention.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=This document has been returned with requested changes and requires your action.
@@ -101,16 +101,18 @@ notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEve
 
 sopManager.defaultSOPManager.error.invalidAction=Cannot perform action [{0}] when the document is in state [{1}].
 sopManager.defaultSOPManager.error.notInWorkflow=The document is not part of the SOP workflow.
+sopManager.defaultSOPManager.error.revisionPlannedDateMustBeFuture=A valid future planned revision date must be provided.
+
 sopManager.defaultPDFExportManager.saveDocument=Attach generated PDF
 sopManager.defaultPDFExportManager.success=The PDF was generated and attached as "{0}" to the current page (Attachments tab) and stored in the File Manager.
 sopManager.defaultPDFExportManager.error.attachFailed=Failed to attach the generated PDF to [{0}].
-
 sopManager.defaultPDFExportManager.error.noTemporaryFile=The PDF export did not produce a temporary PDF file.
 sopManager.defaultPDFExportManager.error.missingTemporaryFile=The PDF export finished without creating the temporary PDF file at [{0}].
 
 sopManager.defaultFileManagerStorageManager.saveDocument=Store generated PDF in the File Manager
 sopManager.defaultFileManagerStorageManager.saveFolder=Create / update File Manager folder
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to store the generated PDF in the File Manager for [{0}].
+
 sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
   </content>
   <object>

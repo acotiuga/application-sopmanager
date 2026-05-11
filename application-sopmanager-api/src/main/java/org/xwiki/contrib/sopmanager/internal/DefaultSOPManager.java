@@ -19,6 +19,8 @@
  */
 package org.xwiki.contrib.sopmanager.internal;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -338,6 +340,8 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
 
+        validateRevisionPlannedDate(sopObj);
+
         DocumentReference pdfTemplateReference = currentStringDocRefResolver.resolve(pdfTemplateString);
         pdfExportManager.exportAndAttachPDF(sopDoc, pdfTemplateReference);
 
@@ -350,6 +354,23 @@ public class DefaultSOPManager implements SOPManager
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success",
             getUserDisplayName(revisionOwnerRef));
+    }
+
+    private void validateRevisionPlannedDate(BaseObject sopObj)
+    {
+        Date revisionPlannedDate = sopObj.getDateValue("revisionPlannedDate");
+        String revisionExceptionMessage = localizationManager.getTranslationPlain(
+            "sopManager.defaultSOPManager.error.revisionPlannedDateMustBeFuture");
+        if (revisionPlannedDate == null) {
+            throw new IllegalArgumentException(revisionExceptionMessage);
+        }
+
+        LocalDate plannedDate = revisionPlannedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+
+        if (!plannedDate.isAfter(today)) {
+            throw new IllegalArgumentException(revisionExceptionMessage);
+        }
     }
 
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)

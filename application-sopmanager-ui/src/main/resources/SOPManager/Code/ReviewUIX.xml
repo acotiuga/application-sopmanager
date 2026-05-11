@@ -156,8 +156,10 @@
     <property>
       <code>require(['jquery', 'xwiki-meta', 'xwiki-events-bridge'], function ($, xm) {
   var serviceURL = new XWiki.Document('ReviewUIX', 'SOPManager.Code').getURL('get');
+
   $('#SOPReviewPagespane').on('click', '.reviewActions button', function(event) {
     event.preventDefault();
+
     var action = this.id;
     var button = $(this);
     var successBox = $('.reviewNotificationSuccess');
@@ -169,38 +171,37 @@
       'document': xm.document
     };
 
-    // Disable the clicked button for any action to prevent multiple clicks.
+    // Always reset notifications before starting a new request.
+    successBox.addClass('hidden');
+    errorBox.addClass('hidden');
+    successBox.find('.box div p').text('');
+    errorBox.find('.box div p').text('');
+
     button.prop('disabled', true);
-    // Show spinner only for the approve action.
-    if (action === 'approve') {
-      if (spinner.length) {
-        spinner.removeClass('hidden');
-      }
+
+    if (action === 'approve' &amp;&amp; spinner.length) {
+      spinner.removeClass('hidden');
     }
 
     $.post({
       url: serviceURL,
       data: data
     }).done(function (data) {
-      var successBoxContent = successBox.find('.box div p');
-      successBoxContent.text(data.message);
-      successBox.toggleClass('hidden');
-      if (errorBox.is(':visible')) {
-        errorBox.toggleClass('hidden');
-      }
+      successBox.find('.box div p').text(data.message);
+      successBox.removeClass('hidden');
+
       setTimeout(function () {
-        const r = Math.floor(Math.random() * 100);
+        var r = Math.floor(Math.random() * 100);
         window.location = window.location.pathname + '?r=' + r + '#SOPReviewPages';
       }, 5000);
     }).fail(function (xhr) {
-      var errorBoxContent = errorBox.find('.box div p');
-      errorBoxContent.text(xhr.responseJSON.message);
-      errorBox.toggleClass('hidden');
-      if (successBox.is(':visible')) {
-        successBox.toggleClass('hidden');
-      }
+      var message = xhr.responseJSON &amp;&amp; xhr.responseJSON.message
+        ? xhr.responseJSON.message
+        : 'An error occurred while updating the review state.';
+
+      errorBox.find('.box div p').text(message);
+      errorBox.removeClass('hidden');
     }).always(function () {
-      // Always hide spinner and re-enable the button.
       if (spinner.length) {
         spinner.addClass('hidden');
       }

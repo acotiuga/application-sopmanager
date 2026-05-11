@@ -246,7 +246,7 @@
       <customDisplay/>
       <dateFormat>dd/MM/yyyy</dateFormat>
       <disabled>0</disabled>
-      <emptyIsToday>1</emptyIsToday>
+      <emptyIsToday>0</emptyIsToday>
       <hint>Set the planned completion date for the next revision. Use this to indicate when the upcoming revision is expected to be finished.</hint>
       <name>revisionPlannedDate</name>
       <number>6</number>
