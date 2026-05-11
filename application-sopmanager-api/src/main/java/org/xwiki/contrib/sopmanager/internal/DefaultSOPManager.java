@@ -340,8 +340,6 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.approve.error"));
         }
 
-        sopObj.setIntValue(IS_IN_REVIEW, 0);
-
         validateRevisionPlannedDate(sopObj);
 
         DocumentReference pdfTemplateReference = currentStringDocRefResolver.resolve(pdfTemplateString);
@@ -380,7 +378,6 @@ public class DefaultSOPManager implements SOPManager
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
         sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(revisionOwner));
         sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
-        sopObj.setIntValue(IS_IN_REVIEW, 1);
         addUserEditRight(rules, revisionOwner);
 
         return localizationManager.getTranslationPlain("sopManager.reviewPage.startNewRevision.success");

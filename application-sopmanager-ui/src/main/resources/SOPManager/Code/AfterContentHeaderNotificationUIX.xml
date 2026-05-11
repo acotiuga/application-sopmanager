@@ -165,8 +165,10 @@
     <property>
       <content>{{velocity}}
 #set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
+#set ($isInReview = $xobject.getValue('isInReview') == 1)
+#set ($isApproved = $xobject.getValue('status') == 'approved')
 #set ($macroName = "info")
-#if ($xobject &amp;&amp; $isInReview)
+#if ($xobject &amp;&amp; $isInReview &amp;&amp; !$isApproved)
   #set ($action = $services.localization.render("SOPManager.Code.ControlledDocumentClass_status_$xobject.getValue('status')"))
   {{info}}
     $services.localization.render('sopManager.afterContentHeaderNotification.inReview', [$action, $xwiki.formatDate($xobject.getValue('releaseDate'), 'dd/MM/yyyy')])
