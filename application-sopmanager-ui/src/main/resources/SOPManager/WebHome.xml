@@ -46,52 +46,204 @@
 {{/velocity}}
 
 {{toc/}}
-= Controlled Document Workflow =
 
-This page explains how controlled documents move through their lifecycle, from initial drafting to approval and publication. The goal is to help users understand what each state means and what actions they can take at each step.
+= SOP Manager =
 
-== Overview ==
+SOP Manager helps teams control important procedures, policies, work instructions, and other official documents. It provides a clear review and approval workflow, keeps responsibilities visible, generates approved PDF versions, and archives the final files in File Manager.
 
-Every controlled document goes through several stages before it becomes an approved and published version. These stages are represented as *workflow states* stored in the Controlled Document Class. The system updates these states automatically based on the actions performed by authors, reviewers, and approvers.
+This page gives a practical overview for business users, reviewers, approvers, and document owners.
 
-== Workflow States ==
+== What SOP Manager is used for ==
 
-* **draft** - The document is being created or updated. Authors can freely edit the content in this state.
-* **submittedForReview** - The document has been sent to reviewers for feedback and evaluation.
-* **submittedForApproval** - The document has passed review and is waiting for final approval.
-* **approved** - The document has been formally approved and is ready for publication.
+Use SOP Manager when a document must follow a controlled lifecycle before it becomes official. Typical examples include:
 
-== How Documents Move Through the Workflow ==
+* Standard Operating Procedures (SOPs)
+* Policies and internal rules
+* Work instructions
+* Quality or compliance documents
+* Forms, templates, and controlled records
 
-When a document is added to the review process from the Information tab, it starts in the **draft** state.
+The application is designed to answer three simple questions:
 
-From there, the following transitions can occur:
+* Which documents are currently being prepared, reviewed, or approved?
+* Who is responsible for the next step?
+* Where is the approved PDF version stored?
 
-* **draft → submittedForReview**
-  The author selects **Submit for Review** to send the document to reviewers.
+== Main Dashboard ==
 
-* **submittedForReview → submittedForApproval**
-  Reviewers select **Submit for approval** when the document is ready for final approval.
+The table at the top of this page lists controlled documents and their main workflow information.
 
-* **submittedForReview → draft**
-  Reviewers select *Return for changes* if the document needs updates before it can proceed.
+Use it to quickly check:
 
-* **submittedForApproval → approved**
-  The approver selects **Approve** to finalize the document.
+* the document title
+* the current workflow status
+* the reviewer and approver groups
+* the release date and planned revision date
+* the archived PDF location in File Manager, when available
 
-* **submittedForApproval → draft**
-  The approver selects **Return for changes** to request revisions.
+This dashboard is intended as a central overview. The actual workflow actions are performed from each controlled document, using the SOP Manager tab.
 
-* **approved → draft**
-  After approval, the user generates the PDF file. Once the PDF is stored, the document returns to *draft* so the next revision cycle can begin.
+== User Roles ==
 
-== Typical User Scenario ==
+SOP Manager works with three practical responsibilities.
 
-A document usually begins in the **draft** state, where the author prepares the content. When ready, the author submits it for review, moving it to **submittedForReview**. Reviewers check the document and either forward it for approval or return it for changes.
+; Document owner
+: Prepares the document, updates the content, submits it for review, and starts new revisions when needed.
 
-If forwarded, the document enters **submittedForApproval**, where an approver evaluates it. The approver may approve the document or return it for further editing.
+; Reviewer
+: Checks whether the content is correct, complete, and ready to move forward. A reviewer can submit the document for approval or return it for changes.
 
-Once approved, the user generates the PDF file. The system stores the PDF as the official version, and the document returns to **draft** so that future updates can be prepared when needed.</content>
+; Approver
+: Performs the final validation. An approver can approve the document or return it for changes.
+
+The same person may have more than one responsibility, depending on how the workflow is configured for a document.
+
+== Workflow Statuses ==
+
+Each controlled document has one workflow status.
+
+; Draft
+: The document is being prepared or updated. The document owner can edit the content and workflow information.
+
+; Submitted for Review
+: The document is waiting for reviewers. Reviewers are expected to check the content and decide whether it can move to approval.
+
+; Submitted for Approval
+: The document has passed review and is waiting for final approval.
+
+; Approved
+: The document has been approved. During approval, the official PDF is generated, attached to the source page, and archived in File Manager.
+
+; Returned for Changes
+: The document was sent back because updates are required before it can continue.
+
+== Typical Workflow ==
+
+A common document lifecycle looks like this:
+
+1. A user adds a page to the SOP workflow.
+1. The document starts as **Draft**.
+1. The document owner prepares the content and metadata.
+1. The document owner submits the document for review.
+1. Reviewers check the document.
+1. Reviewers either submit it for approval or return it for changes.
+1. Approvers perform the final check.
+1. The document is approved, the PDF is generated, and the approved PDF is archived.
+1. A new revision can later be started when the document needs to be updated again.
+
+== Adding a Document to the Workflow ==
+
+To manage a page as a controlled document, use the page action that adds the document to the SOP workflow.
+
+After the page is added, the SOP Manager tab becomes the main place where users can see the workflow information and perform the available actions.
+
+== SOP Manager Tab ==
+
+The SOP Manager tab is available on controlled documents. It shows the workflow information and the actions available to the current user.
+
+Depending on the document status and your responsibility, you may see actions such as:
+
+* Submit for Review
+* Return for Changes
+* Submit for Approval
+* Approve
+* Start New Revision
+
+The tab also shows the relevant workflow metadata, such as reviewers, approvers, revision information, planned revision date, and PDF template selection.
+
+== Review Step ==
+
+When a document is submitted for review, the reviewer group is responsible for checking it.
+
+Reviewers should verify that:
+
+* the content is correct and complete
+* the document follows the expected structure
+* required information is filled in
+* the document is ready for final approval
+
+If the document is ready, reviewers submit it for approval. If changes are needed, reviewers return it for changes.
+
+== Approval Step ==
+
+When a document is submitted for approval, the approver group is responsible for the final decision.
+
+Before approval, the approver should check that:
+
+* the document has been reviewed
+* the planned revision date is valid and in the future
+* the selected PDF template is correct
+* the document is ready to become the official controlled version
+
+When the document is approved, SOP Manager generates the PDF and stores the official file.
+
+== PDF Generation and Templates ==
+
+During approval, SOP Manager generates a PDF version of the controlled document.
+
+The user can choose the PDF template before generating the file. The available templates include:
+
+* portrait template for regular documents
+* landscape template for wide tables or forms
+
+For wide documents, the landscape template is intended to provide a better PDF result.
+
+The generated PDF is attached to the original document. This allows users to keep the approved PDF directly on the source page.
+
+== File Manager Archive ==
+
+After approval, the generated PDF is also archived in File Manager.
+
+The File Manager archive is useful because it provides a centralized place for approved files. The archived file keeps a link back to the original SOP page, so users can move from the official PDF to the source controlled document when needed.
+
+The archived File Manager entry can also expose SOP-related tags, making it easier to organize and find approved files.
+
+== User Profile Queues ==
+
+SOP Manager adds workflow queues to user profiles so each user can see the documents that require attention.
+
+The available queues include:
+
+* documents owned by the current user
+* documents waiting for review
+* documents waiting for approval
+
+These queues help users focus on the documents where they have an active responsibility.
+
+== Notifications ==
+
+SOP Manager sends internal notifications when workflow actions are performed. These notifications help users understand when a document has moved to a new step and when their attention may be required.
+
+Typical notification moments include:
+
+* a document is submitted for review
+* a document is returned for changes
+* a document is submitted for approval
+* a document is approved
+
+== Starting a New Revision ==
+
+After a document has been approved, a new revision can be started when the content needs to be updated again.
+
+Starting a new revision moves the document back into a working state so the next version can be prepared, reviewed, approved, and archived again.
+
+== Practical Recommendations ==
+
+For a clean workflow, users should follow these practices:
+
+* keep the document content complete before submitting it for review
+* choose reviewer and approver groups carefully
+* use the planned revision date to indicate when the next review or update is expected
+* select the PDF template that best matches the document layout
+* use File Manager as the reference location for approved PDF versions
+* use profile queues to track documents waiting for your action
+
+== Summary ==
+
+SOP Manager provides a controlled document process inside XWiki. It helps teams prepare documents, route them through review and approval, generate official PDFs, and archive approved versions in File Manager.
+
+For daily use, start from the dashboard to identify documents, open the controlled page, and use the SOP Manager tab to perform the next workflow action.
+</content>
   <object>
     <name>SOPManager.WebHome</name>
     <number>0</number>
