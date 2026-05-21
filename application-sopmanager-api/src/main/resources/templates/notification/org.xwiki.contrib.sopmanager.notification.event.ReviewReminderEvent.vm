@@ -1,0 +1,84 @@
+## ---------------------------------------------------------------------------
+## See the NOTICE file distributed with this work for additional
+## information regarding copyright ownership.
+##
+## This is free software; you can redistribute it and/or modify it
+## under the terms of the GNU Lesser General Public License as
+## published by the Free Software Foundation; either version 2.1 of
+## the License, or (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+## Lesser General Public License for more details.
+##
+## You should have received a copy of the GNU Lesser General Public
+## License along with this software; if not, write to the Free
+## Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+## 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+## ---------------------------------------------------------------------------
+## Renders the Task Flow notifications.
+#template('notification/macros.vm')
+
+#macro(displaySOPManagerNotificationEventDetails $compositeEvent)
+  #set ($compositeEventType = $compositeEvent.type)
+  #define ($rows)
+    #foreach ($event in $compositeEvent.events)
+      #set ($eventBody = $jsontool.fromString($event.body))
+      #set ($reminderWeeks = $eventBody.reminderWeeks)
+      #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.singular')
+      #if ($reminderWeeks > 1)
+        #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.plural')
+      #end
+      #set ($description = $services.localization.render($translationKey, $reminderWeeks))
+      #set ($releaseDateNote = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate',
+              $xwiki.formatDate($eventBody.releaseDate, 'dd/MM/yyyy')))
+      <p>$description $releaseDateNote</p>
+    #end
+  #end
+  #displayNotificationEventDetailsSkeletons($events.size(), $rows)
+#end
+
+#macro(displaySOPManagerNotificationEvent $compositeEvent)
+  ###
+  ### Icons
+  ###
+  #set ($eventDescriptor = $services.eventstream.getDescriptorForEventType($compositeEvent.type, $xcontext.isMainWiki()))
+  #if ($eventDescriptor)
+    #set ($mainIcon = $eventDescriptor.applicationIcon)
+    #set ($smallIcon = $eventDescriptor.eventTypeIcon)
+  #else
+    #set ($mainIcon = 'bell')
+    #set ($smallIcon = '')
+  #end
+  #if ($eventDescriptor.applicationId == 'org.xwiki.platform')
+    #set ($mainIcon = $smallIcon)
+    #set ($smallIcon = '')
+  #end
+  ###
+  ### Content
+  ###
+  #define ($content)
+    #set ($compositeEventDate = $escapetool.xml($services.date.displayTimeAgo($compositeEvent.dates.get(0))))
+    #set ($document = $xwiki.getDocument($compositeEvent.document))
+    <div class="notification-page">
+      <a href="$!escapetool.xml($document.getURL())">$document.displayTitle</a>
+    </div>
+    <div class="notification-description">
+      $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.summary')
+      <div><small class="text-muted">$compositeEventDate</small></div>
+    </div>
+  #end
+  ###
+  ### Details
+  ###
+  #define($details)
+    #displaySOPManagerNotificationEventDetails($compositeEvent)
+  #end
+  ###
+  ### Display
+  ###
+  #displayNotificationEventSkeleton($mainIcon, $smallIcon, $content, $details)
+#end
+
+#displaySOPManagerNotificationEvent($event)

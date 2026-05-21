@@ -20,6 +20,7 @@
 package org.xwiki.contrib.sopmanager;
 
 import java.util.List;
+import java.util.Map;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.model.reference.DocumentReference;
@@ -68,4 +69,23 @@ public interface SOPWorkflowEventNotifier
      */
     void notifyApproved(XWikiDocument document, DocumentReference revisionOwner,
         List<DocumentReference> groupReferences);
+
+    /**
+     * Notifies that a document needs to be approved.
+     *
+     * @param document the document that has needs to be approved
+     * @param userReference the reference of the user who needs to approve the document
+     * @param eventParams
+     */
+    void notifyApproveReminder(XWikiDocument document, DocumentReference userReference,
+        Map<String, Object> eventParams);
+
+    /**
+     * Notifies that a document needs to be reviewed.
+     *
+     * @param document the document that has needs to be approved
+     * @param userReference the reference of the user who needs to approve the document
+     * @param eventParams
+     */
+    void notifyReviewReminder(XWikiDocument document, DocumentReference userReference, Map<String, Object> eventParams);
 }

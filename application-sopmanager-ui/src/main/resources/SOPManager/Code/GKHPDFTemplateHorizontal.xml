@@ -157,7 +157,7 @@
 {{html clean="false"}}
 &lt;h1&gt;$escapetool.xml($tdoc.plainTitle)&lt;/h1&gt;
 #set ($versionInfo = $escapetool.xml($services.localization.render('export.pdf.templates.default.versionInfo',
-  [$tdoc.version, '__author__', $xwiki.formatDate($tdoc.date)])))
+  [$tdoc.version, '__author__', $xwiki.formatDate($tdoc.date, 'dd/MM/yyyy')])))
 &lt;p&gt;$versionInfo.replace('__author__', "#displayUser($tdoc.authorReference {'useInlineHTML': true})")&lt;/p&gt;
 {{/html}}
 {{/velocity}}</cover>

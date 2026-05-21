@@ -21,6 +21,7 @@ package org.xwiki.contrib.sopmanager.internal;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -31,7 +32,9 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier;
+import org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent;
 import org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent;
+import org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent;
 import org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent;
 import org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent;
 import org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent;
@@ -138,5 +141,21 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
         Set<String> target = getGroupMembers(groupReferences, xcontextProvider.get());
         target.add(serializer.serialize(revisionOwner));
         observationManager.notify(new ApprovedEvent(target), EVENT_SOURCE, document);
+    }
+
+    @Override
+    public void notifyReviewReminder(XWikiDocument document, DocumentReference userReference,
+        Map<String, Object> eventParams)
+    {
+        Set<String> target = Set.of(serializer.serialize(userReference));
+        observationManager.notify(new ReviewReminderEvent(target, eventParams), EVENT_SOURCE, document);
+    }
+
+    @Override
+    public void notifyApproveReminder(XWikiDocument document, DocumentReference userReference,
+        Map<String, Object> eventParams)
+    {
+        Set<String> target = Set.of(serializer.serialize(userReference));
+        observationManager.notify(new ApproveReminderEvent(target, eventParams), EVENT_SOURCE, document);
     }
 }

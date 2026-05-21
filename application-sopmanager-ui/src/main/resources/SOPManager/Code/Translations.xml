@@ -93,6 +93,13 @@ notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedFo
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=submitted page for approval
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=was approved
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=approved page
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.singular=There is one week left to review the document.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.plural=There are {0} weeks left to review the document.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.summary=is waiting for your review.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular=There is one week left to approve the document.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.plural=There are {0} weeks left to approve the document.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary=is waiting for your approval.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate=Release date: {0}.
 
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=This document has been submitted for review and requires your attention.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=This document has been returned with requested changes and requires your action.
