@@ -108,7 +108,6 @@ notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedFo
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent.description=hat eine Seite zur Genehmigung eingereicht
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description.by.1user=wurde genehmigt
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent.description=hat eine Seite genehmigt
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.singular=Es bleibt eine Woche, um das Dokument zu überprüfen.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.plural=Es bleiben {0} Wochen, um das Dokument zu überprüfen.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.summary.singular=wartet auf Ihre Überprüfung.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular=Es bleibt eine Woche, um das Dokument zu genehmigen.

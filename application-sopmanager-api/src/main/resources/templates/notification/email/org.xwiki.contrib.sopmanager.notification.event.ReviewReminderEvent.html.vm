@@ -17,66 +17,39 @@
 ## Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 ## 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 ## ---------------------------------------------------------------------------
-## Renders the Task Flow notifications.
-#template('notification/macros.vm')
-
-#macro(displaySOPManagerNotificationEventDetails $compositeEvent)
-  #set ($compositeEventType = $compositeEvent.type)
-  #define ($rows)
+###
+### Include some macros
+###
+#template('notification/email/macros.vm')
+###
+### Override some macros
+###
+#macro(displaySOPManagerNotificationDescription $compositeEvent)
+  <div>
     #foreach ($event in $compositeEvent.events)
+      #set ($eventBody = $jsontool.fromString($event.body))
       #set ($eventBody = $jsontool.fromString($event.body))
       #set ($reminderWeeks = $eventBody.reminderWeeks)
       ## We do not need to handle singular translations as the number of weeks is expected to be from 3 to 8.
       #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.description.plural')
       #set ($description = $services.localization.render($translationKey, $reminderWeeks))
       #set ($releaseDateNote = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate',
-              $xwiki.formatDate($eventBody.releaseDate, 'dd/MM/yyyy')))
+        $xwiki.formatDate($eventBody.releaseDate, 'dd/MM/yyyy')))
       <p>$description $releaseDateNote</p>
     #end
-  #end
-  #displayNotificationEventDetailsSkeletons($events.size(), $rows)
+  </div>
 #end
-
-#macro(displaySOPManagerNotificationEvent $compositeEvent)
+#macro(displaySOPManagerNotificationRightCell $event)
   ###
-  ### Icons
+  ### Link to the Page
   ###
-  #set ($eventDescriptor = $services.eventstream.getDescriptorForEventType($compositeEvent.type, $xcontext.isMainWiki()))
-  #if ($eventDescriptor)
-    #set ($mainIcon = $eventDescriptor.applicationIcon)
-    #set ($smallIcon = $eventDescriptor.eventTypeIcon)
-  #else
-    #set ($mainIcon = 'bell')
-    #set ($smallIcon = '')
-  #end
-  #if ($eventDescriptor.applicationId == 'org.xwiki.platform')
-    #set ($mainIcon = $smallIcon)
-    #set ($smallIcon = '')
-  #end
+  #displayNotificationPage($event)
   ###
-  ### Content
+  ### Description, users and date
   ###
-  #define ($content)
-    #set ($compositeEventDate = $escapetool.xml($services.date.displayTimeAgo($compositeEvent.dates.get(0))))
-    #set ($document = $xwiki.getDocument($compositeEvent.document))
-    <div class="notification-page">
-      <a href="$!escapetool.xml($document.getURL())">$document.displayTitle</a>
-    </div>
-    <div class="notification-description">
-      $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.summary')
-      <div><small class="text-muted">$compositeEventDate</small></div>
-    </div>
-  #end
-  ###
-  ### Details
-  ###
-  #define($details)
-    #displaySOPManagerNotificationEventDetails($compositeEvent)
-  #end
-  ###
-  ### Display
-  ###
-  #displayNotificationEventSkeleton($mainIcon, $smallIcon, $content, $details)
+  #displaySOPManagerNotificationDescription($event)
 #end
-
-#displaySOPManagerNotificationEvent($event)
+###
+### Display the event
+###
+#displayNotificationSkeleton("#displayNotificationLeftCell($event)", "#displaySOPManagerNotificationRightCell($event)")
