@@ -108,7 +108,21 @@
               "configuration": {
                 "ignore": true,
                 "differences": [
-
+{
+  "code": "java.method.removed",
+  "old": "method org.apache.commons.httpclient.HttpClient com.xpn.xwiki.XWiki::getHttpClient(int, java.lang.String)",
+  "justification": "This method belongs to the XWiki platform oldcore API and was removed upstream as part of the platform API evolution. The SOP Manager extension does not use this method directly; the ignore only acknowledges the upstream XWiki baseline change when running Revapi against the updated platform version."
+},
+{
+  "code": "java.method.addedToInterface",
+  "new": "method void org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier::notifyApproveReminder(com.xpn.xwiki.doc.XWikiDocument, org.xwiki.model.reference.DocumentReference, java.util.Map<java.lang.String, java.lang.Object>)",
+  "justification": "This method was added to support scheduled SOP approval reminders. Approval reminders are now emitted as dedicated notification events for a specific document and target user, with event parameters such as release date and reminder week count. The existing notification API did not provide a dedicated approval reminder method capable of carrying these reminder-specific parameters."
+},
+{
+  "code": "java.method.addedToInterface",
+  "new": "method void org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier::notifyReviewReminder(com.xpn.xwiki.doc.XWikiDocument, org.xwiki.model.reference.DocumentReference, java.util.Map<java.lang.String, java.lang.Object>)",
+  "justification": "This method was added to support scheduled SOP review reminders. Review reminders are now emitted as dedicated notification events for a specific document and target user, with event parameters such as release date and reminder week count. The existing notification API did not provide a dedicated review reminder method capable of carrying these reminder-specific parameters."
+}
                 ]
               }
             }
