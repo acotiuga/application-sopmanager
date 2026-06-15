@@ -166,17 +166,94 @@
       <content>{{velocity}}
 = $services.localization.render('sopManager.name') =
 #set ($currentUser = $doc.fullName)
+#set ($currentUserGroups = $services.user.group.getGroupsFromAllWikis($xcontext.userReference))
+#set ($currentUserGroupValues = [])
+#foreach ($group in $currentUserGroups)
+  ## Use local reference format, usually XWiki.GroupName, because list-of-groups properties often store compact values.
+  #set ($discard = $currentUserGroupValues.add($services.model.serialize($group, 'local')))
+#end
 #set ($properties = 'doc.title,status,revisionOwner,reviewerGroups,approverGroups,revisionPlannedDate,pDFSecondaryTargetLocation,tags')
 #set ($sourceParameters = 'className=SOPManager.Code.ControlledDocumentClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage')
 #set ($ownDocs = $services.query.xwql(
   'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.revisionOwner = :currentUser'
 ).bindValue('currentUser', $currentUser).setLimit(1).execute())
-#set ($reviewDocs = $services.query.xwql(
-  'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.reviewerGroups = :currentUser'
-).bindValue('currentUser', $currentUser).setLimit(1).execute())
-#set ($approveDocs = $services.query.xwql(
+#set ($reviewDocs = [])
+#set ($approveDocs = [])
+#if (!$currentUserGroupValues.isEmpty())
+  #set ($reviewConditions = [])
+  #foreach ($group in $currentUserGroupValues)
+    #set ($discard = $reviewConditions.add(
+      "concat(', ', reviewerGroupsProp.value, ', ') like :reviewGroup${foreach.index}"
+    ))
+  #end
+    #set ($reviewHQL = "
+    select distinct doc.fullName, doc.title
+    from XWikiDocument as doc,
+         BaseObject as obj,
+         LargeStringProperty as reviewerGroupsProp,
+         StringProperty as statusProp,
+         IntegerProperty as isInReviewProp
+    where obj.name = doc.fullName
+      and obj.className = 'SOPManager.Code.ControlledDocumentClass'
+
+      and obj.id = reviewerGroupsProp.id.id
+      and reviewerGroupsProp.id.name = 'reviewerGroups'
+
+      and obj.id = statusProp.id.id
+      and statusProp.id.name = 'status'
+      and statusProp.value = 'submittedForReview'
+
+      and obj.id = isInReviewProp.id.id
+      and isInReviewProp.id.name = 'isInReview'
+      and isInReviewProp.value = 1
+
+      and (" + $stringtool.join($reviewConditions, " or ") + ")
+  ")
+  #set ($reviewQuery = $services.query.hql($reviewHQL))
+  #foreach ($group in $currentUserGroupValues)
+    #set ($groupPattern = "%, $group, %")
+    #set ($discard = $reviewQuery.bindValue("reviewGroup${foreach.index}", $groupPattern))
+  #end
+  #set ($reviewDocs = $reviewQuery.execute())
+  #set ($approveConditions = [])
+  #foreach ($group in $currentUserGroupValues)
+    #set ($discard = $approveConditions.add(
+      "concat(', ', approverGroupsProp.value, ', ') like :approveGroup${foreach.index}"
+    ))
+  #end
+  #set ($approveHQL = "
+    select distinct doc.fullName, doc.title
+    from XWikiDocument as doc,
+         BaseObject as obj,
+         LargeStringProperty as approverGroupsProp,
+         StringProperty as statusProp,
+         IntegerProperty as isInReviewProp
+    where obj.name = doc.fullName
+      and obj.className = 'SOPManager.Code.ControlledDocumentClass'
+
+      and obj.id = approverGroupsProp.id.id
+      and approverGroupsProp.id.name = 'approverGroups'
+
+      and obj.id = statusProp.id.id
+      and statusProp.id.name = 'status'
+      and statusProp.value = 'submittedForApproval'
+
+      and obj.id = isInReviewProp.id.id
+      and isInReviewProp.id.name = 'isInReview'
+      and isInReviewProp.value = 1
+
+      and (" + $stringtool.join($approveConditions, " or ") + ")
+  ")
+  #set ($approveQuery = $services.query.hql($approveHQL))
+  #foreach ($group in $currentUserGroupValues)
+    #set ($groupPattern = "%, $group, %")
+    #set ($discard = $approveQuery.bindValue("approveGroup${foreach.index}", $groupPattern))
+  #end
+  #set ($approveDocs = $approveQuery.execute())
+#end
+#*#set ($approveDocs = $services.query.xwql(
   'from doc.object(SOPManager.Code.ControlledDocumentClass) obj where obj.approverGroups = :currentUser'
-).bindValue('currentUser', $currentUser).setLimit(1).execute())
+).bindValue('currentUser', $currentUser).setLimit(1).execute())*#
 #if ($ownDocs.size() &gt; 0 || $reviewDocs.size() &gt; 0 || $approveDocs.size() &gt; 0)
   #if ($ownDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.ownedPages') ==
@@ -205,7 +282,10 @@
 
   #if ($reviewDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.pagesToReview') ==
-    {{liveData
+    #foreach ($reviewDoc in $reviewDocs)
+      [[$reviewDoc[1]&gt;&gt;$reviewDoc[0]]]
+    #end
+    #*{{liveData
       id="reviewerTable"
       properties="$properties"
       source="liveTable"
@@ -223,14 +303,17 @@
           ]
         }
       }
-    {{/liveData}}
+    {{/liveData}}*#
   #else
     {{info}}$services.localization.render('sopManager.userProfile.pagesToReview.noResults'){{/info}}
   #end
 
   #if ($approveDocs.size() &gt; 0)
     == $services.localization.render('sopManager.userProfile.pagesToApprove') ==
-    {{liveData
+    #foreach ($approveDoc in $approveDocs)
+      [[$approveDoc[1]&gt;&gt;$approveDoc[0]]]
+    #end
+    #*{{liveData
       id="approvalTable"
       properties="$properties"
       source="liveTable"
@@ -248,7 +331,7 @@
           ]
         }
       }
-    {{/liveData}}
+    {{/liveData}}*#
   #else
     {{info}}$services.localization.render('sopManager.userProfile.pagesToApprove.noResults'){{/info}}
   #end
