@@ -149,7 +149,7 @@
       <contextUser>XWiki.XWikiGuest</contextUser>
     </property>
     <property>
-      <cron>0 0 * * * ?</cron>
+      <cron>0 0 9 * * ?</cron>
     </property>
     <property>
       <jobClass>org.xwiki.contrib.sopmanager.internal.job.SOPReminderSchedulerJob</jobClass>
@@ -166,7 +166,7 @@ Approvers will be notified 2 weeks, 1 week before the revision planned date.}}}
       <script/>
     </property>
     <property>
-      <status/>
+      <status>Normal</status>
     </property>
   </object>
 </xwikidoc>
