@@ -75,6 +75,10 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String REVIEWER_GROUPS = "reviewerGroups";
 
+    private static final String REVIEWER_USER = "reviewerUser";
+
+    private static final String APPROVER_USER = "approverUser";
+
     private static final String XWIKI = "XWiki";
 
     private static final LocalDocumentReference RIGHTS_CLASS_REF =
@@ -161,6 +165,8 @@ public class DefaultSOPManager implements SOPManager
                 sopObj.setIntValue(REVISION_NUMBER, 1);
                 sopObj.setStringValue(STATUS, DRAFT);
                 sopObj.setIntValue(IS_IN_REVIEW, 1);
+                sopObj.setLargeStringValue(REVIEWER_USER, "");
+                sopObj.setLargeStringValue(APPROVER_USER, "");
                 List<ReadableSecurityRule> rules = new ArrayList<>();
                 addUserEditRight(rules, context.getUserReference());
 
@@ -281,6 +287,9 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.submitForReview.error"));
         }
 
+        sopObj.setLargeStringValue(REVIEWER_USER, "");
+        sopObj.setLargeStringValue(APPROVER_USER, "");
+
         List<DocumentReference> reviewerGroupsRef = resolveDocumentReferences(reviewerGroupsString);
 
         addGroupsEditRight(rules, reviewerGroupsRef);
@@ -318,6 +327,12 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.submitForApproval.error"));
         }
 
+        DocumentReference reviewerUser = xcontextProvider.get().getUserReference();
+        sopObj.setLargeStringValue(REVIEWER_USER, compactSerializer.serialize(reviewerUser));
+        // Clearing approverUser here prevents an old approver from a previous attempt or revision from remaining on
+        // the object.
+        sopObj.setLargeStringValue(APPROVER_USER, "");
+
         List<DocumentReference> approverGroupRefs = resolveDocumentReferences(approverGroupsString);
 
         addGroupsEditRight(rules, approverGroupRefs);
@@ -328,8 +343,7 @@ public class DefaultSOPManager implements SOPManager
             approverGroupsString);
     }
 
-    private String handleApprove(XWikiDocument sopDoc, BaseObject sopObj,
-        List<ReadableSecurityRule> rules)
+    private String handleApprove(XWikiDocument sopDoc, BaseObject sopObj, List<ReadableSecurityRule> rules)
         throws XWikiException
     {
         String revisionOwnerString = sopObj.getLargeStringValue(REVISION_OWNER);
@@ -341,6 +355,16 @@ public class DefaultSOPManager implements SOPManager
         }
 
         validateRevisionPlannedDate(sopObj);
+
+        XWikiContext context = xcontextProvider.get();
+
+        DocumentReference approverUser = context.getUserReference();
+        sopObj.setLargeStringValue(APPROVER_USER, compactSerializer.serialize(approverUser));
+
+        //The PDF export loads the document through the export request, so the approver must be persisted before the
+        // PDF is generated.
+        context.getWiki()
+            .saveDocument(sopDoc, localizationManager.getTranslationPlain("sopManager.reviewPage.approve"), context);
 
         DocumentReference pdfTemplateReference = currentStringDocRefResolver.resolve(pdfTemplateString);
         pdfExportManager.exportAndAttachPDF(sopDoc, pdfTemplateReference);
@@ -377,6 +401,8 @@ public class DefaultSOPManager implements SOPManager
     {
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
         sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(revisionOwner));
+        sopObj.setLargeStringValue(REVIEWER_USER, "");
+        sopObj.setLargeStringValue(APPROVER_USER, "");
         sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
         addUserEditRight(rules, revisionOwner);
 

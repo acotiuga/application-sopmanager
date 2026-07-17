@@ -53,6 +53,7 @@ sopManager.reviewPage.returnForChanges.label=Return for changes
 sopManager.reviewPage.returnForChanges.title=Return for changes
 sopManager.reviewPage.returnForChanges.error=Please select the revision owner before returning the current document for changes.
 sopManager.reviewPage.returnForChanges.success=The document was returned for changes and « {0} » will receive soon a notification.
+sopManager.reviewPage.approve=Approve.
 sopManager.reviewPage.approve.label=Approve
 sopManager.reviewPage.approve.title=Approve
 sopManager.reviewPage.approve.error=Please ensure that the revision owner and the review user are assigned, so they can be notified about this action.

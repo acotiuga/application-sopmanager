@@ -64,7 +64,7 @@
         <name>approverGroups</name>
         <number>3</number>
         <picker>1</picker>
-        <prettyName>Approver users</prettyName>
+        <prettyName>Approver groups</prettyName>
         <relationalStorage>1</relationalStorage>
         <separator> </separator>
         <separators/>
@@ -76,6 +76,31 @@
         <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.GroupsClass</classType>
       </approverGroups>
+      <approverUser>
+        <cache>0</cache>
+        <customDisplay/>
+        <defaultValue/>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <freeText/>
+        <hint>The user that approved the document.</hint>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>approverUser</name>
+        <number>13</number>
+        <picker>1</picker>
+        <prettyName>Approved by</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators/>
+        <size>20</size>
+        <sort/>
+        <unmodifiable>0</unmodifiable>
+        <usesList>0</usesList>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
+      </approverUser>
       <isInReview>
         <customDisplay/>
         <defaultValue/>
@@ -84,7 +109,7 @@
         <displayType/>
         <hint/>
         <name>isInReview</name>
-        <number>12</number>
+        <number>11</number>
         <prettyName>Is in review</prettyName>
         <unmodifiable>0</unmodifiable>
         <validationMessage/>
@@ -132,7 +157,7 @@
         <largeStorage>0</largeStorage>
         <multiSelect>0</multiSelect>
         <name>pdfTemplate</name>
-        <number>11</number>
+        <number>10</number>
         <picker>1</picker>
         <prettyName>PDF Template</prettyName>
         <relationalStorage>0</relationalStorage>
@@ -176,7 +201,7 @@
         <name>reviewerGroups</name>
         <number>2</number>
         <picker>1</picker>
-        <prettyName>Reviewer users</prettyName>
+        <prettyName>Reviewer groups</prettyName>
         <relationalStorage>1</relationalStorage>
         <separator> </separator>
         <separators/>
@@ -188,6 +213,31 @@
         <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.GroupsClass</classType>
       </reviewerGroups>
+      <reviewerUser>
+        <cache>0</cache>
+        <customDisplay/>
+        <defaultValue/>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <freeText/>
+        <hint>The user that reviewed the document.</hint>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>reviewerUser</name>
+        <number>12</number>
+        <picker>1</picker>
+        <prettyName>Reviewed by</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators/>
+        <size>20</size>
+        <sort/>
+        <unmodifiable>0</unmodifiable>
+        <usesList>0</usesList>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
+      </reviewerUser>
       <revisionId>
         <customDisplay/>
         <disabled>0</disabled>
@@ -227,7 +277,7 @@
         <largeStorage>0</largeStorage>
         <multiSelect>0</multiSelect>
         <name>revisionOwner</name>
-        <number>10</number>
+        <number>9</number>
         <picker>1</picker>
         <prettyName>Revision owner</prettyName>
         <relationalStorage>0</relationalStorage>
@@ -287,6 +337,9 @@
       <approverGroups/>
     </property>
     <property>
+      <approverUser/>
+    </property>
+    <property>
       <isInReview/>
     </property>
     <property>
@@ -300,6 +353,9 @@
     </property>
     <property>
       <reviewerGroups/>
+    </property>
+    <property>
+      <reviewerUser/>
     </property>
     <property>
       <revisionId/>

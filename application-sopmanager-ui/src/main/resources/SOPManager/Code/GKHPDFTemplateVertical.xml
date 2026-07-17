@@ -164,109 +164,83 @@
     </property>
     <property>
       <footer>{{velocity}}
-#macro (extractDocumentNames $serializedRefs $output)
-  #set ($names = [])
-  #if ("$!serializedRefs" != '')
-    #foreach ($serializedRef in $serializedRefs.split(','))
-      #set ($serializedRef = $serializedRef.trim())
-      #if ("$!serializedRef" != '')
-        #set ($groupDoc = $xwiki.getDocument($serializedRef))
-        #set ($groupWiki = $groupDoc.wiki)
-        #set ($groupObjects = $groupDoc.getObjects('XWiki.XWikiGroups'))
-        #if ($groupObjects)
-          #foreach ($groupObj in $groupObjects)
-            #if ($groupObj)
-              #set ($member = $groupObj.getValue('member'))
-              #if ("$!member" != '')
-                #set ($member = "${groupWiki}:$member")
-                #set ($memberDoc = $xwiki.getDocument($member))
-                #set ($userObj = $memberDoc.getObject('XWiki.XWikiUsers'))
-                #if ($userObj)
-                  #set ($firstName = '')
-                  #set ($lastName = '')
-                  #set ($userFullName = '')
-                  #set ($firstNameValue = $userObj.getValue('first_name'))
-                  #if ("$!firstNameValue" != '')
-                    #set ($firstName = "$firstNameValue")
-                  #end
-                  #set ($lastNameValue = $userObj.getValue('last_name'))
-                  #if ("$!lastNameValue" != '')
-                    #set ($lastName = "$lastNameValue")
-                  #end
-                  #if ("$!firstName" != '')
-                    #set ($userFullName = "$firstName")
-                  #end
-                  #if ("$!lastName" != '')
-                    #if ("$!userFullName" != '')
-                      #set ($userFullName = "$userFullName $lastName")
-                    #else
-                      #set ($userFullName = "$lastName")
-                    #end
-                  #end
-                  #if ("$!userFullName" == '')
-                    #set ($userFullName = "$!memberDoc.title")
-                  #end
-                  #if ("$!userFullName" == '')
-                    #set ($userFullName = "$member")
-                  #end
-                  #if (!$names.contains($userFullName))
-                    #set ($discard = $names.add($userFullName))
-                  #end
-                #end
-              #end
-            #end
-          #end
-        #end
-      #end
-    #end 
+#macro (extractDocumentName $serializedRef $output)
+  #set ($name = '')
+  #if ("$!serializedRef" != '')
+    #set ($userDoc = $xwiki.getDocument($serializedRef))
+    #set ($userObj = $userDoc.getObject('XWiki.XWikiUsers'))
+    #if ($userObj)
+      #set ($firstName = $!userObj.getValue('first_name'))
+      #set ($lastName = $!userObj.getValue('last_name'))
+      #set ($name = "$!firstName $!lastName")
+      #set ($name = $name.trim())
+    #end
+    #if ("$!name" == '')
+      #set ($name = $serializedRef)
+    #end
   #end
-  #set ($discard = $output.add($stringtool.join($names, ', ')))
+  #set ($output = $name)
 #end
+
 #set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
 #set ($xclass = $controlledObj.xWikiClass)
+
 #set ($releaseDate = '')
-#set ($approverGroups = '')
-#set ($reviewerGroups = '')
+#set ($approverUser = '')
+#set ($reviewerUser = '')
 #set ($revisionNumber = '')
 #set ($plannedRevisionDate = '')
+
 #if ($controlledObj)
   #set ($releaseDateValue = $controlledObj.getValue('releaseDate'))
   #if ($releaseDateValue)
     #set ($releaseDate = $datetool.format('dd.MM.yyyy', $releaseDateValue))
   #end
-  #set ($approverGroups = $!controlledObj.getValue('approverGroups'))
-  #set ($reviewerGroups = $!controlledObj.getValue('reviewerGroups'))
+
+  #set ($approverUser = $!controlledObj.getValue('approverUser'))
+  #set ($reviewerUser = $!controlledObj.getValue('reviewerUser'))
   #set ($revisionNumber = $!controlledObj.getValue('revisionNumber'))
+
   #set ($plannedRevisionDateValue = $controlledObj.getValue('revisionPlannedDate'))
   #if ($plannedRevisionDateValue)
     #set ($plannedRevisionDate = $datetool.format('dd.MM.yyyy', $plannedRevisionDateValue))
   #end
 #end
-#set ($fieldsToDisplay = ['releaseDate', 'approverGroups', 'reviewerGroups', 'revisionNumber', 'revisionPlannedDate'])
-#set ($approverGroupsOutput = [])
-#set ($reviewerGroupsOutput = [])
-#extractDocumentNames($approverGroups $approverGroupsOutput)
-#extractDocumentNames($reviewerGroups $reviewerGroupsOutput)
-#set ($approverGroupsString = $approverGroupsOutput.get(0))
-#set ($reviewerGroupsString = $reviewerGroupsOutput.get(0))
+
+#set ($fieldsToDisplay = [
+  'releaseDate',
+  'approverUser',
+  'reviewerUser',
+  'revisionNumber',
+  'revisionPlannedDate'
+])
+
+#set ($approverFullName = '')
+#set ($reviewerFullName = '')
+#extractDocumentName($approverUser $approverFullName)
+#extractDocumentName($reviewerUser $reviewerFullName)
+
 {{html clean="false"}}
 &lt;table class="sop-pdf-footer-table"&gt;
   &lt;tr&gt;
-    #foreach ($property in $xclass.properties)
-      #if ($fieldsToDisplay.contains($property.name))
-        &lt;th&gt;$escapetool.xml($property.translatedPrettyName)&lt;/th&gt;
+    #foreach ($fieldName in $fieldsToDisplay)
+      #foreach ($property in $xclass.properties)
+        #if ($property.name == $fieldName)
+          &lt;th&gt;$escapetool.xml($property.translatedPrettyName)&lt;/th&gt;
+        #end
       #end
     #end
     &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.pdfExport.page'))&lt;/th&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
     &lt;td&gt;$escapetool.xml($releaseDate)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($approverGroupsString)&lt;/td&gt;
-    &lt;td&gt;$escapetool.xml($reviewerGroupsString)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($approverFullName)&lt;/td&gt;
+    &lt;td&gt;$escapetool.xml($reviewerFullName)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($revisionNumber)&lt;/td&gt;
     &lt;td&gt;$escapetool.xml($plannedRevisionDate)&lt;/td&gt;
     &lt;td&gt;
-      $escapetool.xml($services.localization.render('sopManager.pdfExport.page')) &lt;span class="pdf-page-number"&gt;&lt;/span&gt; / &lt;span class="pdf-page-count"&gt;&lt;/span&gt;
+      $escapetool.xml($services.localization.render('sopManager.pdfExport.page'))
+      &lt;span class="pdf-page-number"&gt;&lt;/span&gt; / &lt;span class="pdf-page-count"&gt;&lt;/span&gt;
     &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/table&gt;
