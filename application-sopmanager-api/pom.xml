@@ -103,30 +103,441 @@
         <configuration>
           <analysisConfiguration><![CDATA[
           [
-            {
-              "extension": "revapi.differences",
-              "configuration": {
-                "ignore": true,
-                "differences": [
-{
-  "code": "java.method.removed",
-  "old": "method org.apache.commons.httpclient.HttpClient com.xpn.xwiki.XWiki::getHttpClient(int, java.lang.String)",
-  "justification": "This method belongs to the XWiki platform oldcore API and was removed upstream as part of the platform API evolution. The SOP Manager extension does not use this method directly; the ignore only acknowledges the upstream XWiki baseline change when running Revapi against the updated platform version."
-},
-{
-  "code": "java.method.addedToInterface",
-  "new": "method void org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier::notifyApproveReminder(com.xpn.xwiki.doc.XWikiDocument, org.xwiki.model.reference.DocumentReference, java.util.Map<java.lang.String, java.lang.Object>)",
-  "justification": "This method was added to support scheduled SOP approval reminders. Approval reminders are now emitted as dedicated notification events for a specific document and target user, with event parameters such as release date and reminder week count. The existing notification API did not provide a dedicated approval reminder method capable of carrying these reminder-specific parameters."
-},
-{
-  "code": "java.method.addedToInterface",
-  "new": "method void org.xwiki.contrib.sopmanager.SOPWorkflowEventNotifier::notifyReviewReminder(com.xpn.xwiki.doc.XWikiDocument, org.xwiki.model.reference.DocumentReference, java.util.Map<java.lang.String, java.lang.Object>)",
-  "justification": "This method was added to support scheduled SOP review reminders. Review reminders are now emitted as dedicated notification events for a specific document and target user, with event parameters such as release date and reminder week count. The existing notification API did not provide a dedicated review reminder method capable of carrying these reminder-specific parameters."
-}
-                ]
-              }
-            }
-          ]
+  {
+    "extension": "revapi.differences",
+    "configuration": {
+      "ignore": true,
+      "justification": "These methods are inherited from the Servlet API through XWikiRequest and XWikiResponse and do not represent intentional new application APIs.",
+      "differences": [
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::authenticate(javax.servlet.http.HttpServletResponse) throws java.io.IOException, javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::changeSessionId() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.AsyncContext javax.servlet.ServletRequest::getAsyncContext() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.Object javax.servlet.ServletRequest::getAttribute(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Enumeration<java.lang.String> javax.servlet.ServletRequest::getAttributeNames() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getAuthType() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getCharacterEncoding() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.ServletRequest::getContentLength() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method long javax.servlet.ServletRequest::getContentLengthLong() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getContentType() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getContextPath() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.http.Cookie[] javax.servlet.http.HttpServletRequest::getCookies() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method long javax.servlet.http.HttpServletRequest::getDateHeader(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.DispatcherType javax.servlet.ServletRequest::getDispatcherType() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getHeader(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Enumeration<java.lang.String> javax.servlet.http.HttpServletRequest::getHeaderNames() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Enumeration<java.lang.String> javax.servlet.http.HttpServletRequest::getHeaders(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.ServletInputStream javax.servlet.ServletRequest::getInputStream() throws java.io.IOException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.http.HttpServletRequest::getIntHeader(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getLocalAddr() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getLocalName() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.ServletRequest::getLocalPort() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Locale javax.servlet.ServletRequest::getLocale() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Enumeration<java.util.Locale> javax.servlet.ServletRequest::getLocales() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getMethod() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getParameter(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Map<java.lang.String, java.lang.String[]> javax.servlet.ServletRequest::getParameterMap() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Enumeration<java.lang.String> javax.servlet.ServletRequest::getParameterNames() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String[] javax.servlet.ServletRequest::getParameterValues(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.http.Part javax.servlet.http.HttpServletRequest::getPart(java.lang.String) throws java.io.IOException, javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Collection<javax.servlet.http.Part> javax.servlet.http.HttpServletRequest::getParts() throws java.io.IOException, javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getPathInfo() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getPathTranslated() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getProtocol() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getQueryString() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.io.BufferedReader javax.servlet.ServletRequest::getReader() throws java.io.IOException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getRealPath(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getRemoteAddr() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getRemoteHost() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.ServletRequest::getRemotePort() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getRemoteUser() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.RequestDispatcher javax.servlet.ServletRequest::getRequestDispatcher(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getRequestURI() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.StringBuffer javax.servlet.http.HttpServletRequest::getRequestURL() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getRequestedSessionId() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getScheme() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletRequest::getServerName() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.ServletRequest::getServerPort() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.ServletContext javax.servlet.ServletRequest::getServletContext() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletRequest::getServletPath() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.http.HttpSession javax.servlet.http.HttpServletRequest::getSession() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.http.HttpSession javax.servlet.http.HttpServletRequest::getSession(boolean) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.security.Principal javax.servlet.http.HttpServletRequest::getUserPrincipal() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.ServletRequest::isAsyncStarted() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.ServletRequest::isAsyncSupported() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::isRequestedSessionIdFromCookie() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::isRequestedSessionIdFromURL() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::isRequestedSessionIdFromUrl() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::isRequestedSessionIdValid() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.ServletRequest::isSecure() @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletRequest::isUserInRole(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletRequest::login(java.lang.String, java.lang.String) throws javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletRequest::logout() throws javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletRequest::removeAttribute(java.lang.String) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletRequest::setAttribute(java.lang.String, java.lang.Object) @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletRequest::setCharacterEncoding(java.lang.String) throws java.io.UnsupportedEncodingException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.AsyncContext javax.servlet.ServletRequest::startAsync() throws java.lang.IllegalStateException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.AsyncContext javax.servlet.ServletRequest::startAsync(javax.servlet.ServletRequest, javax.servlet.ServletResponse) throws java.lang.IllegalStateException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method <T extends javax.servlet.http.HttpUpgradeHandler> T javax.servlet.http.HttpServletRequest::upgrade(java.lang.Class<T>) throws java.io.IOException, javax.servlet.ServletException @ com.xpn.xwiki.web.XWikiRequest"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::addCookie(javax.servlet.http.Cookie) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::addDateHeader(java.lang.String, long) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::addHeader(java.lang.String, java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::addIntHeader(java.lang.String, int) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.http.HttpServletResponse::containsHeader(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletResponse::encodeRedirectURL(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletResponse::encodeRedirectUrl(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletResponse::encodeURL(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletResponse::encodeUrl(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::flushBuffer() throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.ServletResponse::getBufferSize() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletResponse::getCharacterEncoding() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.ServletResponse::getContentType() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.lang.String javax.servlet.http.HttpServletResponse::getHeader(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Collection<java.lang.String> javax.servlet.http.HttpServletResponse::getHeaderNames() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Collection<java.lang.String> javax.servlet.http.HttpServletResponse::getHeaders(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.util.Locale javax.servlet.ServletResponse::getLocale() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method javax.servlet.ServletOutputStream javax.servlet.ServletResponse::getOutputStream() throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method int javax.servlet.http.HttpServletResponse::getStatus() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method java.io.PrintWriter javax.servlet.ServletResponse::getWriter() throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method boolean javax.servlet.ServletResponse::isCommitted() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::reset() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::resetBuffer() @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::sendError(int) throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::sendError(int, java.lang.String) throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::sendRedirect(java.lang.String) throws java.io.IOException @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setBufferSize(int) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setCharacterEncoding(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setContentLength(int) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setContentLengthLong(long) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setContentType(java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::setDateHeader(java.lang.String, long) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::setHeader(java.lang.String, java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::setIntHeader(java.lang.String, int) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.ServletResponse::setLocale(java.util.Locale) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::setStatus(int) @ com.xpn.xwiki.web.XWikiResponse"
+        },
+        {
+          "code": "java.method.addedToInterface",
+          "new": "method void javax.servlet.http.HttpServletResponse::setStatus(int, java.lang.String) @ com.xpn.xwiki.web.XWikiResponse"
+        }
+      ]
+    }
+  }
+]
+
         ]]></analysisConfiguration>
         </configuration>
       </plugin>
