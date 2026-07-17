@@ -304,7 +304,6 @@ For daily use, start from the dashboard to identify documents, open the controll
         <name>content</name>
         <number>1</number>
         <prettyName>Executed Content</prettyName>
-        <restricted>0</restricted>
         <rows>25</rows>
         <size>120</size>
         <unmodifiable>0</unmodifiable>
@@ -335,7 +334,6 @@ For daily use, start from the dashboard to identify documents, open the controll
         <name>parameters</name>
         <number>7</number>
         <prettyName>Extension Parameters</prettyName>
-        <restricted>0</restricted>
         <rows>10</rows>
         <size>40</size>
         <unmodifiable>0</unmodifiable>
