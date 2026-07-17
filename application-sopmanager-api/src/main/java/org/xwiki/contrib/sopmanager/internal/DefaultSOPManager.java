@@ -159,7 +159,7 @@ public class DefaultSOPManager implements SOPManager
             }
             boolean isInReview = sopObj.getIntValue(IS_IN_REVIEW) == 1;
             if (!isInReview) {
-                sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(context.getUserReference()));
+                sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
                 sopObj.setIntValue(REVISION_NUMBER, 1);
@@ -240,7 +240,7 @@ public class DefaultSOPManager implements SOPManager
                 requireStatus(action, currentStatus, DRAFT, RETURNED_FOR_CHANGES);
                 break;
             case RETURN_FOR_CHANGES:
-                requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW, SUBMITTED_FOR_APPROVAL, APPROVED);
+                requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW, SUBMITTED_FOR_APPROVAL);
                 break;
             case SUBMIT_FOR_APPROVAL:
                 requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW);
@@ -290,7 +290,8 @@ public class DefaultSOPManager implements SOPManager
         sopObj.setLargeStringValue(REVIEWER_USER, "");
         sopObj.setLargeStringValue(APPROVER_USER, "");
 
-        List<DocumentReference> reviewerGroupsRef = resolveDocumentReferences(reviewerGroupsString);
+        List<DocumentReference> reviewerGroupsRef =
+            resolveDocumentReferences(reviewerGroupsString, sopDoc.getDocumentReference());
 
         addGroupsEditRight(rules, reviewerGroupsRef);
 
@@ -309,7 +310,8 @@ public class DefaultSOPManager implements SOPManager
                 localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.error"));
         }
 
-        DocumentReference revisionOwner = currentStringDocRefResolver.resolve(revisionOwnerString);
+        DocumentReference revisionOwner =
+            currentStringDocRefResolver.resolve(revisionOwnerString, sopDoc.getDocumentReference());
         addUserEditRight(rules, revisionOwner);
 
         workflowEventNotifier.notifyReturnedForChanges(sopDoc, revisionOwner);
@@ -328,12 +330,13 @@ public class DefaultSOPManager implements SOPManager
         }
 
         DocumentReference reviewerUser = xcontextProvider.get().getUserReference();
-        sopObj.setLargeStringValue(REVIEWER_USER, compactSerializer.serialize(reviewerUser));
+        sopObj.setLargeStringValue(REVIEWER_USER, serializer.serialize(reviewerUser));
         // Clearing approverUser here prevents an old approver from a previous attempt or revision from remaining on
         // the object.
         sopObj.setLargeStringValue(APPROVER_USER, "");
 
-        List<DocumentReference> approverGroupRefs = resolveDocumentReferences(approverGroupsString);
+        List<DocumentReference> approverGroupRefs = resolveDocumentReferences(approverGroupsString,
+            sopDoc.getDocumentReference());
 
         addGroupsEditRight(rules, approverGroupRefs);
 
@@ -359,18 +362,21 @@ public class DefaultSOPManager implements SOPManager
         XWikiContext context = xcontextProvider.get();
 
         DocumentReference approverUser = context.getUserReference();
-        sopObj.setLargeStringValue(APPROVER_USER, compactSerializer.serialize(approverUser));
+        sopObj.setLargeStringValue(APPROVER_USER, serializer.serialize(approverUser));
 
         //The PDF export loads the document through the export request, so the approver must be persisted before the
         // PDF is generated.
         context.getWiki()
             .saveDocument(sopDoc, localizationManager.getTranslationPlain("sopManager.reviewPage.approve"), context);
 
-        DocumentReference pdfTemplateReference = currentStringDocRefResolver.resolve(pdfTemplateString);
+        DocumentReference pdfTemplateReference =
+            currentStringDocRefResolver.resolve(pdfTemplateString, sopDoc.getDocumentReference());
         pdfExportManager.exportAndAttachPDF(sopDoc, pdfTemplateReference);
 
-        DocumentReference revisionOwnerRef = currentStringDocRefResolver.resolve(revisionOwnerString);
-        List<DocumentReference> reviewerGroupsRef = resolveDocumentReferences(reviewerGroupsString);
+        DocumentReference revisionOwnerRef =
+            currentStringDocRefResolver.resolve(revisionOwnerString, sopDoc.getDocumentReference());
+        List<DocumentReference> reviewerGroupsRef = resolveDocumentReferences(reviewerGroupsString,
+            sopDoc.getDocumentReference());
 
         addUserEditRight(rules, revisionOwnerRef);
 
@@ -400,7 +406,7 @@ public class DefaultSOPManager implements SOPManager
     private String handleStartNewRevision(BaseObject sopObj, List<ReadableSecurityRule> rules)
     {
         DocumentReference revisionOwner = xcontextProvider.get().getUserReference();
-        sopObj.setLargeStringValue(REVISION_OWNER, compactSerializer.serialize(revisionOwner));
+        sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(revisionOwner));
         sopObj.setLargeStringValue(REVIEWER_USER, "");
         sopObj.setLargeStringValue(APPROVER_USER, "");
         sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
@@ -445,7 +451,8 @@ public class DefaultSOPManager implements SOPManager
         rules.add(rightsWriter.createRule(groupsReferences, null, List.of(Right.EDIT), RuleState.ALLOW));
     }
 
-    private List<DocumentReference> resolveDocumentReferences(String serializedReferences)
+    private List<DocumentReference> resolveDocumentReferences(String serializedReferences,
+        DocumentReference documentReference)
     {
         if (StringUtils.isBlank(serializedReferences)) {
             return List.of();
@@ -454,7 +461,8 @@ public class DefaultSOPManager implements SOPManager
         return Arrays.stream(serializedReferences.split(SEPARATOR))
             .map(StringUtils::trimToNull)
             .filter(Objects::nonNull)
-            .map(currentStringDocRefResolver::resolve)
+            .map(serializedReference ->
+                currentStringDocRefResolver.resolve(serializedReference, documentReference))
             .toList();
     }
 }

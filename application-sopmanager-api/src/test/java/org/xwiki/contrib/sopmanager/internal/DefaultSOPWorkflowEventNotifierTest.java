@@ -113,6 +113,7 @@ class DefaultSOPWorkflowEventNotifierTest
 
         when(this.xcontextProvider.get()).thenReturn(this.context);
         when(this.context.getWiki()).thenReturn(this.wiki);
+        when(this.groupDocument.getDocumentReference()).thenReturn(this.groupReference);
     }
 
     @Test
@@ -125,10 +126,11 @@ class DefaultSOPWorkflowEventNotifierTest
         when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(Arrays.asList(reviewerObject, null,
             blankObject));
 
-        when(reviewerObject.getStringValue("member")).thenReturn(" xwiki:XWiki.Reviewer ");
+        when(reviewerObject.getStringValue("member")).thenReturn(" XWiki.Reviewer ");
         when(blankObject.getStringValue("member")).thenReturn(" ");
 
-        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.Reviewer")).thenReturn(this.reviewer);
+        when(this.currentStringDocRefResolver.resolve("XWiki.Reviewer", this.groupReference))
+            .thenReturn(this.reviewer);
         when(this.serializer.serialize(this.reviewer)).thenReturn("xwiki:XWiki.Reviewer");
 
         this.notifier.notifySubmittedForReview(this.document, List.of(this.groupReference));
@@ -136,7 +138,7 @@ class DefaultSOPWorkflowEventNotifierTest
         SubmittedForReviewEvent event = captureEvent(SubmittedForReviewEvent.class);
 
         assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
-        verify(this.currentStringDocRefResolver).resolve("xwiki:XWiki.Reviewer");
+        verify(this.currentStringDocRefResolver).resolve("XWiki.Reviewer", this.groupReference);
         verify(this.serializer).serialize(this.reviewer);
     }
 
@@ -174,8 +176,9 @@ class DefaultSOPWorkflowEventNotifierTest
         when(this.wiki.getDocument(this.groupReference, this.context)).thenReturn(this.groupDocument);
         when(this.groupDocument.getXObjects(GROUPS_CLASS_REF)).thenReturn(List.of(reviewerObject));
 
-        when(reviewerObject.getStringValue("member")).thenReturn("xwiki:XWiki.Reviewer");
-        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.Reviewer")).thenReturn(this.reviewer);
+        when(reviewerObject.getStringValue("member")).thenReturn("XWiki.Reviewer");
+        when(this.currentStringDocRefResolver.resolve("XWiki.Reviewer", this.groupReference))
+            .thenReturn(this.reviewer);
 
         when(this.serializer.serialize(this.reviewer)).thenReturn("xwiki:XWiki.Reviewer");
         when(this.serializer.serialize(this.owner)).thenReturn("xwiki:XWiki.Owner");

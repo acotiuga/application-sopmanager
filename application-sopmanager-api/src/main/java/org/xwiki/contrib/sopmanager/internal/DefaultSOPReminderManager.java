@@ -236,7 +236,8 @@ public class DefaultSOPReminderManager implements SOPReminderManager
             .map(groupObject -> groupObject.getStringValue("member"))
             .map(StringUtils::trimToNull)
             .filter(Objects::nonNull)
-            .map(currentStringDocRefResolver::resolve)
+            .map(member -> currentStringDocRefResolver.resolve(
+                member, groupDocument.getDocumentReference()))
             .distinct()
             .toList();
     }

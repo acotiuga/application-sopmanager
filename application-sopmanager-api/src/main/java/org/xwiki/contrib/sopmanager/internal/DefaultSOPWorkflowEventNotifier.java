@@ -123,7 +123,10 @@ public class DefaultSOPWorkflowEventNotifier implements SOPWorkflowEventNotifier
                     String member = StringUtils.trimToNull(groupObj.getStringValue("member"));
                     if (StringUtils.isNotBlank(member)) {
                         // Make sure the XWiki.Admin is serialized as xwiki:XWiki.Admin.
-                        members.add(serializer.serialize(currentStringDocRefResolver.resolve(member)));
+                        DocumentReference memberReference = currentStringDocRefResolver.resolve(
+                            member, groupDoc.getDocumentReference());
+
+                        members.add(serializer.serialize(memberReference));
                     }
                 }
             } catch (XWikiException e) {

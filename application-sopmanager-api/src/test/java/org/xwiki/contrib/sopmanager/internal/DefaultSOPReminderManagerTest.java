@@ -239,9 +239,11 @@ class DefaultSOPReminderManagerTest
         BaseObject groupObject = mock(BaseObject.class);
 
         when(this.currentStringDocRefResolver.resolve(serializedGroupReference)).thenReturn(groupReference);
-        when(this.currentStringDocRefResolver.resolve(serializedUserReference)).thenReturn(userReference);
+        when(this.currentStringDocRefResolver.resolve(serializedUserReference, groupReference))
+            .thenReturn(userReference);
 
         when(this.wiki.getDocument(groupReference, this.context)).thenReturn(groupDocument);
+        when(groupDocument.getDocumentReference()).thenReturn(groupReference);
         when(groupDocument.getXObjects(GROUPS_CLASS)).thenReturn(List.of(groupObject));
         when(groupObject.getStringValue("member")).thenReturn(serializedUserReference);
     }
