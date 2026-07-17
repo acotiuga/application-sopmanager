@@ -65,7 +65,7 @@
       <name>approverGroups</name>
       <number>3</number>
       <picker>1</picker>
-      <prettyName>Approver groups</prettyName>
+      <prettyName>Approver users</prettyName>
       <relationalStorage>1</relationalStorage>
       <separator> </separator>
       <separators/>
@@ -177,7 +177,7 @@
       <name>reviewerGroups</name>
       <number>2</number>
       <picker>1</picker>
-      <prettyName>Reviewer groups</prettyName>
+      <prettyName>Reviewer users</prettyName>
       <relationalStorage>1</relationalStorage>
       <separator> </separator>
       <separators/>
