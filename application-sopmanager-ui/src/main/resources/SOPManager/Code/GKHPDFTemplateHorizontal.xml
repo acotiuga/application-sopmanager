@@ -220,7 +220,7 @@
       #end
     #end 
   #end
-  #set ($discard = $output.add($stringtool.join($names, ',')))
+  #set ($discard = $output.add($stringtool.join($names, ', ')))
 #end
 #set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))
 #set ($xclass = $controlledObj.xWikiClass)
