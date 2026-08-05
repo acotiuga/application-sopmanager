@@ -1,0 +1,574 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.FileManagerLocationTree" locale="">
+  <web>SOPManager.Code</web>
+  <name>FileManagerLocationTree</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>FileManagerLocationTree</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity}}
+#set ($fileManagerSpace = 'FileManager')
+#set ($driveFullName = 'FileManager.WebHome')
+#set ($driveStatement = 'from doc.object(FileManagerCode.DriveClass) as drive where doc.space = :space order by doc.fullName')
+#set ($driveDocuments = $services.query.xwql($driveStatement).bindValue('space', $fileManagerSpace).setLimit(1).execute())
+#if ($driveDocuments.size() &gt; 0)
+  #set ($driveFullName = $driveDocuments.get(0))
+#end
+#set ($driveDocument = $xwiki.getDocument($driveFullName))
+#set ($driveReference = $services.model.serialize($driveDocument.documentReference, 'default'))
+#set ($driveTitle = "$!driveDocument.plainTitle")
+#if ($driveTitle == '')
+  #set ($driveTitle = $services.localization.render('sopManager.fileManagerLocation.fileManager'))
+#end
+#macro (addFolderPath $folderFullName $folderPath)
+  #set ($folderFullNameCopy = "$!folderFullName")
+  #if ($folderFullNameCopy != '')
+    #set ($folderDocument = $xwiki.getDocument($folderFullNameCopy))
+    #if ($folderDocument &amp;&amp; !$folderDocument.isNew())
+      #set ($folderTitle = "$!folderDocument.plainTitle")
+      #if ($folderTitle == '')
+        #set ($folderTitle = $folderDocument.name)
+      #end
+      #set ($discard = $folderPath.add(0, {'title': $folderTitle, 'url': $folderDocument.getURL()}))
+      #set ($parentFullName = "$!folderDocument.parent")
+      #if ($parentFullName != '')
+        #set ($parentDocument = $xwiki.getDocument($parentFullName))
+        #if ($parentDocument &amp;&amp; !$parentDocument.isNew() &amp;&amp; $parentDocument.getObject('FileManagerCode.FolderClass'))
+          #addFolderPath($parentFullName $folderPath)
+        #end
+      #end
+    #end
+  #end
+#end
+#macro (displayFolderPath $folderPath $links)
+  #foreach ($pathEntry in $folderPath)
+    #if ($links)
+      &lt;a href="$escapetool.xml($pathEntry.url)"&gt;$escapetool.xml($pathEntry.title)&lt;/a&gt;
+    #else
+      $escapetool.xml($pathEntry.title)
+    #end
+    #if ($foreach.hasNext) / #end
+  #end
+#end
+#set ($treeRequest = "$!request.getParameter('fileManagerTree')")
+#if ($xcontext.action == 'get' &amp;&amp; $treeRequest == 'true')
+  #set ($folderStatement = "select doc.fullName, doc.parent, doc.title, doc.name from Document doc, doc.object(FileManagerCode.FolderClass) as folder where doc.fullName &lt;&gt; 'FileManagerCode.FolderTemplate' and doc.space = :space order by doc.title, doc.name")
+  #set ($folderRows = $services.query.xwql($folderStatement).bindValue('space', $fileManagerSpace).setLimit(1000).execute())
+  #set ($folderMap = {})
+  #set ($folderOrder = [])
+  #set ($childrenByParent = {})
+  #foreach ($folderRow in $folderRows)
+    #set ($folderFullName = "$!folderRow[0]")
+    #if ($xwiki.hasAccessLevel('view', $xcontext.user, $folderFullName))
+      #set ($folderParent = "$!folderRow[1]")
+      #set ($folderTitle = "$!folderRow[2]")
+      #set ($folderName = "$!folderRow[3]")
+      #if ($folderTitle == '')
+        #set ($folderTitle = $folderName)
+      #end
+      #set ($folderReference = $services.model.serialize($services.model.resolveDocument($folderFullName), 'default'))
+      #set ($folderNode = {'fullName': $folderFullName, 'parent': $folderParent, 'title': $folderTitle, 'name': $folderName, 'reference': $folderReference})
+      #set ($discard = $folderMap.put($folderFullName, $folderNode))
+      #set ($discard = $folderOrder.add($folderFullName))
+      #if (!$childrenByParent.containsKey($folderParent))
+        #set ($discard = $childrenByParent.put($folderParent, []))
+      #end
+      #set ($discard = $childrenByParent.get($folderParent).add($folderFullName))
+    #end
+  #end
+  #macro (addFolderTitlePath $folderFullName $folderTitlePath)
+    #set ($folderFullNameCopy = "$!folderFullName")
+    #if ($folderMap.containsKey($folderFullNameCopy))
+      #set ($folderNodeCopy = $folderMap.get($folderFullNameCopy))
+      #set ($discard = $folderTitlePath.add(0, $folderNodeCopy.title))
+      #set ($folderParentCopy = "$!folderNodeCopy.parent")
+      #if ($folderMap.containsKey($folderParentCopy))
+        #addFolderTitlePath($folderParentCopy $folderTitlePath)
+      #end
+    #end
+  #end
+  #macro (addFolderReferencePath $folderFullName $folderReferencePath)
+    #set ($folderFullNameCopy = "$!folderFullName")
+    #if ($folderMap.containsKey($folderFullNameCopy))
+      #set ($folderNodeCopy = $folderMap.get($folderFullNameCopy))
+      #set ($discard = $folderReferencePath.add(0, $folderFullNameCopy))
+      #set ($folderParentCopy = "$!folderNodeCopy.parent")
+      #if ($folderMap.containsKey($folderParentCopy))
+        #addFolderReferencePath($folderParentCopy $folderReferencePath)
+      #end
+    #end
+  #end
+  #macro (addTreeNode $treeFolderFullName $nodes $includeInfo)
+    #set ($treeFolderFullNameCopy = "$!treeFolderFullName")
+    #if ($folderMap.containsKey($treeFolderFullNameCopy))
+      #set ($treeFolderNode = $folderMap.get($treeFolderFullNameCopy))
+      #set ($treeHasChildren = $childrenByParent.containsKey($treeFolderFullNameCopy))
+      #set ($treeNodeInfo = '')
+      #if ($includeInfo)
+        #set ($folderTitlePath = [])
+        #addFolderTitlePath($treeFolderFullNameCopy $folderTitlePath)
+        #set ($discard = $folderTitlePath.add(0, $driveTitle))
+        #set ($treeNodeInfo = $stringtool.join($folderTitlePath, ' / '))
+      #end
+      #set ($treeFolderNode = $folderMap.get($treeFolderFullNameCopy))
+      #set ($nodeData = {'id': $treeFolderNode.reference, 'type': 'document', 'validChildren': ['document']})
+      #if ($treeNodeInfo != '')
+        #set ($discard = $nodeData.put('info', $treeNodeInfo))
+      #end
+      #set ($anchorAttributes = {'href': $xwiki.getURL($treeFolderFullNameCopy)})
+      #set ($treeNode = {'id': "document:$treeFolderNode.reference", 'text': $treeFolderNode.title, 'icon': 'fa fa-folder-o', 'iconOpened': 'fa fa-folder-open-o', 'children': $treeHasChildren, 'data': $nodeData, 'a_attr': $anchorAttributes})
+      #set ($discard = $nodes.add($treeNode))
+    #end
+  #end
+  #set ($requestedData = "$!request.getParameter('data')")
+  #set ($result = [])
+  #if ($requestedData == 'children')
+    #set ($nodeId = "$!request.getParameter('id')")
+    #set ($parentFullName = '')
+    #if ($nodeId == '#')
+      #set ($parentFullName = $driveFullName)
+    #elseif ($nodeId.startsWith('document:'))
+      #set ($parentReference = $stringtool.substringAfter($nodeId, 'document:'))
+      #set ($parentDocument = $xwiki.getDocument($parentReference))
+      #if ($parentDocument &amp;&amp; !$parentDocument.isNew() &amp;&amp; $folderMap.containsKey($parentDocument.fullName))
+        #set ($parentFullName = $parentDocument.fullName)
+      #end
+    #end
+    #if (($parentFullName == $driveFullName || $folderMap.containsKey($parentFullName)) &amp;&amp; $childrenByParent.containsKey($parentFullName))
+      #foreach ($childFullName in $childrenByParent.get($parentFullName))
+        #addTreeNode($childFullName $result false)
+      #end
+    #end
+  #elseif ($requestedData == 'path')
+    #set ($nodeId = "$!request.getParameter('id')")
+    #if ($nodeId.startsWith('document:'))
+      #set ($folderReference = $stringtool.substringAfter($nodeId, 'document:'))
+      #set ($folderDocument = $xwiki.getDocument($folderReference))
+      #if ($folderDocument &amp;&amp; !$folderDocument.isNew() &amp;&amp; $folderMap.containsKey($folderDocument.fullName))
+        #set ($folderReferencePath = [])
+        #addFolderReferencePath($folderDocument.fullName $folderReferencePath)
+        #if ($folderReferencePath.size() &gt; 0)
+          #set ($firstFolderNode = $folderMap.get($folderReferencePath.get(0)))
+          #if ($firstFolderNode.parent == $driveFullName)
+            #foreach ($folderFullName in $folderReferencePath)
+              #addTreeNode($folderFullName $result false)
+            #end
+          #end
+        #end
+      #end
+    #end
+  #elseif ($requestedData == 'suggestions')
+    #set ($query = "$!request.getParameter('query')")
+    #set ($query = $query.trim().toLowerCase())
+    #if ($query != '')
+      #foreach ($folderFullName in $folderOrder)
+        #if ($result.size() &lt; 20)
+          #set ($folderNode = $folderMap.get($folderFullName))
+          #set ($folderTitleLowerCase = $folderNode.title.toLowerCase())
+          #set ($folderNameLowerCase = $folderNode.name.toLowerCase())
+          #if ($folderTitleLowerCase.contains($query) || $folderNameLowerCase.contains($query))
+            #addTreeNode($folderFullName $result true)
+          #end
+        #end
+      #end
+    #end
+  #end
+  #set ($discard = $response.setContentType('application/json'))
+$jsontool.serialize($result)
+#else
+  #set ($discard = $xwiki.linkx.use($services.webjars.url('org.xwiki.platform:xwiki-platform-tree-webjar', 'tree.min.css', {'evaluate': true}), {'type': 'text/css', 'rel': 'stylesheet'}))
+  #set ($discard = $xwiki.jsx.use('SOPManager.Code.FileManagerLocationTree'))
+  #set ($discard = $xwiki.ssx.use('SOPManager.Code.FileManagerLocationTree'))
+  #set ($currentValue = "$!object.getValue($name)")
+  #if ($currentValue != '')
+    #set ($currentValue = $services.model.serialize($services.model.resolveDocument($currentValue), 'default'))
+  #end
+  #set ($fileManagerValue = $driveReference)
+  #if ($currentValue != '')
+    #set ($fileManagerValue = $currentValue)
+  #end
+  #set ($treeURL = $xwiki.getURL('SOPManager.Code.FileManagerLocationTree', 'get', 'outputSyntax=plain&amp;fileManagerTree=true'))
+{{html clean="false"}}
+#if ($type == 'edit')
+  &lt;div class="sop-file-manager-location" data-drive-reference="$escapetool.xml($driveReference)" data-finder-placeholder="$escapetool.xml($services.localization.render('sopManager.fileManagerLocation.find'))"&gt;
+    &lt;label class="sop-file-manager-location-option"&gt;
+      &lt;input type="radio" name="${prefix}${name}" value="" class="sop-file-manager-location-hierarchy"#if ($currentValue == '') checked="checked"#end /&gt;
+      $escapetool.xml($services.localization.render('sopManager.fileManagerLocation.currentHierarchy'))
+    &lt;/label&gt;
+    &lt;label class="sop-file-manager-location-option"&gt;
+      &lt;input type="radio" name="${prefix}${name}" value="$escapetool.xml($fileManagerValue)" class="sop-file-manager-location-value"#if ($currentValue != '') checked="checked"#end /&gt;
+      $escapetool.xml($driveTitle)
+    &lt;/label&gt;
+    &lt;div class="sop-file-manager-location-picker"&gt;
+      &lt;div class="sop-file-manager-location-tree jstree-no-links" data-url="$escapetool.xml($treeURL)" data-finder="true" data-icons="true" data-edges="true" data-responsive="true"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+#else
+  #if ($currentValue == '')
+    $escapetool.xml($services.localization.render('sopManager.fileManagerLocation.currentHierarchy'))
+  #else
+    #set ($selectedDocument = $xwiki.getDocument($currentValue))
+    #if ($selectedDocument &amp;&amp; !$selectedDocument.isNew())
+      #set ($selectedPath = [])
+      #if ($currentValue != $driveReference)
+        #addFolderPath($currentValue $selectedPath)
+      #end
+      #set ($discard = $selectedPath.add(0, {'title': $driveTitle, 'url': $driveDocument.getURL()}))
+      #displayFolderPath($selectedPath true)
+    #else
+      $escapetool.xml($currentValue)
+    #end
+  #end
+#end
+{{/html}}
+#end
+{{/velocity}}</content>
+  <object>
+    <name>SOPManager.Code.FileManagerLocationTree</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>0312a65a-8559-4a29-9d45-52b887a31241</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>require(['xwiki-tree'], function($) {
+  'use strict';
+  var containerSelector = '.sop-file-manager-location';
+  var treeSelector = '.sop-file-manager-location-tree';
+  var initializeTree = function(container) {
+    if (container.data('fileManagerLocationInitialized')) {
+      return;
+    }
+    container.data('fileManagerLocationInitialized', true);
+    var treeElement = container.find(treeSelector);
+    var hierarchyRadio = container.find('.sop-file-manager-location-hierarchy');
+    var locationRadio = container.find('.sop-file-manager-location-value');
+    var driveReference = container.attr('data-drive-reference');
+    var finderPlaceholder = container.attr('data-finder-placeholder');
+    var openFirstTwoLevels = function(tree) {
+      var rootNode = tree.get_node($.jstree.root);
+      $.each(rootNode &amp;&amp; rootNode.children ? rootNode.children : [], function(index, childNodeId) {
+        tree.open_node(childNodeId);
+      });
+    };
+    treeElement
+      .one('ready.jstree.sopFileManagerLocation', function(event, data) {
+        var tree = data.instance;
+        openFirstTwoLevels(tree);
+        var selectedReference = locationRadio.val();
+        if (!hierarchyRadio.prop('checked') &amp;&amp; selectedReference &amp;&amp; selectedReference !== driveReference) {
+          var selectedNodeId = 'document:' + selectedReference;
+          tree.openTo(selectedNodeId, function(node) {
+            if (node &amp;&amp; node.id === selectedNodeId) {
+              tree.select_node(node);
+            }
+          });
+        }
+      })
+      .on('changed.jstree.sopFileManagerLocation', function(event, data) {
+        if (!data.selected || data.selected.length === 0) {
+          return;
+        }
+        var selectedNode = data.instance.get_node(data.selected[0]);
+        if (!selectedNode || !selectedNode.data || !selectedNode.data.id) {
+          return;
+        }
+        locationRadio
+          .val(selectedNode.data.id)
+          .prop('checked', true)
+          .trigger('change');
+      })
+      .xtree({
+        core: {
+          multiple: false
+        },
+        finder: {
+          placeholder: finderPlaceholder
+        }
+      });
+  };
+  var initializeTrees = function() {
+    $(containerSelector).each(function() {
+      initializeTree($(this));
+    });
+  };
+  $(initializeTrees);
+  $(document).on('xwiki:dom:updated.sopFileManagerLocation', initializeTrees);
+  $(document).on('focusin.sopFileManagerLocation click.sopFileManagerLocation', containerSelector, function() {
+    initializeTree($(this));
+  });
+  $(document).on('click.sopFileManagerLocation', '.sop-file-manager-location-value', function() {
+    var locationRadio = $(this);
+    var container = locationRadio.closest(containerSelector);
+    var tree = $.jstree.reference(container.find(treeSelector));
+    locationRadio
+      .val(container.attr('data-drive-reference'))
+      .prop('checked', true);
+    if (tree) {
+      tree.deselect_all();
+    }
+  });
+  $(document).on('change.sopFileManagerLocation', '.sop-file-manager-location-hierarchy', function() {
+    if (!this.checked) {
+      return;
+    }
+    var container = $(this).closest(containerSelector);
+    var tree = $.jstree.reference(container.find(treeSelector));
+    if (tree) {
+      tree.deselect_all();
+    }
+  });
+});</code>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
+  <object>
+    <name>SOPManager.Code.FileManagerLocationTree</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>69d44317-e13f-4210-b4f9-6b50f62b59fc</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <contentType>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>contentType</name>
+        <number>6</number>
+        <prettyName>Content Type</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>CSS|LESS</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </contentType>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>.sop-file-manager-location-option {
+  display: block;
+  font-weight: normal;
+  margin: 0 0 .25em;
+}
+.sop-file-manager-location-picker {
+  margin: .25em 0 0 1.5em;
+  max-width: 44em;
+}
+.sop-file-manager-location-tree {
+  max-height: 22em;
+  overflow: auto;
+}</code>
+    </property>
+    <property>
+      <contentType/>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
+</xwikidoc>

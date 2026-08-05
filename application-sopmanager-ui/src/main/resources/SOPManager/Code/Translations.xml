@@ -71,6 +71,10 @@ SOPManager.Code.ControlledDocumentClass_status_submittedForReview=Submitted for 
 SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Submitted for approval
 SOPManager.Code.ControlledDocumentClass_status_approved=Approved
 
+sopManager.fileManagerLocation.currentHierarchy=Use current page hierarchy
+sopManager.fileManagerLocation.fileManager=File Manager
+sopManager.fileManagerLocation.find=Find a File Manager folder…
+
 sopManager.pdfExport.page=Page
 sopManager.userProfile.ownedPages=Owned pages
 sopManager.userProfile.ownedPages.noResults=There are no pages added by you in the review system.

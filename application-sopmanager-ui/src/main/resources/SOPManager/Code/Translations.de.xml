@@ -87,6 +87,11 @@ SOPManager.Code.ControlledDocumentClass_status_submittedForApproval=Zur Genehmig
 SOPManager.Code.ControlledDocumentClass_status_approved=Genehmigt
 SOPManager.Code.ControlledDocumentClass_reviewerUser=Überarbeitet von:
 SOPManager.Code.ControlledDocumentClass_approverUser=Freigabe durch:
+SOPManager.Code.ControlledDocumentClass_fileManagerLocation=File-Manager-Speicherort
+SOPManager.Code.ControlledDocumentClass_fileManagerLocation_hint=Standardmäßig wird die Hierarchie der aktuellen Seite im File Manager nachgebildet und die erzeugte PDF-Datei im entsprechenden Ordner gespeichert. Wählen Sie einen File-Manager-Ordner aus, wenn die PDF-Datei gemeinsam mit zugehörigen Dateien aus anderen Bereichen abgelegt werden soll.
+sopManager.fileManagerLocation.currentHierarchy=Hierarchie der aktuellen Seite verwenden
+sopManager.fileManagerLocation.fileManager=File Manager
+sopManager.fileManagerLocation.find=File-Manager-Ordner suchen…
 
 sopManager.pdfExport.page=Seite
 sopManager.userProfile.ownedPages=Eigene Seiten

@@ -27,6 +27,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
 import org.xwiki.filemanager.internal.reference.DocumentNameSequence;
@@ -67,6 +68,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     private static final String FILE_MANAGER_CODE = "FileManagerCode";
 
+    private static final LocalDocumentReference DRIVE_CLASS =
+        new LocalDocumentReference(List.of(FILE_MANAGER_CODE), "DriveClass");
+
     private static final LocalDocumentReference FOLDER_CLASS =
         new LocalDocumentReference(List.of(FILE_MANAGER_CODE), "FolderClass");
 
@@ -76,12 +80,21 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private static final LocalDocumentReference TAG_CLASS =
         new LocalDocumentReference(List.of("XWiki"), "TagClass");
 
+    private static final String SOP_MANAGER = "SOPManager";
+
+    private static final String CODE = "Code";
+
+    private static final LocalDocumentReference CONTROLLED_DOCUMENT_CLASS =
+        new LocalDocumentReference(List.of(SOP_MANAGER, CODE), "ControlledDocumentClass");
+
     private static final LocalDocumentReference ORIGINAL_DETAILS_CLASS =
-        new LocalDocumentReference(List.of("SOPManager", "Code"), "OriginalDocumentDetailsClass");
+        new LocalDocumentReference(List.of(SOP_MANAGER, CODE), "OriginalDocumentDetailsClass");
 
     private static final String BACKLINK = "backlink";
 
     private static final String TAGS = "tags";
+
+    private static final String FILE_MANAGER_LOCATION = "fileManagerLocation";
 
     @Inject
     private Provider<XWikiContext> xcontextProvider;
@@ -101,6 +114,10 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private DocumentReferenceResolver<String> documentReferenceResolver;
 
     @Inject
+    @Named("current")
+    private DocumentReferenceResolver<String> currentStringDocRefResolver;
+
+    @Inject
     private ContextualLocalizationManager localizationManager;
 
     @Override
@@ -111,13 +128,15 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
         try {
             String wikiName = sourceDocumentReference.getWikiReference().getName();
-            List<String> folderNames = extractFolderNames(sourceDocumentReference);
+            DocumentReference parentFolderReference =
+                getConfiguredFileManagerLocation(sourceDocumentReference, context);
 
-            DocumentReference parentFolderReference = null;
-
-            for (String folderName : folderNames) {
-                parentFolderReference =
-                    getOrCreateFileManagerFolder(folderName, parentFolderReference, wikiName, context);
+            if (parentFolderReference == null) {
+                List<String> folderNames = extractFolderNames(sourceDocumentReference);
+                for (String folderName : folderNames) {
+                    parentFolderReference =
+                        getOrCreateFileManagerFolder(folderName, parentFolderReference, wikiName, context);
+                }
             }
 
             XWikiDocument fileDoc =
@@ -143,7 +162,9 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
             List<String> tags = new ArrayList<>();
             if (parentFolderReference != null) {
-                tags.add(parentFolderReference.getName());
+                if (!FILE_MANAGER_REFERENCE.equals(parentFolderReference.getLocalDocumentReference())) {
+                    tags.add(parentFolderReference.getName());
+                }
                 fileDoc.setParentReference(
                     parentFolderReference.removeParent(parentFolderReference.getWikiReference()));
             } else {
@@ -332,5 +353,43 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             return false;
         }
         return left.equals(right);
+    }
+
+    DocumentReference getConfiguredFileManagerLocation(DocumentReference sourceDocumentReference,
+        XWikiContext context) throws XWikiException
+    {
+        XWikiDocument sourceDocument = context.getWiki().getDocument(sourceDocumentReference, context);
+        BaseObject controlledDocumentObject = sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS);
+        if (controlledDocumentObject == null) {
+            return null;
+        }
+
+        String serializedLocation = controlledDocumentObject.getStringValue(FILE_MANAGER_LOCATION);
+        if (StringUtils.isBlank(serializedLocation)) {
+            return null;
+        }
+
+        DocumentReference locationReference =
+            currentStringDocRefResolver.resolve(serializedLocation, sourceDocumentReference);
+        if (!sourceDocumentReference.getWikiReference().equals(locationReference.getWikiReference())) {
+            throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                String.format("The configured File Manager location [%s] must belong to the same wiki.",
+                    locationReference));
+        }
+
+        XWikiDocument locationDocument = context.getWiki().getDocument(locationReference, context);
+        boolean isInFileManagerSpace =
+            FILE_MANAGER_SPACE.equals(locationReference.getLastSpaceReference().getName());
+        boolean isDrive = isInFileManagerSpace
+            && FILE_MANAGER_REFERENCE.equals(locationReference.getLocalDocumentReference())
+            && locationDocument.getXObject(DRIVE_CLASS) != null;
+        boolean isFolder = isInFileManagerSpace && locationDocument.getXObject(FOLDER_CLASS) != null;
+        if (locationDocument.isNew() || (!isDrive && !isFolder)) {
+            throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                String.format("The configured document [%s] is not a File Manager drive or folder.",
+                    locationReference));
+        }
+
+        return locationReference;
     }
 }

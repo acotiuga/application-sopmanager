@@ -101,6 +101,20 @@
         <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
       </approverUser>
+      <fileManagerLocation>
+        <customDisplay>{{include reference="SOPManager.Code.FileManagerLocationTree" /}}</customDisplay>
+        <disabled>0</disabled>
+        <hint>By default, the SOP document hierarchy is replicated in File Manager and the generated PDF is stored in the corresponding folder. Select a different folder only when this PDF should be grouped with related files from other locations.</hint>
+        <name>fileManagerLocation</name>
+        <number>14</number>
+        <picker>0</picker>
+        <prettyName>File Manager location</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </fileManagerLocation>
       <isInReview>
         <customDisplay/>
         <defaultValue/>
@@ -338,6 +352,9 @@
     </property>
     <property>
       <approverUser/>
+    </property>
+    <property>
+      <fileManagerLocation/>
     </property>
     <property>
       <isInReview/>
