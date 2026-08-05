@@ -74,6 +74,8 @@ SOPManager.Code.ControlledDocumentClass_status_approved=Approved
 sopManager.fileManagerLocation.currentHierarchy=Use current page hierarchy
 sopManager.fileManagerLocation.fileManager=File Manager
 sopManager.fileManagerLocation.find=Find a File Manager folder…
+sopManager.fileManagerLocation.existingPDFWarning=A generated PDF already exists in File Manager. Changing this location does not move or delete the existing file. Open and delete the existing File Manager file before approving the document again.
+sopManager.fileManagerLocation.openExistingPDF=Open existing PDF
 
 sopManager.pdfExport.page=Page
 sopManager.userProfile.ownedPages=Owned pages

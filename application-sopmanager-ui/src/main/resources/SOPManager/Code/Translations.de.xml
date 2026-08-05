@@ -92,6 +92,8 @@ SOPManager.Code.ControlledDocumentClass_fileManagerLocation_hint=Standardmäßig
 sopManager.fileManagerLocation.currentHierarchy=Hierarchie der aktuellen Seite verwenden
 sopManager.fileManagerLocation.fileManager=File Manager
 sopManager.fileManagerLocation.find=File-Manager-Ordner suchen…
+sopManager.fileManagerLocation.existingPDFWarning=Eine erzeugte PDF-Datei ist bereits im File Manager vorhanden. Eine Änderung dieses Speicherorts verschiebt oder löscht die vorhandene Datei nicht. Öffnen und löschen Sie die vorhandene File-Manager-Datei, bevor Sie das Dokument erneut genehmigen.
+sopManager.fileManagerLocation.openExistingPDF=Vorhandene PDF öffnen
 
 sopManager.pdfExport.page=Seite
 sopManager.userProfile.ownedPages=Eigene Seiten

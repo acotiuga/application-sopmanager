@@ -210,8 +210,30 @@ $jsontool.serialize($result)
   #set ($discard = $xwiki.jsx.use('SOPManager.Code.FileManagerLocationTree'))
   #set ($discard = $xwiki.ssx.use('SOPManager.Code.FileManagerLocationTree'))
   #set ($currentValue = "$!object.getValue($name)")
-  #if ($currentValue != '')
+  #if ("$!currentValue" != '')
     #set ($currentValue = $services.model.serialize($services.model.resolveDocument($currentValue), 'default'))
+  #end
+  #set ($existingPDFTitle = '')
+  #set ($existingPDFURL = '')
+  #set ($existingPDFReference = "$!object.getValue('pDFSecondaryTargetLocation')")
+  #if ("$!existingPDFReference" != '')
+    #set ($candidatePDFDocument = $xwiki.getDocument($existingPDFReference))
+    #if ($candidatePDFDocument &amp;&amp; !$candidatePDFDocument.isNew())
+      #set ($originalDetailsObject = $candidatePDFDocument.getObject('SOPManager.Code.OriginalDocumentDetailsClass'))
+      #if ($originalDetailsObject)
+        #set ($backlink = "$!originalDetailsObject.getValue('backlink')")
+        #if ("$!backlink" != '')
+          #set ($backlinkDocument = $xwiki.getDocument($backlink))
+          #if ($backlinkDocument &amp;&amp; !$backlinkDocument.isNew() &amp;&amp; $backlinkDocument.documentReference == $doc.documentReference)
+            #set ($existingPDFTitle = "$!candidatePDFDocument.plainTitle")
+            #if ("$!existingPDFTitle" == '')
+              #set ($existingPDFTitle = $candidatePDFDocument.name)
+            #end
+            #set ($existingPDFURL = $candidatePDFDocument.getURL())
+          #end
+        #end
+      #end
+    #end
   #end
   #set ($fileManagerValue = $driveReference)
   #if ($currentValue != '')
@@ -220,6 +242,12 @@ $jsontool.serialize($result)
   #set ($treeURL = $xwiki.getURL('SOPManager.Code.FileManagerLocationTree', 'get', 'outputSyntax=plain&amp;fileManagerTree=true'))
 {{html clean="false"}}
 #if ($type == 'edit')
+  #if ("$!existingPDFURL" != '')
+    &lt;div class="box warningmessage"&gt;
+      &lt;p&gt;$escapetool.xml($services.localization.render('sopManager.fileManagerLocation.existingPDFWarning'))&lt;/p&gt;
+      &lt;p&gt;&lt;a href="$escapetool.xml($existingPDFURL)"&gt;$escapetool.xml($services.localization.render('sopManager.fileManagerLocation.openExistingPDF')): $escapetool.xml($existingPDFTitle)&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+  #end
   &lt;div class="sop-file-manager-location" data-drive-reference="$escapetool.xml($driveReference)" data-finder-placeholder="$escapetool.xml($services.localization.render('sopManager.fileManagerLocation.find'))"&gt;
     &lt;label class="sop-file-manager-location-option"&gt;
       &lt;input type="radio" name="${prefix}${name}" value="" class="sop-file-manager-location-hierarchy"#if ($currentValue == '') checked="checked"#end /&gt;
