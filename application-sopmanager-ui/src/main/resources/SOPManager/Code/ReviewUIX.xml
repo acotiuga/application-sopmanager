@@ -496,7 +496,7 @@
           #set ($generalEditing = $editing)
           #set ($propertiesToDisplay = [])
           #set ($hiddenFields = ['status', 'revisionOwner', 'isInReview', 'reviewerUser', 'approverUser'])
-          #set ($readOnlyFields = ['pDFSecondaryTargetLocation', 'revisionNumber'])
+          #set ($readOnlyFields = ['pDFSecondaryTargetLocation'])
           ## Do not display status.
           #foreach ($property in $xclass.properties)
             #set ($name = $property.name)
