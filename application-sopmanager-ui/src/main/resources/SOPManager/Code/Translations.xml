@@ -129,6 +129,8 @@ sopManager.defaultFileManagerStorageManager.saveFolder=Create / update File Mana
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to store the generated PDF in the File Manager for [{0}].
 
 sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
+
+platform.index.tags=Tags
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>
