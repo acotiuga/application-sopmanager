@@ -65,9 +65,14 @@ import com.xpn.xwiki.objects.BaseObject;
 @Singleton
 public class DefaultSOPManager implements SOPManager
 {
+
     private static final String REVISION_OWNER = "revisionOwner";
 
     private static final String REVISION_NUMBER = "revisionNumber";
+
+    private static final String REVISION_PLANNED_DATE = "revisionPlannedDate";
+
+    private static final int DEFAULT_REVISION_PERIOD_YEARS = 3;
 
     private static final String STATUS = "status";
 
@@ -162,6 +167,7 @@ public class DefaultSOPManager implements SOPManager
                 sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
                 // Set today as the default revisionDate.
                 sopObj.setDateValue("releaseDate", new Date());
+                sopObj.setDateValue(REVISION_PLANNED_DATE, getDefaultRevisionPlannedDate());
                 sopObj.setIntValue(REVISION_NUMBER, 1);
                 sopObj.setStringValue(STATUS, DRAFT);
                 sopObj.setIntValue(IS_IN_REVIEW, 1);
@@ -388,7 +394,7 @@ public class DefaultSOPManager implements SOPManager
 
     private void validateRevisionPlannedDate(BaseObject sopObj)
     {
-        Date revisionPlannedDate = sopObj.getDateValue("revisionPlannedDate");
+        Date revisionPlannedDate = sopObj.getDateValue(REVISION_PLANNED_DATE);
         String revisionExceptionMessage = localizationManager.getTranslationPlain(
             "sopManager.defaultSOPManager.error.revisionPlannedDateMustBeFuture");
         if (revisionPlannedDate == null) {
@@ -409,6 +415,7 @@ public class DefaultSOPManager implements SOPManager
         sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(revisionOwner));
         sopObj.setLargeStringValue(REVIEWER_USER, "");
         sopObj.setLargeStringValue(APPROVER_USER, "");
+        sopObj.setDateValue(REVISION_PLANNED_DATE, getDefaultRevisionPlannedDate());
         sopObj.setIntValue(REVISION_NUMBER, sopObj.getIntValue(REVISION_NUMBER) + 1);
         addUserEditRight(rules, revisionOwner);
 
@@ -464,5 +471,13 @@ public class DefaultSOPManager implements SOPManager
             .map(serializedReference ->
                 currentStringDocRefResolver.resolve(serializedReference, documentReference))
             .toList();
+    }
+
+    private Date getDefaultRevisionPlannedDate()
+    {
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate plannedDate = LocalDate.now(zoneId).plusYears(DEFAULT_REVISION_PERIOD_YEARS);
+
+        return Date.from(plannedDate.atStartOfDay(zoneId).toInstant());
     }
 }

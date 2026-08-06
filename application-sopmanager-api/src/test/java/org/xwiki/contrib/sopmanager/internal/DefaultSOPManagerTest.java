@@ -33,6 +33,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
@@ -42,6 +44,7 @@ import javax.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.xwiki.contrib.rights.RightsWriter;
 import org.xwiki.contrib.rights.RulesObjectWriter;
@@ -168,6 +171,7 @@ class DefaultSOPManagerTest
 
         verify(this.sopObj).setLargeStringValue("revisionOwner", "xwiki:XWiki.Admin");
         verify(this.sopObj).setDateValue(eq("releaseDate"), any(Date.class));
+        verifyDefaultRevisionPlannedDate();
         verify(this.sopObj).setIntValue("revisionNumber", 1);
         verify(this.sopObj).setStringValue("status", "draft");
         verify(this.sopObj).setIntValue("isInReview", 1);
@@ -362,6 +366,7 @@ class DefaultSOPManagerTest
         verify(this.sopObj).setLargeStringValue("revisionOwner", "xwiki:XWiki.Admin");
         verify(this.sopObj).setLargeStringValue("reviewerUser", "");
         verify(this.sopObj).setLargeStringValue("approverUser", "");
+        verifyDefaultRevisionPlannedDate();
         verify(this.sopObj).setIntValue("revisionNumber", 2);
 
         verify(this.rightsWriter).createRule(isNull(), eq(List.of(this.currentUser)),
@@ -411,5 +416,27 @@ class DefaultSOPManagerTest
         verifyNoInteractions(this.workflowEventNotifier);
         verify(this.rulesObjectWriter, never()).persistRulesToObjects(any(), any(), any(), any());
         verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void addDocumentToReviewProcessDoesNotResetRevisionPlannedDateWhenAlreadyInReview() throws Exception
+    {
+        when(this.sopObj.getIntValue("isInReview")).thenReturn(1);
+
+        this.sopManager.addDocumentToReviewProcess(this.documentReference);
+
+        verify(this.sopObj, never()).setDateValue(eq("revisionPlannedDate"), any(Date.class));
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    private void verifyDefaultRevisionPlannedDate()
+    {
+        ArgumentCaptor<Date> dateCaptor = ArgumentCaptor.forClass(Date.class);
+        verify(this.sopObj).setDateValue(eq("revisionPlannedDate"), dateCaptor.capture());
+
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate actualDate = dateCaptor.getValue().toInstant().atZone(zoneId).toLocalDate();
+
+        assertEquals(LocalDate.now(zoneId).plusYears(3), actualDate);
     }
 }
