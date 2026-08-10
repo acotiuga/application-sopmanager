@@ -54,7 +54,7 @@
     <validationScript/>
     <approverGroups>
       <cache>0</cache>
-      <customDisplay/>
+      <customDisplay>{{include reference="SOPManager.Code.SOPGroupSelector" /}}</customDisplay>
       <defaultValue/>
       <disabled>0</disabled>
       <displayType>input</displayType>
@@ -205,7 +205,7 @@
     </releaseDate>
     <reviewerGroups>
       <cache>0</cache>
-      <customDisplay/>
+      <customDisplay>{{include reference="SOPManager.Code.SOPGroupSelector" /}}</customDisplay>
       <defaultValue/>
       <disabled>0</disabled>
       <displayType>input</displayType>

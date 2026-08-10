@@ -1,0 +1,112 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.SOPGroupSelector" locale="">
+  <web>SOPManager.Code</web>
+  <name>SOPGroupSelector</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>SOPGroupSelector</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity}}
+#if ("$!name" != '')
+  #if ($name == 'reviewerGroups')
+    #set ($catalogGroupReference = 'XWiki.SOPReviewersGroup')
+    #set ($placeholder = $services.localization.render('sopManager.groupSelector.reviewers.placeholder'))
+  #elseif ($name == 'approverGroups')
+    #set ($catalogGroupReference = 'XWiki.SOPApproversGroup')
+    #set ($placeholder = $services.localization.render('sopManager.groupSelector.approvers.placeholder'))
+  #end
+  #set ($availableGroups = $services.user.group.getMembers($catalogGroupReference, false))
+  #set ($selectedGroups = [])
+  #if ("$!value" != '')
+    #foreach ($serializedGroup in $value.split(','))
+      #set ($serializedGroup = $serializedGroup.trim())
+      #if ($serializedGroup != '')
+        #set ($groupReference = $services.model.resolveDocument($serializedGroup))
+        #set ($discard = $selectedGroups.add($services.model.serialize($groupReference, 'local')))
+      #end
+    #end
+  #end
+  #set ($availableGroupValues = [])
+  #foreach ($groupReference in $availableGroups)
+    #set ($discard = $availableGroupValues.add($services.model.serialize($groupReference, 'local')))
+  #end
+  #macro (displaySOPGroupOptions $selectedValues)
+    #foreach ($serializedGroup in $selectedValues)
+      #if (!$availableGroupValues.contains($serializedGroup))
+        #set ($groupDocument = $xwiki.getDocument($serializedGroup))
+        #set ($groupTitle = "$!groupDocument.plainTitle")
+        #if ("$!groupTitle" == '')
+          #set ($groupTitle = $groupDocument.name)
+        #end
+        &lt;option value="$escapetool.xml($serializedGroup)" selected="selected"&gt;$escapetool.xml($groupTitle)&lt;/option&gt;
+      #end
+    #end
+    #foreach ($groupReference in $availableGroups)
+      #set ($serializedGroup = $services.model.serialize($groupReference, 'local'))
+      #set ($groupDocument = $xwiki.getDocument($groupReference))
+      #set ($groupTitle = "$!groupDocument.plainTitle")
+      #if ("$!groupTitle" == '')
+        #set ($groupTitle = $groupDocument.name)
+      #end
+      &lt;option value="$escapetool.xml($serializedGroup)"#if ($selectedValues.contains($serializedGroup)) selected="selected"#end&gt;$escapetool.xml($groupTitle)&lt;/option&gt;
+    #end
+  #end
+  {{html clean="false"}}
+  #if ($type == 'edit')
+    #picker_import
+    #set ($discard = $xwiki.jsfx.use('uicomponents/suggest/xwiki.selectize.js'))
+    #if ($availableGroups.size() == 0)
+      #set ($placeholder = $services.localization.render('sopManager.groupSelector.noGroups'))
+    #end
+    #set ($suggestInputAttributes = {
+      'name': "${prefix}${name}",
+      'class': 'xwiki-selectize',
+      'multiple': 'multiple',
+      'value': $selectedGroups,
+      'placeholder': $placeholder
+    })
+    #suggestInput($suggestInputAttributes 'displaySOPGroupOptions')
+  #else
+    #foreach ($serializedGroup in $selectedGroups)
+      #set ($groupDocument = $xwiki.getDocument($serializedGroup))
+      #set ($groupTitle = "$!groupDocument.plainTitle")
+      #if ("$!groupTitle" == '')
+        #set ($groupTitle = $groupDocument.name)
+      #end
+      &lt;a href="$escapetool.xml($groupDocument.getURL())"&gt;$escapetool.xml($groupTitle)&lt;/a&gt;#if ($foreach.hasNext), #end
+    #end
+  #end
+  {{/html}}
+#end
+{{/velocity}}</content>
+</xwikidoc>

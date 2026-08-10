@@ -64,6 +64,9 @@ sopManager.reviewPage.startNewRevision.success=A new revision has been started.
 sopManager.reviewPage.submitForReview=Submitted for review.
 sopManager.reviewPage.returnForChanges=Returned for changes.
 sopManager.reviewPage.submitForApproval=Submitted for approval.
+sopManager.groupSelector.reviewers.placeholder=Select reviewer groups...
+sopManager.groupSelector.approvers.placeholder=Select approver groups...
+sopManager.groupSelector.noGroups=No groups have been configured for this role.
 
 SOPManager.Code.ControlledDocumentClass_status_returnedForChanges=Returned for changes
 SOPManager.Code.ControlledDocumentClass_status_draft=Draft

@@ -64,6 +64,9 @@ sopManager.reviewPage.startNewRevision.success=Eine neue Revision wurde gestarte
 sopManager.reviewPage.submitForReview=Zur Überprüfung eingereicht.
 sopManager.reviewPage.returnForChanges=Zur Überarbeitung zurückgegeben.
 sopManager.reviewPage.submitForApproval=Zur Genehmigung eingereicht.
+sopManager.groupSelector.reviewers.placeholder=Prüfergruppen auswählen...
+sopManager.groupSelector.approvers.placeholder=Genehmigergruppen auswählen...
+sopManager.groupSelector.noGroups=Für diese Rolle wurden keine Gruppen konfiguriert.
 
 SOPManager.Code.ControlledDocumentClass_releaseDate=Freigabe am
 SOPManager.Code.ControlledDocumentClass_releaseDate_hint=Das geplante Abschlussdatum für den aktuellen Freigabeprozess. Wird automatisch auf heute gesetzt, kann jedoch auf ein beliebiges zukünftiges Datum angepasst werden, um Ihren Freigabeplan widerzuspiegeln.
