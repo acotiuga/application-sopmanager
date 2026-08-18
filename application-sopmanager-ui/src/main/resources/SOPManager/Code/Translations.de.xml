@@ -150,5 +150,6 @@ sopManager.defaultFileManagerStorageManager.saveFolder=File-Manager-Ordner erste
 sopManager.defaultFileManagerStorageManager.error.storeAttachment=Die erzeugte PDF konnte für [{0}] nicht im File Manager gespeichert werden.
 
 sopManager.reviewPage.generatePDF.notAvailable=Die serverseitige PDF-Erzeugung ist in diesem Wiki nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.
-  </content>
+
+sopManager.pdfDeletedListener.clearPDFLocation=Verweis auf die gelöschte PDF-Datei entfernen</content>
 </xwikidoc>

@@ -133,6 +133,8 @@ sopManager.defaultFileManagerStorageManager.error.storeAttachment=Failed to stor
 
 sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not available on this wiki. Please contact your administrator.
 
+sopManager.pdfDeletedListener.clearPDFLocation=Clear deleted PDF reference
+
 platform.index.tags=Tags
   </content>
   <object>
