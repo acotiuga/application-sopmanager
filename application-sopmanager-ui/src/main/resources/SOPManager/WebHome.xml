@@ -43,7 +43,7 @@
 {{velocity}}
 {{liveData
   id="sopManagerTable"
-  properties="doc.title,status,reviewerGroups,approverGroups,releaseDate,revisionPlannedDate,pDFSecondaryTargetLocation,tags"
+  properties="doc.title,status,reviewerGroups,approverGroups,releaseDate,revisionPlannedDate,tags"
   source="liveTable"
   sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;tags_class=XWiki.TagClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
 }}
