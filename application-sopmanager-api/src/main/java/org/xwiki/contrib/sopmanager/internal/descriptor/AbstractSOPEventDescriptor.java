@@ -19,32 +19,31 @@
  */
 package org.xwiki.contrib.sopmanager.internal.descriptor;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent;
+import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
- * Event descriptor for the {@link ReturnedForChangesEvent}.
+ * Base event descriptor for SOP Manager events.
  *
  * @version $Id$
  * @since 1.0
  */
-@Component
-@Singleton
-@Named("org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent")
-public class ReturnedForChangesEventDescriptor extends AbstractSOPEventDescriptor
+public abstract class AbstractSOPEventDescriptor implements RecordableEventDescriptor
 {
     @Override
-    public String getEventType()
+    public String getApplicationName()
     {
-        return ReturnedForChangesEvent.class.getCanonicalName();
+        return "sopManager.name";
     }
 
     @Override
-    public String getDescription()
+    public String getApplicationIcon()
     {
-        return "sopManager.event.returnedForChangesEvent.description";
+        return "page";
+    }
+
+    @Override
+    public String getEventTypeIcon()
+    {
+        return "refresh";
     }
 }

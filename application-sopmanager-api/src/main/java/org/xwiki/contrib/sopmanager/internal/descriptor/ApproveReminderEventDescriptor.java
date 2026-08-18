@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent;
-import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
  * Event descriptor for the {@link ApproveReminderEvent}.
@@ -35,7 +34,7 @@ import org.xwiki.eventstream.RecordableEventDescriptor;
 @Component
 @Singleton
 @Named("org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.vm")
-public class ApproveReminderEventDescriptor implements RecordableEventDescriptor
+public class ApproveReminderEventDescriptor extends AbstractSOPEventDescriptor
 {
     @Override
     public String getEventType()
@@ -44,20 +43,8 @@ public class ApproveReminderEventDescriptor implements RecordableEventDescriptor
     }
 
     @Override
-    public String getApplicationName()
-    {
-        return "sopManager.name";
-    }
-
-    @Override
     public String getDescription()
     {
         return "sopManager.event.approveReminderEvent.description";
-    }
-
-    @Override
-    public String getApplicationIcon()
-    {
-        return "refresh";
     }
 }

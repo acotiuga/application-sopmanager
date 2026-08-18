@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent;
-import org.xwiki.eventstream.RecordableEventDescriptor;
 
 /**
  * Event descriptor for the {@link SubmittedForReviewEvent}.
@@ -35,7 +34,7 @@ import org.xwiki.eventstream.RecordableEventDescriptor;
 @Component
 @Singleton
 @Named("org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent")
-public class SubmittedForReviewEventDescriptor implements RecordableEventDescriptor
+public class SubmittedForReviewEventDescriptor extends AbstractSOPEventDescriptor
 {
     @Override
     public String getEventType()
@@ -44,20 +43,8 @@ public class SubmittedForReviewEventDescriptor implements RecordableEventDescrip
     }
 
     @Override
-    public String getApplicationName()
-    {
-        return "sopManager.name";
-    }
-
-    @Override
     public String getDescription()
     {
         return "sopManager.event.submittedForReviewEvent.description";
-    }
-
-    @Override
-    public String getApplicationIcon()
-    {
-        return "refresh";
     }
 }
