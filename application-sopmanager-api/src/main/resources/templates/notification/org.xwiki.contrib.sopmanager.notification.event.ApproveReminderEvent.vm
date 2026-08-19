@@ -25,17 +25,21 @@
   #define ($rows)
     #foreach ($event in $compositeEvent.events)
       #set ($eventBody = $jsontool.fromString($event.body))
-      #set ($eventBody = $jsontool.fromString($event.body))
-      #set ($reminderWeeks = $eventBody.reminderWeeks)
-      ## Handle singular and plural translations as the number of weeks is expected to be 1 or 2.
-      #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular')
-      #if ($reminderWeeks > 1)
-        #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.plural')
+      #if ($eventBody.revisionReminder)
+        #set ($description = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.description'))
+        #set ($revisionPlannedDateNote = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.revisionPlannedDate', $xwiki.formatDate($eventBody.revisionPlannedDate, 'dd/MM/yyyy')))
+        <p>$description $revisionPlannedDateNote</p>
+      #else
+        #set ($reminderWeeks = $eventBody.reminderWeeks)
+        ## Handle singular and plural translations as the number of weeks is expected to be 1 or 2.
+        #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular')
+        #if ($reminderWeeks > 1)
+          #set ($translationKey = 'notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.plural')
+        #end
+        #set ($description = $services.localization.render($translationKey, $reminderWeeks))
+        #set ($releaseDateNote = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate', $xwiki.formatDate($eventBody.releaseDate, 'dd/MM/yyyy')))
+        <p>$description $releaseDateNote</p>
       #end
-      #set ($description = $services.localization.render($translationKey, $reminderWeeks))
-      #set ($releaseDateNote = $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate',
-        $xwiki.formatDate($eventBody.releaseDate, 'dd/MM/yyyy')))
-      <p>$description $releaseDateNote</p>
     #end
   #end
   #displayNotificationEventDetailsSkeletons($events.size(), $rows)
@@ -67,7 +71,12 @@
       <a href="$!escapetool.xml($document.getURL())">$document.displayTitle</a>
     </div>
     <div class="notification-description">
-      $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary')
+      #set ($eventBody = $jsontool.fromString($compositeEvent.events.get(0).body))
+      #if ($eventBody.revisionReminder)
+        $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.summary')
+      #else
+        $services.localization.render('notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary')
+      #end
       <div><small class="text-muted">$compositeEventDate</small></div>
     </div>
   #end

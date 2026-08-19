@@ -113,7 +113,7 @@ sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überp
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben
 sopManager.event.submittedForApprovalEvent.description=Eine Seite wurde zur Genehmigung eingereicht
 sopManager.event.approvedEvent.description=Eine Seite wurde genehmigt
-sopManager.event.approveReminderEvent.description=Genehmigungserinnerung senden
+sopManager.event.approveReminderEvent.description=Genehmigungs- und Überarbeitungserinnerungen an Genehmiger senden
 sopManager.event.reviewReminderEvent.description=Überprüfungserinnerung senden
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=wurde zur Überprüfung eingereicht
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description=hat eine Seite zur Überprüfung eingereicht
@@ -127,8 +127,11 @@ notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewRemin
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent.summary.singular=wartet auf Ihre Überprüfung.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular=Es bleibt eine Woche, um das Dokument zu genehmigen.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.plural=Es bleiben {0} Wochen, um das Dokument zu genehmigen.
-notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary.singular=wartet auf Ihre Genehmigung.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary=wartet auf Ihre Genehmigung.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.description=Das Dokument muss in einem Monat überarbeitet werden.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.summary=nähert sich dem geplanten Überarbeitungsdatum.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate=Veröffentlichungsdatum: {0}.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.revisionPlannedDate=Geplantes Überarbeitungsdatum: {0}.
 
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=Dieses Dokument wurde zur Überprüfung eingereicht und erfordert Ihre Aufmerksamkeit.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=Dieses Dokument wurde mit Änderungsanforderungen zurückgesendet und erfordert Ihr Handeln.

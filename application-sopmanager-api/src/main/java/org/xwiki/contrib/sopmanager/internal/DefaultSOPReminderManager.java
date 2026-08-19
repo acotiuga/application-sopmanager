@@ -73,8 +73,13 @@ public class DefaultSOPReminderManager implements SOPReminderManager
     private static final LocalDocumentReference CONTROLLED_DOCUMENT_CLASS =
         new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
 
+    private static final String XWIKI = "XWiki";
+
     private static final LocalDocumentReference GROUPS_CLASS =
-        new LocalDocumentReference(List.of("XWiki"), "XWikiGroups");
+        new LocalDocumentReference(List.of(XWIKI), "XWikiGroups");
+
+    private static final LocalDocumentReference USERS_CLASS =
+        new LocalDocumentReference(List.of(XWIKI), "XWikiUsers");
 
     private static final String STATUS = "status";
 
@@ -87,6 +92,17 @@ public class DefaultSOPReminderManager implements SOPReminderManager
     private static final String SUBMITTED_FOR_REVIEW = "submittedForReview";
 
     private static final String SUBMITTED_FOR_APPROVAL = "submittedForApproval";
+
+    private static final String REVISION_PLANNED_DATE = "revisionPlannedDate";
+
+    private static final String APPROVER_USER = "approverUser";
+
+    private static final String SOP_ADMINISTRATORS_GROUP = "xwiki:XWiki.SOPAdministratorsGroup";
+
+    private static final String REVISION_REMINDER = "revisionReminder";
+
+    private static final String DEFAULT_FROM_SOP_STATEMENT =
+        "from doc.object(SOPManager.Code.ControlledDocumentClass) as sop ";
 
     @Inject
     private Provider<XWikiContext> xcontextProvider;
@@ -121,6 +137,8 @@ public class DefaultSOPReminderManager implements SOPReminderManager
             : remindersToSend.entrySet()) {
             sendReminderType(reminderEntry.getKey(), reminderEntry.getValue());
         }
+
+        sendRevisionReminders();
     }
 
     Map<String, Map<DocumentReference, List<DocumentReference>>> getRemindersToSend()
@@ -157,9 +175,20 @@ public class DefaultSOPReminderManager implements SOPReminderManager
 
     List<DocumentReference> getSubmittedDocuments() throws QueryException
     {
-        String xwql = "from doc.object(SOPManager.Code.ControlledDocumentClass) as sop "
+        String xwql = DEFAULT_FROM_SOP_STATEMENT
             + "where sop.status in ('submittedForReview', 'submittedForApproval') "
             + "and sop.isInReview = 1";
+
+        Query query = queryManager.createQuery(xwql, Query.XWQL);
+        query.addFilter(documentQueryFilter).addFilter(uniqueQueryFilter);
+
+        return query.execute();
+    }
+
+    List<DocumentReference> getApprovedDocuments() throws QueryException
+    {
+        String xwql = DEFAULT_FROM_SOP_STATEMENT
+            + "where sop.status = 'approved' and sop.isInReview = 1";
 
         Query query = queryManager.createQuery(xwql, Query.XWQL);
         query.addFilter(documentQueryFilter).addFilter(uniqueQueryFilter);
@@ -219,9 +248,12 @@ public class DefaultSOPReminderManager implements SOPReminderManager
             }
         }
 
-        return users.stream()
+        List<DocumentReference> activeUsers = users.stream()
+            .filter(this::isActiveUser)
             .distinct()
             .toList();
+
+        return activeUsers.isEmpty() ? getSOPAdministrators() : activeUsers;
     }
 
     private List<DocumentReference> getGroupMembers(XWikiDocument groupDocument)
@@ -331,6 +363,38 @@ public class DefaultSOPReminderManager implements SOPReminderManager
         }
     }
 
+    private void sendRevisionReminders()
+    {
+        XWikiContext context = xcontextProvider.get();
+        XWiki xwiki = context.getWiki();
+
+        try {
+            for (DocumentReference documentReference : getApprovedDocuments()) {
+                XWikiDocument document = xwiki.getDocument(documentReference, context);
+                BaseObject controlledObject = document.getXObject(CONTROLLED_DOCUMENT_CLASS);
+
+                if (controlledObject == null) {
+                    continue;
+                }
+
+                Date revisionPlannedDate = controlledObject.getDateValue(REVISION_PLANNED_DATE);
+                if (!isRevisionReminderDue(getToday(), revisionPlannedDate)) {
+                    continue;
+                }
+
+                Map<String, Object> eventParams = new HashMap<>();
+                eventParams.put(REVISION_REMINDER, true);
+                eventParams.put(REVISION_PLANNED_DATE, revisionPlannedDate);
+
+                for (DocumentReference userReference : getRevisionReminderRecipients(controlledObject)) {
+                    workflowEventNotifier.notifyApproveReminder(document, userReference, eventParams);
+                }
+            }
+        } catch (QueryException | XWikiException e) {
+            logger.error("Failed to send SOP revision reminders.", e);
+        }
+    }
+
     private void notifyReminder(String reminderStatus, XWikiDocument document, DocumentReference userReference,
         Map<String, Object> eventParams)
     {
@@ -338,6 +402,64 @@ public class DefaultSOPReminderManager implements SOPReminderManager
             workflowEventNotifier.notifyReviewReminder(document, userReference, eventParams);
         } else if (SUBMITTED_FOR_APPROVAL.equals(reminderStatus)) {
             workflowEventNotifier.notifyApproveReminder(document, userReference, eventParams);
+        }
+    }
+
+    private boolean isRevisionReminderDue(LocalDate today, Date revisionPlannedDate)
+    {
+        if (revisionPlannedDate == null) {
+            return false;
+        }
+
+        LocalDate plannedDate = revisionPlannedDate.toInstant()
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate();
+
+        return plannedDate.minusMonths(1).equals(today);
+    }
+
+    private boolean isActiveUser(DocumentReference userReference)
+    {
+        XWikiContext context = xcontextProvider.get();
+
+        try {
+            XWikiDocument userDocument = context.getWiki().getDocument(userReference, context);
+            BaseObject userObject = userDocument.getXObject(USERS_CLASS);
+
+            return userObject != null && userObject.getIntValue("active", 1) != 0;
+        } catch (XWikiException e) {
+            logger.warn("Failed to check SOP reminder user [{}].", userReference, e);
+            return false;
+        }
+    }
+
+    private List<DocumentReference> getRevisionReminderRecipients(BaseObject controlledObject)
+    {
+        String approver = StringUtils.trimToNull(controlledObject.getLargeStringValue(APPROVER_USER));
+
+        if (approver != null) {
+            DocumentReference approverReference = currentStringDocRefResolver.resolve(approver);
+            if (isActiveUser(approverReference)) {
+                return List.of(approverReference);
+            }
+        }
+
+        return getSOPAdministrators();
+    }
+
+    private List<DocumentReference> getSOPAdministrators()
+    {
+        XWikiContext context = xcontextProvider.get();
+        XWiki xwiki = context.getWiki();
+        DocumentReference groupReference = currentStringDocRefResolver.resolve(SOP_ADMINISTRATORS_GROUP);
+
+        try {
+            return getGroupMembers(xwiki.getDocument(groupReference, context)).stream()
+                .filter(this::isActiveUser)
+                .toList();
+        } catch (XWikiException e) {
+            logger.warn("Failed to read SOP Administrators group [{}].", groupReference, e);
+            return List.of();
         }
     }
 }

@@ -66,6 +66,9 @@ class DefaultSOPReminderManagerTest
     private static final LocalDocumentReference GROUPS_CLASS =
         new LocalDocumentReference(List.of("XWiki"), "XWikiGroups");
 
+    private static final LocalDocumentReference USERS_CLASS =
+        new LocalDocumentReference(List.of("XWiki"), "XWikiUsers");
+
     private static final String RELEASE_DATE = "releaseDate";
 
     private static final String REMINDER_WEEKS = "reminderWeeks";
@@ -128,6 +131,7 @@ class DefaultSOPReminderManagerTest
 
         doReturn(today).when(testedManager).getToday();
         doReturn(List.of(documentReference)).when(testedManager).getSubmittedDocuments();
+        doReturn(List.of()).when(testedManager).getApprovedDocuments();
 
         XWikiDocument reviewDocument = mockControlledDocument(documentReference, "submittedForReview", releaseDate,
             "reviewerGroups", "XWiki.Reviewers");
@@ -156,6 +160,7 @@ class DefaultSOPReminderManagerTest
 
         doReturn(today).when(testedManager).getToday();
         doReturn(List.of(documentReference)).when(testedManager).getSubmittedDocuments();
+        doReturn(List.of()).when(testedManager).getApprovedDocuments();
 
         XWikiDocument approvalDocument = mockControlledDocument(documentReference, "submittedForApproval", releaseDate,
             "approverGroups", "XWiki.Approvers");
@@ -193,6 +198,7 @@ class DefaultSOPReminderManagerTest
         doReturn(today).when(testedManager).getToday();
         doReturn(List.of(reviewDocumentA, reviewDocumentB, approvalDocument))
             .when(testedManager).getSubmittedDocuments();
+        doReturn(List.of()).when(testedManager).getApprovedDocuments();
 
         XWikiDocument reviewDocumentAObject = mockControlledDocument(reviewDocumentA, "submittedForReview",
             reviewReleaseDate, "reviewerGroups", "XWiki.Reviewers");
@@ -237,6 +243,8 @@ class DefaultSOPReminderManagerTest
     {
         XWikiDocument groupDocument = mock(XWikiDocument.class);
         BaseObject groupObject = mock(BaseObject.class);
+        XWikiDocument userDocument = mock(XWikiDocument.class);
+        BaseObject userObject = mock(BaseObject.class);
 
         when(this.currentStringDocRefResolver.resolve(serializedGroupReference)).thenReturn(groupReference);
         when(this.currentStringDocRefResolver.resolve(serializedUserReference, groupReference))
@@ -246,6 +254,10 @@ class DefaultSOPReminderManagerTest
         when(groupDocument.getDocumentReference()).thenReturn(groupReference);
         when(groupDocument.getXObjects(GROUPS_CLASS)).thenReturn(List.of(groupObject));
         when(groupObject.getStringValue("member")).thenReturn(serializedUserReference);
+
+        when(this.wiki.getDocument(userReference, this.context)).thenReturn(userDocument);
+        when(userDocument.getXObject(USERS_CLASS)).thenReturn(userObject);
+        when(userObject.getIntValue("active", 1)).thenReturn(1);
     }
 
     private Map<String, Object> getExpectedEventParams(LocalDate releaseDate, int reminderWeeks)

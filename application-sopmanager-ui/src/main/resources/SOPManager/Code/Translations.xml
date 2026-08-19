@@ -95,7 +95,7 @@ sopManager.event.submittedForReviewEvent.description=A page is submitted for rev
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes
 sopManager.event.submittedForApprovalEvent.description=A page is submitted for approval
 sopManager.event.approvedEvent.description=A page is approved
-sopManager.event.approveReminderEvent.description=Send approval reminder to approver
+sopManager.event.approveReminderEvent.description=Send approval and revision reminders to approvers
 sopManager.event.reviewReminderEvent.description=Send review reminder to reviewer.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.by.1user=was submitted for review
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description=submitted page for review
@@ -110,7 +110,10 @@ notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReviewRemin
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.singular=There is one week left to approve the document.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.description.plural=There are {0} weeks left to approve the document.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.summary=is waiting for your approval.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.description=The document is due for revision in one month.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent.revision.summary=is approaching its planned revision date.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.releaseDate=Release date: {0}.
+notifications.events.org.xwiki.contrib.sopmanager.notification.event.revisionPlannedDate=Planned revision date: {0}.
 
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent.description.email=This document has been submitted for review and requires your attention.
 notifications.events.org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent.description.email=This document has been returned with requested changes and requires your action.
