@@ -96,6 +96,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     private static final String FILE_MANAGER_LOCATION = "fileManagerLocation";
 
+    private static final String SOP_TAGS = "sopTags";
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -145,9 +147,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
             fileDoc.setTitle(fileName);
 
-            if (fileDoc.getXObject(FILE_CLASS) == null) {
-                fileDoc.newXObject(FILE_CLASS, context);
-            }
+            getOrCreateXObject(fileDoc, FILE_CLASS, context);
 
             BaseObject tagObject = getOrCreateXObject(fileDoc, TAG_CLASS, context);
 
@@ -157,7 +157,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             String serializedBacklink = localEntityReferenceSerializer.serialize(sourceDocumentReference);
             originalDetailsObj.setStringValue(BACKLINK, serializedBacklink);
             if (sopTagsObject != null) {
-                originalDetailsObj.setDBStringListValue("sopTags", sopTagsObject.getListValue(TAGS));
+                originalDetailsObj.setDBStringListValue(SOP_TAGS, sopTagsObject.getListValue(TAGS));
             }
 
             List<String> tags = new ArrayList<>();
@@ -246,7 +246,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     }
 
     DocumentReference getOrCreateFileManagerFolder(String folderName, DocumentReference parentFolderReference,
-        String wikiName, XWikiContext context) throws Exception
+        String wikiName, XWikiContext context) throws QueryException, XWikiException
     {
         XWiki xwiki = context.getWiki();
 
@@ -261,7 +261,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         );
 
         XWikiDocument folderDoc = xwiki.getDocument(folderReference, context);
-        folderDoc.setTitle(folderReference.getName());
+        folderDoc.setTitle(folderName);
 
         if (parentFolderReference != null) {
             folderDoc.setParentReference(
@@ -270,9 +270,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             folderDoc.setParentReference(FILE_MANAGER_REFERENCE);
         }
 
-        if (folderDoc.getXObject(FOLDER_CLASS) == null) {
-            folderDoc.newXObject(FOLDER_CLASS, context);
-        }
+        getOrCreateXObject(folderDoc, FOLDER_CLASS, context);
 
         folderDoc.setCreatorReference(context.getUserReference());
         folderDoc.setAuthorReference(context.getUserReference());
@@ -308,22 +306,19 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
         List<String> documentNames = query.execute();
 
-        EntityReference expectedParent = parentReference != null
+        LocalDocumentReference expectedParent = parentReference != null
             ? parentReference.getLocalDocumentReference()
             : FILE_MANAGER_REFERENCE;
 
         for (String documentName : documentNames) {
             DocumentReference candidateReference = documentReferenceResolver.resolve(documentName);
             XWikiDocument candidateDoc = context.getWiki().getDocument(candidateReference, context);
-            if (candidateDoc == null) {
-                continue;
-            }
 
-            EntityReference actualParent = candidateDoc.getParentReference() != null
+            LocalDocumentReference actualParent = candidateDoc.getParentReference() != null
                 ? candidateDoc.getParentReference().getLocalDocumentReference()
                 : null;
 
-            if (sameReference(actualParent, expectedParent)) {
+            if (expectedParent.equals(actualParent)) {
                 return candidateReference;
             }
         }
@@ -342,17 +337,6 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
 
         return folderNames;
-    }
-
-    private boolean sameReference(EntityReference left, EntityReference right)
-    {
-        if (left == null && right == null) {
-            return true;
-        }
-        if (left == null || right == null) {
-            return false;
-        }
-        return left.equals(right);
     }
 
     DocumentReference getConfiguredFileManagerLocation(DocumentReference sourceDocumentReference,
