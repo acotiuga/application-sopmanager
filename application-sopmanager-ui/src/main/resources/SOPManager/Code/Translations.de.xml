@@ -154,5 +154,14 @@ sopManager.defaultFileManagerStorageManager.error.storeAttachment=Die erzeugte P
 
 sopManager.reviewPage.generatePDF.notAvailable=Die serverseitige PDF-Erzeugung ist in diesem Wiki nicht verfügbar. Bitte kontaktieren Sie Ihren Administrator.
 
-sopManager.pdfDeletedListener.clearPDFLocation=Verweis auf die gelöschte PDF-Datei entfernen</content>
+sopManager.pdfDeletedListener.clearPDFLocation=Verweis auf die gelöschte PDF-Datei entfernen
+
+platform.index.tags=Tags
+
+sopManager.defaultFileManagerStorageManager.error.permanentDirectoryMissing=Das erzeugte PDF konnte nicht archiviert werden, weil das permanente XWiki-Verzeichnis nicht konfiguriert ist. Bitte wenden Sie sich an einen Administrator.
+sopManager.defaultFileManagerStorageManager.error.invalidArchivePath=Das erzeugte PDF konnte nicht archiviert werden, weil der aufgelöste Pfad [{0}] außerhalb des konfigurierten SOP-Archivs liegt.
+sopManager.defaultFileManagerStorageManager.error.createArchiveDirectory=Das erzeugte PDF konnte nicht archiviert werden, weil das Verzeichnis [{0}] nicht erstellt werden konnte. Prüfen Sie, ob XWiki Schreibrechte besitzt und ob an dieser Stelle bereits eine Datei existiert.
+sopManager.defaultFileManagerStorageManager.error.writeArchiveFile=Das erzeugte PDF konnte nicht nach [{0}] geschrieben werden. Prüfen Sie die Schreibrechte von XWiki und den verfügbaren Speicherplatz.
+sopManager.defaultFileManagerStorageManager.error.emptyArchivePathSegment=Das erzeugte PDF konnte nicht archiviert werden, weil die File-Manager-Hierarchie einen leeren Ordnernamen enthält.
+sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment=Das erzeugte PDF konnte nicht archiviert werden, weil der File-Manager-Name [{0}] kein gültiger Dateisystemname ist.</content>
 </xwikidoc>

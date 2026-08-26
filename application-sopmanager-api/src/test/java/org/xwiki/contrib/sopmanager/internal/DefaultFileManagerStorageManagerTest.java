@@ -34,6 +34,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import javax.inject.Named;
@@ -41,6 +45,8 @@ import javax.inject.Provider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.xwiki.environment.Environment;
 import org.xwiki.filemanager.internal.reference.DocumentNameSequence;
 import org.xwiki.filemanager.reference.UniqueDocumentReferenceGenerator;
 import org.xwiki.localization.ContextualLocalizationManager;
@@ -66,6 +72,17 @@ import com.xpn.xwiki.objects.BaseObject;
 @ComponentTest
 class DefaultFileManagerStorageManagerTest
 {
+    private static final String PDF_CONTENT = "%PDF-1.4 test content";
+
+    private static final LocalDocumentReference CONTROLLED_DOCUMENT_CLASS =
+        new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
+
+    private static final LocalDocumentReference FOLDER_CLASS =
+        new LocalDocumentReference(List.of("FileManagerCode"), "FolderClass");
+
+    private static final LocalDocumentReference DRIVE_CLASS =
+        new LocalDocumentReference(List.of("FileManagerCode"), "DriveClass");
+
     @InjectMockComponents
     private DefaultFileManagerStorageManager storageManager;
 
@@ -93,14 +110,11 @@ class DefaultFileManagerStorageManagerTest
     @Named("current")
     private DocumentReferenceResolver<String> currentStringDocRefResolver;
 
-    private static final LocalDocumentReference CONTROLLED_DOCUMENT_CLASS =
-        new LocalDocumentReference(List.of("SOPManager", "Code"), "ControlledDocumentClass");
+    @MockComponent
+    private Environment environment;
 
-    private static final LocalDocumentReference FOLDER_CLASS =
-        new LocalDocumentReference(List.of("FileManagerCode"), "FolderClass");
-
-    private static final LocalDocumentReference DRIVE_CLASS =
-        new LocalDocumentReference(List.of("FileManagerCode"), "DriveClass");
+    @TempDir
+    private Path permanentDirectory;
 
     private Query query;
 
@@ -121,6 +135,7 @@ class DefaultFileManagerStorageManagerTest
 
         when(this.xcontextProvider.get()).thenReturn(this.context);
         when(this.context.getWiki()).thenReturn(this.wiki);
+        when(this.environment.getPermanentDirectory()).thenReturn(this.permanentDirectory.toFile());
 
         when(this.localEntityReferenceSerializer.serialize(any(EntityReference.class)))
             .thenReturn("serializedReference");
@@ -129,17 +144,23 @@ class DefaultFileManagerStorageManagerTest
     @Test
     void extractFolderNamesForNestedSpacesDocument()
     {
-        DocumentReference reference = new DocumentReference("xwiki", List.of("Sandbox", "S1", "S2"), "WebHome");
+        DocumentReference reference =
+            new DocumentReference("xwiki", List.of("Sandbox", "S1", "S2"), "WebHome");
 
-        assertEquals(List.of("Sandbox", "S1", "S2"), this.storageManager.extractFolderNames(reference));
+        assertEquals(
+            List.of("Sandbox", "S1", "S2"),
+            this.storageManager.extractFolderNames(reference)
+        );
     }
 
     @Test
     void findExistingFileReturnsReferenceOnlyWhenParentMatches() throws Exception
     {
         String fullName = "FileManager.ZorroPDF";
-        DocumentReference parentReference = new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
-        DocumentReference candidateReference = new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
+        DocumentReference parentReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
+        DocumentReference candidateReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
 
         when(this.query.execute()).thenReturn(List.of(fullName));
         when(this.documentReferenceResolver.resolve(fullName)).thenReturn(candidateReference);
@@ -158,9 +179,12 @@ class DefaultFileManagerStorageManagerTest
     void findExistingFileReturnsNullWhenParentDoesNotMatch() throws Exception
     {
         String fullName = "FileManager.ZorroPDF";
-        DocumentReference expectedParentReference = new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
-        DocumentReference differentParentReference = new DocumentReference("xwiki", List.of("FileManager"), "Other");
-        DocumentReference candidateReference = new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
+        DocumentReference expectedParentReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
+        DocumentReference differentParentReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "Other");
+        DocumentReference candidateReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
 
         when(this.query.execute()).thenReturn(List.of(fullName));
         when(this.documentReferenceResolver.resolve(fullName)).thenReturn(candidateReference);
@@ -180,25 +204,38 @@ class DefaultFileManagerStorageManagerTest
     {
         DefaultFileManagerStorageManager storageManager = spy(this.storageManager);
 
-        DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
-        DocumentReference fileReference = new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
+        DocumentReference sourceReference =
+            new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
+        DocumentReference fileReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
         XWikiDocument fileDoc = mock(XWikiDocument.class);
 
-        doReturn(null).when(storageManager).findExistingFile("Sandbox.pdf", null, this.context);
+        doReturn(null).when(storageManager)
+            .findExistingFile("Sandbox.pdf", null, this.context);
 
-        when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class), any(DocumentNameSequence.class)))
+        when(this.uniqueDocRefGenerator.generate(
+            any(SpaceReference.class), any(DocumentNameSequence.class)))
             .thenReturn(fileReference);
         when(this.wiki.getDocument(fileReference, this.context)).thenReturn(fileDoc);
 
-        XWikiDocument result = storageManager.getFileManagerFileDocumentForStorage(this.context, "xwiki",
-            "Sandbox.pdf", null, sourceReference, 1);
+        XWikiDocument result =
+            storageManager.getFileManagerFileDocumentForStorage(
+                this.context,
+                "xwiki",
+                "Sandbox.pdf",
+                null,
+                sourceReference,
+                1
+            );
 
         assertSame(fileDoc, result);
-        verify(this.wiki, never()).deleteDocument(any(XWikiDocument.class), eq(this.context));
+        verify(this.wiki, never())
+            .deleteDocument(any(XWikiDocument.class), eq(this.context));
     }
 
     @Test
-    void getFileManagerFileDocumentForStorageDeletesExistingLinkedFileForNewRevision() throws Exception
+    void getFileManagerFileDocumentForStorageDeletesExistingLinkedFileForNewRevision()
+        throws Exception
     {
         DefaultFileManagerStorageManager storageManager = spy(this.storageManager);
 
@@ -206,21 +243,32 @@ class DefaultFileManagerStorageManagerTest
         XWikiDocument newFileDoc = mock(XWikiDocument.class);
         BaseObject backlinkObject = mock(BaseObject.class);
 
-        DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
-        DocumentReference fileReference = new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
+        DocumentReference sourceReference =
+            new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
+        DocumentReference fileReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
 
-        doReturn(fileReference).when(storageManager).findExistingFile("Sandbox.pdf", null, this.context);
+        doReturn(fileReference).when(storageManager)
+            .findExistingFile("Sandbox.pdf", null, this.context);
 
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(existingFileDoc, newFileDoc);
-        when(existingFileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(backlinkObject);
-        when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
-        when(backlinkObject.getStringValue("backlink")).thenReturn("Sandbox.WebHome");
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(existingFileDoc, newFileDoc);
+        when(existingFileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(backlinkObject);
+        when(this.localEntityReferenceSerializer.serialize(sourceReference))
+            .thenReturn("Sandbox.WebHome");
+        when(backlinkObject.getStringValue("backlink"))
+            .thenReturn("Sandbox.WebHome");
 
-        when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class), any(DocumentNameSequence.class)))
-            .thenReturn(fileReference);
-
-        XWikiDocument result = storageManager.getFileManagerFileDocumentForStorage(this.context, "xwiki",
-            "Sandbox.pdf", null, sourceReference, 2);
+        XWikiDocument result =
+            storageManager.getFileManagerFileDocumentForStorage(
+                this.context,
+                "xwiki",
+                "Sandbox.pdf",
+                null,
+                sourceReference,
+                2
+            );
 
         assertSame(newFileDoc, result);
         verify(this.wiki).deleteDocument(existingFileDoc, this.context);
@@ -234,48 +282,82 @@ class DefaultFileManagerStorageManagerTest
         XWikiDocument existingFileDoc = mock(XWikiDocument.class);
         BaseObject backlinkObject = mock(BaseObject.class);
 
-        DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
-        DocumentReference fileReference = new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
+        DocumentReference sourceReference =
+            new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
+        DocumentReference fileReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
 
-        doReturn(fileReference).when(storageManager).findExistingFile("Sandbox.pdf", null, this.context);
+        doReturn(fileReference).when(storageManager)
+            .findExistingFile("Sandbox.pdf", null, this.context);
 
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(existingFileDoc);
-        when(existingFileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(backlinkObject);
-        when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
-        when(backlinkObject.getStringValue("backlink")).thenReturn("Other.Page");
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(existingFileDoc);
+        when(existingFileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(backlinkObject);
+        when(this.localEntityReferenceSerializer.serialize(sourceReference))
+            .thenReturn("Sandbox.WebHome");
+        when(backlinkObject.getStringValue("backlink"))
+            .thenReturn("Other.Page");
 
-        XWikiException exception = assertThrows(XWikiException.class,
-            () -> storageManager.getFileManagerFileDocumentForStorage(this.context, "xwiki", "Sandbox.pdf",
-                null, sourceReference, 2));
+        XWikiException exception = assertThrows(
+            XWikiException.class,
+            () -> storageManager.getFileManagerFileDocumentForStorage(
+                this.context,
+                "xwiki",
+                "Sandbox.pdf",
+                null,
+                sourceReference,
+                2
+            )
+        );
 
-        assertTrue(exception.getMessage().contains("not linked to the current SOP document"));
-        verify(this.wiki, never()).deleteDocument(any(XWikiDocument.class), eq(this.context));
+        assertTrue(exception.getMessage()
+            .contains("not linked to the current SOP document"));
+        verify(this.wiki, never())
+            .deleteDocument(any(XWikiDocument.class), eq(this.context));
     }
 
     @Test
-    void getFileManagerFileDocumentForStorageRefusesToReplaceFileForFirstRevision() throws Exception
+    void getFileManagerFileDocumentForStorageRefusesToReplaceFileForFirstRevision()
+        throws Exception
     {
         DefaultFileManagerStorageManager storageManager = spy(this.storageManager);
 
         XWikiDocument existingFileDoc = mock(XWikiDocument.class);
         BaseObject backlinkObject = mock(BaseObject.class);
 
-        DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
-        DocumentReference fileReference = new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
+        DocumentReference sourceReference =
+            new DocumentReference("xwiki", List.of("Sandbox"), "WebHome");
+        DocumentReference fileReference =
+            new DocumentReference("xwiki", List.of("FileManager"), "SandboxPDF");
 
-        doReturn(fileReference).when(storageManager).findExistingFile("Sandbox.pdf", null, this.context);
+        doReturn(fileReference).when(storageManager)
+            .findExistingFile("Sandbox.pdf", null, this.context);
 
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(existingFileDoc);
-        when(existingFileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(backlinkObject);
-        when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.WebHome");
-        when(backlinkObject.getStringValue("backlink")).thenReturn("Sandbox.WebHome");
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(existingFileDoc);
+        when(existingFileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(backlinkObject);
+        when(this.localEntityReferenceSerializer.serialize(sourceReference))
+            .thenReturn("Sandbox.WebHome");
+        when(backlinkObject.getStringValue("backlink"))
+            .thenReturn("Sandbox.WebHome");
 
-        XWikiException exception = assertThrows(XWikiException.class,
-            () -> storageManager.getFileManagerFileDocumentForStorage(this.context, "xwiki", "Sandbox.pdf",
-                null, sourceReference, 1));
+        XWikiException exception = assertThrows(
+            XWikiException.class,
+            () -> storageManager.getFileManagerFileDocumentForStorage(
+                this.context,
+                "xwiki",
+                "Sandbox.pdf",
+                null,
+                sourceReference,
+                1
+            )
+        );
 
         assertTrue(exception.getMessage().contains("first SOP revision"));
-        verify(this.wiki, never()).deleteDocument(any(XWikiDocument.class), eq(this.context));
+        verify(this.wiki, never())
+            .deleteDocument(any(XWikiDocument.class), eq(this.context));
     }
 
     @Test
@@ -284,55 +366,151 @@ class DefaultFileManagerStorageManagerTest
         DefaultFileManagerStorageManager storageManager = spy(this.storageManager);
 
         XWikiDocument fileDoc = mock(XWikiDocument.class);
+        XWikiDocument sandboxFolderDocument = mock(XWikiDocument.class);
+        XWikiDocument marmotaFolderDocument = mock(XWikiDocument.class);
         BaseObject fileObject = mock(BaseObject.class);
+        BaseObject folderObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
         BaseObject backlinkObject = mock(BaseObject.class);
         BaseObject tagsObject = mock(BaseObject.class);
-        XWikiAttachment attachment = mock(XWikiAttachment.class);
+        XWikiAttachment attachment = mockAttachmentWithPDFContent();
         BaseObject controlledDocumentObject = mock(BaseObject.class);
         XWikiDocument sourceDocument = mock(XWikiDocument.class);
 
-        DocumentReference sourceReference = new DocumentReference("xwiki", List.of("Sandbox", "Marmota"), "Zorro");
-        DocumentReference sandboxFolderReference = new DocumentReference("xwiki", List.of("FileManager"), "Sandbox");
-        DocumentReference marmotaFolderReference = new DocumentReference("xwiki", List.of("FileManager"), "Marmota");
-        DocumentReference fileReference = new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
+        DocumentReference sourceReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("Sandbox", "Marmota"),
+                "Zorro"
+            );
+        DocumentReference driveReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "WebHome"
+            );
+        DocumentReference sandboxFolderReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "Sandbox"
+            );
+        DocumentReference marmotaFolderReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "Marmota"
+            );
+        DocumentReference fileReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "ZorroPDF"
+            );
 
         doReturn(sandboxFolderReference).when(storageManager)
-            .getOrCreateFileManagerFolder("Sandbox", null, "xwiki", this.context);
+            .getOrCreateFileManagerFolder(
+                "Sandbox",
+                null,
+                "xwiki",
+                this.context
+            );
         doReturn(marmotaFolderReference).when(storageManager)
-            .getOrCreateFileManagerFolder("Marmota", sandboxFolderReference, "xwiki", this.context);
-        doReturn(null).when(storageManager).findExistingFile("Zorro.pdf", marmotaFolderReference, this.context);
+            .getOrCreateFileManagerFolder(
+                "Marmota",
+                sandboxFolderReference,
+                "xwiki",
+                this.context
+            );
+        doReturn(null).when(storageManager)
+            .findExistingFile(
+                "Zorro.pdf",
+                marmotaFolderReference,
+                this.context
+            );
 
-        when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class), any(DocumentNameSequence.class)))
+        when(this.uniqueDocRefGenerator.generate(
+            any(SpaceReference.class), any(DocumentNameSequence.class)))
             .thenReturn(fileReference);
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(fileDoc);
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(fileDoc);
         when(fileDoc.getDocumentReference()).thenReturn(fileReference);
-        when(this.localEntityReferenceSerializer.serialize(sourceReference)).thenReturn("Sandbox.Marmota.Zorro");
-        when(tagsObject.getListValue("tags")).thenReturn(List.of("test", "marmota"));
-        when(this.localizationManager.getTranslationPlain("sopManager.defaultFileManagerStorageManager.saveDocument"))
+        when(this.localEntityReferenceSerializer.serialize(sourceReference))
+            .thenReturn("Sandbox.Marmota.Zorro");
+        when(tagsObject.getListValue("tags"))
+            .thenReturn(List.of("test", "marmota"));
+        when(this.localizationManager.getTranslationPlain(
+            "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
 
-        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
-        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(this.context)))
+        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(null, null, null);
+        when(fileDoc.newXObject(
+            any(LocalDocumentReference.class), eq(this.context)))
             .thenReturn(fileObject, tagObject, backlinkObject);
 
-        when(this.wiki.getDocument(sourceReference, this.context)).thenReturn(sourceDocument);
-        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS)).thenReturn(controlledDocumentObject);
-        when(controlledDocumentObject.getStringValue("fileManagerLocation")).thenReturn("");
+        when(this.wiki.getDocument(sourceReference, this.context))
+            .thenReturn(sourceDocument);
+        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS))
+            .thenReturn(controlledDocumentObject);
+        when(controlledDocumentObject.getStringValue("fileManagerLocation"))
+            .thenReturn("");
+
+        when(this.wiki.getDocument(marmotaFolderReference, this.context))
+            .thenReturn(marmotaFolderDocument);
+        when(marmotaFolderDocument.getXObject(FOLDER_CLASS))
+            .thenReturn(folderObject);
+        when(marmotaFolderDocument.getTitle()).thenReturn("Marmota");
+        when(marmotaFolderDocument.getParentReference())
+            .thenReturn(sandboxFolderReference);
+
+        when(this.wiki.getDocument(sandboxFolderReference, this.context))
+            .thenReturn(sandboxFolderDocument);
+        when(sandboxFolderDocument.getXObject(FOLDER_CLASS))
+            .thenReturn(folderObject);
+        when(sandboxFolderDocument.getTitle()).thenReturn("Sandbox");
+        when(sandboxFolderDocument.getParentReference())
+            .thenReturn(driveReference);
 
         DocumentReference result =
-            storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf", 2, tagsObject);
+            storageManager.storeAttachment(
+                sourceReference,
+                attachment,
+                "Zorro.pdf",
+                2,
+                tagsObject
+            );
 
         assertEquals(fileReference, result);
 
+        Path storedPDF = this.permanentDirectory.resolve(
+            Path.of("sops", "Sandbox", "Marmota", "Zorro.pdf"));
+        assertEquals(
+            PDF_CONTENT,
+            Files.readString(storedPDF, StandardCharsets.UTF_8)
+        );
+
         verify(fileDoc).setTitle("Zorro.pdf");
         verify(fileDoc).setParentReference(
-            marmotaFolderReference.removeParent(marmotaFolderReference.getWikiReference()));
-        verify(tagObject).setDBStringListValue("tags", List.of("Marmota"));
-        verify(backlinkObject).setStringValue("backlink", "Sandbox.Marmota.Zorro");
-        verify(backlinkObject).setDBStringListValue("sopTags", List.of("test", "marmota"));
+            marmotaFolderReference.removeParent(
+                marmotaFolderReference.getWikiReference()
+            )
+        );
+        verify(tagObject)
+            .setDBStringListValue("tags", List.of("Marmota"));
+        verify(backlinkObject)
+            .setStringValue("backlink", "Sandbox.Marmota.Zorro");
+        verify(backlinkObject)
+            .setDBStringListValue(
+                "sopTags",
+                List.of("test", "marmota")
+            );
         verify(fileDoc).setAttachment(attachment);
-        verify(this.wiki).saveDocument(fileDoc, "Store generated PDF in File Manager", this.context);
+        verify(this.wiki).saveDocument(
+            fileDoc,
+            "Store generated PDF in File Manager",
+            this.context
+        );
     }
 
     @Test
@@ -348,49 +526,107 @@ class DefaultFileManagerStorageManagerTest
         BaseObject fileObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
         BaseObject backlinkObject = mock(BaseObject.class);
-        XWikiAttachment attachment = mock(XWikiAttachment.class);
+        XWikiAttachment attachment = mockAttachmentWithPDFContent();
 
         DocumentReference sourceReference =
-            new DocumentReference("xwiki", List.of("Sandbox", "Marmota"), "Zorro");
+            new DocumentReference(
+                "xwiki",
+                List.of("Sandbox", "Marmota"),
+                "Zorro"
+            );
         DocumentReference selectedFolderReference =
-            new DocumentReference("xwiki", List.of("FileManager"), "SOPTest");
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "SOPTest"
+            );
+        DocumentReference driveReference =
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "WebHome"
+            );
         DocumentReference fileReference =
-            new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "ZorroPDF"
+            );
 
-        when(this.wiki.getDocument(sourceReference, this.context)).thenReturn(sourceDocument);
-        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS)).thenReturn(controlledDocumentObject);
+        when(this.wiki.getDocument(sourceReference, this.context))
+            .thenReturn(sourceDocument);
+        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS))
+            .thenReturn(controlledDocumentObject);
         when(controlledDocumentObject.getStringValue("fileManagerLocation"))
             .thenReturn("xwiki:FileManager.SOPTest");
-        when(this.currentStringDocRefResolver.resolve("xwiki:FileManager.SOPTest", sourceReference))
+        when(this.currentStringDocRefResolver.resolve(
+            "xwiki:FileManager.SOPTest", sourceReference))
             .thenReturn(selectedFolderReference);
+
         when(this.wiki.getDocument(selectedFolderReference, this.context))
             .thenReturn(selectedFolderDocument);
-        when(selectedFolderDocument.getXObject(FOLDER_CLASS)).thenReturn(folderObject);
+        when(selectedFolderDocument.getXObject(FOLDER_CLASS))
+            .thenReturn(folderObject);
+        when(selectedFolderDocument.getTitle()).thenReturn("SOPTest");
+        when(selectedFolderDocument.getParentReference())
+            .thenReturn(driveReference);
 
         doReturn(null).when(storageManager)
-            .findExistingFile("Zorro.pdf", selectedFolderReference, this.context);
-        when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class),
-            any(DocumentNameSequence.class))).thenReturn(fileReference);
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(fileDoc);
+            .findExistingFile(
+                "Zorro.pdf",
+                selectedFolderReference,
+                this.context
+            );
+        when(this.uniqueDocRefGenerator.generate(
+            any(SpaceReference.class), any(DocumentNameSequence.class)))
+            .thenReturn(fileReference);
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(fileDoc);
         when(fileDoc.getDocumentReference()).thenReturn(fileReference);
         when(this.localEntityReferenceSerializer.serialize(sourceReference))
             .thenReturn("Sandbox.Marmota.Zorro");
         when(this.localizationManager.getTranslationPlain(
             "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
-        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
-        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(this.context)))
+        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(null, null, null);
+        when(fileDoc.newXObject(
+            any(LocalDocumentReference.class), eq(this.context)))
             .thenReturn(fileObject, tagObject, backlinkObject);
 
         DocumentReference result =
-            storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf", 1, null);
+            storageManager.storeAttachment(
+                sourceReference,
+                attachment,
+                "Zorro.pdf",
+                1,
+                null
+            );
 
         assertEquals(fileReference, result);
-        verify(storageManager, never()).getOrCreateFileManagerFolder(
-            anyString(), any(), anyString(), eq(this.context));
+
+        Path storedPDF =
+            this.permanentDirectory.resolve(
+                Path.of("sops", "SOPTest", "Zorro.pdf"));
+        assertEquals(
+            PDF_CONTENT,
+            Files.readString(storedPDF, StandardCharsets.UTF_8)
+        );
+
+        verify(storageManager, never())
+            .getOrCreateFileManagerFolder(
+                anyString(),
+                any(),
+                anyString(),
+                eq(this.context)
+            );
         verify(fileDoc).setParentReference(
-            selectedFolderReference.removeParent(selectedFolderReference.getWikiReference()));
-        verify(tagObject).setDBStringListValue("tags", List.of("SOPTest"));
+            selectedFolderReference.removeParent(
+                selectedFolderReference.getWikiReference()
+            )
+        );
+        verify(tagObject)
+            .setDBStringListValue("tags", List.of("SOPTest"));
     }
 
     @Test
@@ -406,47 +642,94 @@ class DefaultFileManagerStorageManagerTest
         BaseObject fileObject = mock(BaseObject.class);
         BaseObject tagObject = mock(BaseObject.class);
         BaseObject backlinkObject = mock(BaseObject.class);
-        XWikiAttachment attachment = mock(XWikiAttachment.class);
+        XWikiAttachment attachment = mockAttachmentWithPDFContent();
 
         DocumentReference sourceReference =
-            new DocumentReference("xwiki", List.of("Sandbox"), "Zorro");
+            new DocumentReference(
+                "xwiki",
+                List.of("Sandbox"),
+                "Zorro"
+            );
         DocumentReference driveReference =
-            new DocumentReference("xwiki", List.of("FileManager"), "WebHome");
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "WebHome"
+            );
         DocumentReference fileReference =
-            new DocumentReference("xwiki", List.of("FileManager"), "ZorroPDF");
+            new DocumentReference(
+                "xwiki",
+                List.of("FileManager"),
+                "ZorroPDF"
+            );
 
-        when(this.wiki.getDocument(sourceReference, this.context)).thenReturn(sourceDocument);
-        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS)).thenReturn(controlledDocumentObject);
+        when(this.wiki.getDocument(sourceReference, this.context))
+            .thenReturn(sourceDocument);
+        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS))
+            .thenReturn(controlledDocumentObject);
         when(controlledDocumentObject.getStringValue("fileManagerLocation"))
             .thenReturn("xwiki:FileManager.WebHome");
-        when(this.currentStringDocRefResolver.resolve("xwiki:FileManager.WebHome", sourceReference))
+        when(this.currentStringDocRefResolver.resolve(
+            "xwiki:FileManager.WebHome", sourceReference))
             .thenReturn(driveReference);
-        when(this.wiki.getDocument(driveReference, this.context)).thenReturn(driveDocument);
-        when(driveDocument.getXObject(DRIVE_CLASS)).thenReturn(driveObject);
+        when(this.wiki.getDocument(driveReference, this.context))
+            .thenReturn(driveDocument);
+        when(driveDocument.getXObject(DRIVE_CLASS))
+            .thenReturn(driveObject);
 
         doReturn(null).when(storageManager)
-            .findExistingFile("Zorro.pdf", driveReference, this.context);
-        when(this.uniqueDocRefGenerator.generate(any(SpaceReference.class),
-            any(DocumentNameSequence.class))).thenReturn(fileReference);
-        when(this.wiki.getDocument(fileReference, this.context)).thenReturn(fileDoc);
+            .findExistingFile(
+                "Zorro.pdf",
+                driveReference,
+                this.context
+            );
+        when(this.uniqueDocRefGenerator.generate(
+            any(SpaceReference.class), any(DocumentNameSequence.class)))
+            .thenReturn(fileReference);
+        when(this.wiki.getDocument(fileReference, this.context))
+            .thenReturn(fileDoc);
         when(fileDoc.getDocumentReference()).thenReturn(fileReference);
         when(this.localEntityReferenceSerializer.serialize(sourceReference))
             .thenReturn("Sandbox.Zorro");
         when(this.localizationManager.getTranslationPlain(
             "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
-        when(fileDoc.getXObject(any(LocalDocumentReference.class))).thenReturn(null, null, null);
-        when(fileDoc.newXObject(any(LocalDocumentReference.class), eq(this.context)))
+        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
+            .thenReturn(null, null, null);
+        when(fileDoc.newXObject(
+            any(LocalDocumentReference.class), eq(this.context)))
             .thenReturn(fileObject, tagObject, backlinkObject);
 
         DocumentReference result =
-            storageManager.storeAttachment(sourceReference, attachment, "Zorro.pdf", 1, null);
+            storageManager.storeAttachment(
+                sourceReference,
+                attachment,
+                "Zorro.pdf",
+                1,
+                null
+            );
 
         assertEquals(fileReference, result);
-        verify(storageManager, never()).getOrCreateFileManagerFolder(
-            anyString(), any(), anyString(), eq(this.context));
-        verify(fileDoc).setParentReference(driveReference.getLocalDocumentReference());
-        verify(tagObject).setDBStringListValue("tags", List.of());
+
+        Path storedPDF =
+            this.permanentDirectory.resolve(
+                Path.of("sops", "Zorro.pdf"));
+        assertEquals(
+            PDF_CONTENT,
+            Files.readString(storedPDF, StandardCharsets.UTF_8)
+        );
+
+        verify(storageManager, never())
+            .getOrCreateFileManagerFolder(
+                anyString(),
+                any(),
+                anyString(),
+                eq(this.context)
+            );
+        verify(fileDoc)
+            .setParentReference(driveReference.getLocalDocumentReference());
+        verify(tagObject)
+            .setDBStringListValue("tags", List.of());
     }
 
     @Test
@@ -457,26 +740,57 @@ class DefaultFileManagerStorageManagerTest
         BaseObject controlledDocumentObject = mock(BaseObject.class);
 
         DocumentReference sourceReference =
-            new DocumentReference("xwiki", List.of("Sandbox"), "Zorro");
+            new DocumentReference(
+                "xwiki",
+                List.of("Sandbox"),
+                "Zorro"
+            );
         DocumentReference invalidLocationReference =
-            new DocumentReference("xwiki", List.of("Main"), "WebHome");
+            new DocumentReference(
+                "xwiki",
+                List.of("Main"),
+                "WebHome"
+            );
 
-        when(this.wiki.getDocument(sourceReference, this.context)).thenReturn(sourceDocument);
-        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS)).thenReturn(controlledDocumentObject);
+        when(this.wiki.getDocument(sourceReference, this.context))
+            .thenReturn(sourceDocument);
+        when(sourceDocument.getXObject(CONTROLLED_DOCUMENT_CLASS))
+            .thenReturn(controlledDocumentObject);
         when(controlledDocumentObject.getStringValue("fileManagerLocation"))
             .thenReturn("xwiki:Main.WebHome");
-        when(this.currentStringDocRefResolver.resolve("xwiki:Main.WebHome", sourceReference))
+        when(this.currentStringDocRefResolver.resolve(
+            "xwiki:Main.WebHome", sourceReference))
             .thenReturn(invalidLocationReference);
         when(this.wiki.getDocument(invalidLocationReference, this.context))
             .thenReturn(invalidLocationDocument);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
             () -> this.storageManager.storeAttachment(
-                sourceReference, mock(XWikiAttachment.class), "Zorro.pdf", 1, null));
+                sourceReference,
+                mock(XWikiAttachment.class),
+                "Zorro.pdf",
+                1,
+                null
+            )
+        );
 
         assertTrue(exception.getCause().getMessage()
             .contains("is not a File Manager drive or folder"));
         verify(this.uniqueDocRefGenerator, never()).generate(
-            any(SpaceReference.class), any(DocumentNameSequence.class));
+            any(SpaceReference.class),
+            any(DocumentNameSequence.class)
+        );
+    }
+
+    private XWikiAttachment mockAttachmentWithPDFContent() throws XWikiException
+    {
+        XWikiAttachment attachment = mock(XWikiAttachment.class);
+        when(attachment.getContentInputStream(this.context))
+            .thenReturn(new ByteArrayInputStream(
+                PDF_CONTENT.getBytes(StandardCharsets.UTF_8)
+            ));
+
+        return attachment;
     }
 }

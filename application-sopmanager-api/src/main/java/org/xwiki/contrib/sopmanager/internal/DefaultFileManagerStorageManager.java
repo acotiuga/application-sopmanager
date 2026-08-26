@@ -19,6 +19,11 @@
  */
 package org.xwiki.contrib.sopmanager.internal;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,8 +33,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.FileManagerStorageManager;
+import org.xwiki.environment.Environment;
 import org.xwiki.filemanager.internal.reference.DocumentNameSequence;
 import org.xwiki.filemanager.reference.UniqueDocumentReferenceGenerator;
 import org.xwiki.localization.ContextualLocalizationManager;
@@ -59,6 +66,8 @@ import com.xpn.xwiki.objects.BaseObject;
  */
 @Component
 @Singleton
+// This component stores generated PDFs in both File Manager and the filesystem.
+@SuppressWarnings("checkstyle:ClassFanOutComplexity")
 public class DefaultFileManagerStorageManager implements FileManagerStorageManager
 {
     private static final String FILE_MANAGER_SPACE = "FileManager";
@@ -96,6 +105,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     private static final String FILE_MANAGER_LOCATION = "fileManagerLocation";
 
+    private static final String SOPS_DIRECTORY = "sops";
+
     private static final String SOP_TAGS = "sopTags";
 
     @Inject
@@ -121,6 +132,12 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     @Inject
     private ContextualLocalizationManager localizationManager;
+
+    @Inject
+    private Environment environment;
+
+    @Inject
+    private Logger logger;
 
     @Override
     public DocumentReference storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment,
@@ -175,6 +192,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
             attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
+
+            storeAttachmentOnFileSystem(parentFolderReference, fileName, attachment, context);
 
             fileDoc.setCreatorReference(context.getUserReference());
             fileDoc.setAuthorReference(context.getUserReference());
@@ -375,5 +394,94 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
 
         return locationReference;
+    }
+
+    private void storeAttachmentOnFileSystem(DocumentReference parentFolderReference, String fileName,
+        XWikiAttachment attachment, XWikiContext context) throws XWikiException, IOException
+    {
+        Path storageRoot =
+            environment.getPermanentDirectory().toPath().resolve(SOPS_DIRECTORY).toAbsolutePath().normalize();
+        Path destination = storageRoot;
+
+        for (String folderName : getFileManagerFolderNames(parentFolderReference, context)) {
+            destination = resolvePathSegment(destination, folderName);
+        }
+
+        destination = resolvePathSegment(destination, fileName).normalize();
+
+        if (!destination.startsWith(storageRoot)) {
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.invalidArchivePath", destination));
+        }
+
+        Path parentDirectory = destination.getParent();
+
+        try {
+            Files.createDirectories(parentDirectory);
+        } catch (IOException e) {
+            logger.error("Failed to create SOP filesystem archive directory [{}] for PDF [{}].",
+                parentDirectory, fileName, e);
+
+            // Do not attach the technical exception as the cause because ReviewUIX displays the root cause message.
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.createArchiveDirectory", parentDirectory));
+        }
+
+        try (InputStream content = attachment.getContentInputStream(context)) {
+            Files.copy(content, destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException | XWikiException e) {
+            logger.error("Failed to store generated PDF [{}] at filesystem location [{}].", fileName, destination, e);
+
+            // Do not attach the technical exception as the cause because ReviewUIX displays the root cause message.
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.writeArchiveFile", destination));
+        }
+    }
+
+
+    private List<String> getFileManagerFolderNames(DocumentReference parentFolderReference, XWikiContext context)
+        throws XWikiException
+    {
+        List<String> folderNames = new ArrayList<>();
+        DocumentReference folderReference = parentFolderReference;
+
+        while (folderReference != null
+            && !FILE_MANAGER_REFERENCE.equals(folderReference.getLocalDocumentReference()))
+        {
+            XWikiDocument folderDocument = context.getWiki().getDocument(folderReference, context);
+            if (folderDocument.isNew() || folderDocument.getXObject(FOLDER_CLASS) == null) {
+                throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                    String.format("The File Manager folder [%s] does not exist or is invalid.", folderReference));
+            }
+
+            folderNames.add(0, folderDocument.getTitle());
+            folderReference = folderDocument.getParentReference();
+        }
+
+        if (folderReference == null && parentFolderReference != null) {
+            throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                String.format("The File Manager folder [%s] is not attached to the File Manager drive.",
+                    parentFolderReference));
+        }
+
+        return folderNames;
+    }
+
+    private Path resolvePathSegment(Path parent, String segment) throws IOException
+    {
+        if (StringUtils.isBlank(segment)) {
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.emptyArchivePathSegment"));
+        }
+
+        Path segmentPath = Path.of(segment);
+        if (segmentPath.isAbsolute() || segmentPath.getNameCount() != 1
+            || ".".equals(segment) || "..".equals(segment))
+        {
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment", segment));
+        }
+
+        return parent.resolve(segment);
     }
 }

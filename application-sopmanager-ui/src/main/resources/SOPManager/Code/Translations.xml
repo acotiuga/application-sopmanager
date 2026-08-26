@@ -139,6 +139,13 @@ sopManager.reviewPage.generatePDF.notAvailable=Server-side PDF generation is not
 sopManager.pdfDeletedListener.clearPDFLocation=Clear deleted PDF reference
 
 platform.index.tags=Tags
+
+sopManager.defaultFileManagerStorageManager.error.permanentDirectoryMissing=The generated PDF could not be archived because the XWiki permanent directory is not configured. Please contact an administrator.
+sopManager.defaultFileManagerStorageManager.error.invalidArchivePath=The generated PDF could not be archived because the resolved path [{0}] is outside the configured SOP archive.
+sopManager.defaultFileManagerStorageManager.error.createArchiveDirectory=The generated PDF could not be archived because directory [{0}] could not be created. Verify that XWiki has write permission and that no file already exists at this location.
+sopManager.defaultFileManagerStorageManager.error.writeArchiveFile=The generated PDF could not be written to [{0}]. Verify that XWiki has write permission and sufficient disk space.
+sopManager.defaultFileManagerStorageManager.error.emptyArchivePathSegment=The generated PDF could not be archived because the File Manager hierarchy contains an empty folder name.
+sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment=The generated PDF could not be archived because the File Manager name [{0}] is not a valid filesystem name.
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>
