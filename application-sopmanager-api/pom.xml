@@ -109,6 +109,12 @@
                 "ignore": true,
                 "justification": "These methods are inherited from the Servlet API through XWikiRequest and XWikiResponse and do not represent intentional new application APIs.",
                 "differences": [
+                  {
+                    "ignore": true,
+                    "code": "java.method.addedToInterface",
+                    "new": "method void org.xwiki.contrib.sopmanager.FileManagerStorageManager::archiveFile(org.xwiki.model.reference.DocumentReference, org.xwiki.model.reference.DocumentReference)",
+                    "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
+                  }
                 ]
               }
             }
