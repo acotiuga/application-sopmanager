@@ -89,7 +89,7 @@ sopManager.userProfile.pagesToApprove=Pages to approve
 sopManager.userProfile.pagesToApprove.noResults=There are no pages waiting for your approval.
 sopManager.userProfile.noResults=There are no pages in the review system that require your attention.
 sopManager.contentMenu.backlinkToOrigin=View original document
-sopManager.afterContentHeaderNotification.inReview=**Under Review** ({0}): This document is currently under review.\nDeadline: **{1}**.
+sopManager.afterContentHeaderNotification.inReview=This document is currently under review: **{0}**.\nDeadline:**{1}**.\nTo change the workflow status, use the [[SOP Manager section&gt;&gt;path:{2}]] at the bottom of this page.
 
 sopManager.event.submittedForReviewEvent.description=A page is submitted for review
 sopManager.event.returnedForChangesEvent.description=A page is returned for changes

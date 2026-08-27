@@ -107,7 +107,7 @@ sopManager.userProfile.pagesToApprove=Seiten zur Genehmigung
 sopManager.userProfile.pagesToApprove.noResults=Es gibt keine Seiten, die auf Ihre Genehmigung warten.
 sopManager.userProfile.noResults=Es gibt keine Seiten im Prüfsystem, die Ihre Aufmerksamkeit erfordern.
 sopManager.contentMenu.backlinkToOrigin=Originaldokument anzeigen
-sopManager.afterContentHeaderNotification.inReview=**Unter Überprüfung** ({0}): Dieses Dokument befindet sich derzeit in der Überprüfung.\nFrist: {1}.
+sopManager.afterContentHeaderNotification.inReview=Dieses Dokument befindet sich derzeit in Prüfung **{0}**.\nFrist: **{1}**.\nUm den Workflow-Status zu ändern, verwenden Sie den [[SOP-Manager-Bereich&gt;&gt;path:{2}}]] am Ende dieser Seite.
 
 sopManager.event.submittedForReviewEvent.description=Eine Seite wurde zur Überprüfung eingereicht
 sopManager.event.returnedForChangesEvent.description=Eine Seite wurde zur Überarbeitung zurückgegeben

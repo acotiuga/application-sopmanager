@@ -163,17 +163,19 @@
     <property>
       <content>{{velocity}}
 #set ($xobject = $doc.getObject('SOPManager.Code.ControlledDocumentClass'))
-#set ($isInReview = $xobject.getValue('isInReview') == 1)
-#set ($isApproved = $xobject.getValue('status') == 'approved')
-#set ($macroName = "info")
-#if ($xobject &amp;&amp; $isInReview &amp;&amp; !$isApproved)
-  #set ($action = $services.localization.render("SOPManager.Code.ControlledDocumentClass_status_$xobject.getValue('status')"))
-  {{info}}
-    $services.localization.render('sopManager.afterContentHeaderNotification.inReview', [$action, $xwiki.formatDate($xobject.getValue('releaseDate'), 'dd/MM/yyyy')])
-  {{/info}}
+#if ($xobject)
+  #set ($isInReview = $xobject.getValue('isInReview') == 1)
+  #set ($isApproved = $xobject.getValue('status') == 'approved')
+  #if ($isInReview &amp;&amp; !$isApproved)
+    #set ($action = $services.localization.render("SOPManager.Code.ControlledDocumentClass_status_$xobject.getValue('status')"))
+    #set ($sopManagerSectionURL = $doc.getURL('view', 'r=1'))
+    #set ($sopManagerSectionURL = "${sopManagerSectionURL}#SOPReviewPages")
+    {{info}}
+      $services.localization.render('sopManager.afterContentHeaderNotification.inReview', [$action, $xwiki.formatDate($xobject.getValue('releaseDate'), 'dd/MM/yyyy'), $sopManagerSectionURL])
+    {{/info}}
+  #end
 #end
-{{/velocity}}
-</content>
+{{/velocity}}</content>
     </property>
     <property>
       <extensionPointId>org.xwiki.platform.template.content.header.after</extensionPointId>
