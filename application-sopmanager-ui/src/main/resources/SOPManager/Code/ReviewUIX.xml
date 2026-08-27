@@ -543,9 +543,28 @@
               $escapetool.xml($services.localization.render('sopManager.reviewPage.submitForReview.label'))
             &lt;/button&gt;
           #elseif ($status == 'submittedForReview')
+            #set ($isApprover = false)
+            #set ($approverGroups = "$!xobject.getValue('approverGroups')")
+            #if ($approverGroups != '')
+              #foreach ($approverGroup in $approverGroups.split(','))
+                #if ($xwiki.user.isUserInGroup($approverGroup.trim()))
+                  #set ($isApprover = true)
+                #end
+              #end
+            #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.submitForApproval.title'))" id="submitForApproval"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.submitForApproval.label'))
             &lt;/button&gt;
+            #if ($isApprover)
+              #if (!$services.export.pdf.isServerSidePrintingAvailable())
+
+                {{error}}$escapetool.xml($services.localization.render('sopManager.reviewPage.generatePDF.notAvailable')){{/error}}
+
+              #end
+              &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.approve.title'))" id="approve"&gt;
+                $escapetool.xml($services.localization.render('sopManager.reviewPage.approve.label'))
+              &lt;/button&gt;&lt;span class="hidden fa fa-spinner fa-spin"&gt;&lt;/span&gt;
+            #end
             &lt;button class="btn btn-default" title="$escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.title'))" id="returnForChanges"&gt;
               $escapetool.xml($services.localization.render('sopManager.reviewPage.returnForChanges.label'))
             &lt;/button&gt;

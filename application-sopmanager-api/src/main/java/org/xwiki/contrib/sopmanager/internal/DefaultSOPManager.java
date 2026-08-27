@@ -245,14 +245,11 @@ public class DefaultSOPManager implements SOPManager
             case SUBMIT_FOR_REVIEW:
                 requireStatus(action, currentStatus, DRAFT, RETURNED_FOR_CHANGES);
                 break;
-            case RETURN_FOR_CHANGES:
+            case RETURN_FOR_CHANGES, APPROVE:
                 requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW, SUBMITTED_FOR_APPROVAL);
                 break;
             case SUBMIT_FOR_APPROVAL:
                 requireStatus(action, currentStatus, SUBMITTED_FOR_REVIEW);
-                break;
-            case APPROVE:
-                requireStatus(action, currentStatus, SUBMITTED_FOR_APPROVAL);
                 break;
             case START_NEW_REVISION:
                 requireStatus(action, currentStatus, APPROVED);
@@ -367,8 +364,14 @@ public class DefaultSOPManager implements SOPManager
 
         XWikiContext context = xcontextProvider.get();
 
-        DocumentReference approverUser = context.getUserReference();
-        sopObj.setLargeStringValue(APPROVER_USER, serializer.serialize(approverUser));
+        String serializedCurrentUser = serializer.serialize(context.getUserReference());
+
+        if (SUBMITTED_FOR_REVIEW.equals(sopObj.getStringValue(STATUS))) {
+            // Direct approval skips handleSubmitForApproval(), so the current user completed both review and approval.
+            sopObj.setLargeStringValue(REVIEWER_USER, serializedCurrentUser);
+        }
+
+        sopObj.setLargeStringValue(APPROVER_USER, serializedCurrentUser);
 
         //The PDF export loads the document through the export request, so the approver must be persisted before the
         // PDF is generated.
