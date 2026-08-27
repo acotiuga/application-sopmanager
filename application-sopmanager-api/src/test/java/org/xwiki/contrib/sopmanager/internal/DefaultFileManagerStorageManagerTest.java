@@ -83,6 +83,15 @@ class DefaultFileManagerStorageManagerTest
     private static final LocalDocumentReference DRIVE_CLASS =
         new LocalDocumentReference(List.of("FileManagerCode"), "DriveClass");
 
+    private static final LocalDocumentReference FILE_CLASS =
+        new LocalDocumentReference(List.of("FileManagerCode"), "FileClass");
+
+    private static final LocalDocumentReference TAG_CLASS =
+        new LocalDocumentReference(List.of("XWiki"), "TagClass");
+
+    private static final LocalDocumentReference ORIGINAL_DETAILS_CLASS =
+        new LocalDocumentReference(List.of("SOPManager", "Code"), "OriginalDocumentDetailsClass");
+
     @InjectMockComponents
     private DefaultFileManagerStorageManager storageManager;
 
@@ -443,11 +452,14 @@ class DefaultFileManagerStorageManagerTest
             "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
 
-        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
-            .thenReturn(null, null, null);
-        when(fileDoc.newXObject(
-            any(LocalDocumentReference.class), eq(this.context)))
-            .thenReturn(fileObject, tagObject, backlinkObject);
+        when(fileDoc.getXObject(FILE_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(FILE_CLASS, this.context)).thenReturn(fileObject);
+
+        when(fileDoc.getXObject(ORIGINAL_DETAILS_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(ORIGINAL_DETAILS_CLASS, this.context)).thenReturn(backlinkObject);
+
+        when(fileDoc.getXObject(TAG_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(TAG_CLASS, this.context)).thenReturn(tagObject);
 
         when(this.wiki.getDocument(sourceReference, this.context))
             .thenReturn(sourceDocument);
@@ -588,11 +600,14 @@ class DefaultFileManagerStorageManagerTest
         when(this.localizationManager.getTranslationPlain(
             "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
-        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
-            .thenReturn(null, null, null);
-        when(fileDoc.newXObject(
-            any(LocalDocumentReference.class), eq(this.context)))
-            .thenReturn(fileObject, tagObject, backlinkObject);
+        when(fileDoc.getXObject(FILE_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(FILE_CLASS, this.context)).thenReturn(fileObject);
+
+        when(fileDoc.getXObject(ORIGINAL_DETAILS_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(ORIGINAL_DETAILS_CLASS, this.context)).thenReturn(backlinkObject);
+
+        when(fileDoc.getXObject(TAG_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(TAG_CLASS, this.context)).thenReturn(tagObject);
 
         DocumentReference result =
             storageManager.storeAttachment(
@@ -694,11 +709,14 @@ class DefaultFileManagerStorageManagerTest
         when(this.localizationManager.getTranslationPlain(
             "sopManager.defaultFileManagerStorageManager.saveDocument"))
             .thenReturn("Store generated PDF in File Manager");
-        when(fileDoc.getXObject(any(LocalDocumentReference.class)))
-            .thenReturn(null, null, null);
-        when(fileDoc.newXObject(
-            any(LocalDocumentReference.class), eq(this.context)))
-            .thenReturn(fileObject, tagObject, backlinkObject);
+        when(fileDoc.getXObject(FILE_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(FILE_CLASS, this.context)).thenReturn(fileObject);
+
+        when(fileDoc.getXObject(ORIGINAL_DETAILS_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(ORIGINAL_DETAILS_CLASS, this.context)).thenReturn(backlinkObject);
+
+        when(fileDoc.getXObject(TAG_CLASS)).thenReturn(null);
+        when(fileDoc.newXObject(TAG_CLASS, this.context)).thenReturn(tagObject);
 
         DocumentReference result =
             storageManager.storeAttachment(

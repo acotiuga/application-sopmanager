@@ -109,6 +109,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
     private static final String SOP_TAGS = "sopTags";
 
+    private static final String ARCHIVE_NAME = "Archiv";
+
     @Inject
     private Provider<XWikiContext> xcontextProvider;
 
@@ -166,8 +168,6 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
 
             getOrCreateXObject(fileDoc, FILE_CLASS, context);
 
-            BaseObject tagObject = getOrCreateXObject(fileDoc, TAG_CLASS, context);
-
             // Ensure backlink object exists and set backlink to the original source document.
             BaseObject originalDetailsObj = getOrCreateXObject(fileDoc, ORIGINAL_DETAILS_CLASS, context);
 
@@ -177,18 +177,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
                 originalDetailsObj.setDBStringListValue(SOP_TAGS, sopTagsObject.getListValue(TAGS));
             }
 
-            List<String> tags = new ArrayList<>();
-            if (parentFolderReference != null) {
-                if (!FILE_MANAGER_REFERENCE.equals(parentFolderReference.getLocalDocumentReference())) {
-                    tags.add(parentFolderReference.getName());
-                }
-                fileDoc.setParentReference(
-                    parentFolderReference.removeParent(parentFolderReference.getWikiReference()));
-            } else {
-                fileDoc.setParentReference(FILE_MANAGER_REFERENCE);
-            }
-
-            tagObject.setDBStringListValue(TAGS, tags);
+            setFileManagerParent(fileDoc, parentFolderReference, context);
 
             attachment.setDoc(fileDoc);
             fileDoc.setAttachment(attachment);
@@ -205,6 +194,74 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
             throw new RuntimeException(localizationManager.getTranslationPlain(
                 "sopManager.defaultFileManagerStorageManager.error.storeAttachment", sourceDocumentReference), e);
         }
+    }
+
+    @Override
+    public void archiveFile(DocumentReference fileReference, DocumentReference sourceDocumentReference)
+    {
+        XWikiContext context = xcontextProvider.get();
+
+        try {
+            XWikiDocument fileDocument = context.getWiki().getDocument(fileReference, context);
+
+            if (!isLinkedToSourceDocument(fileDocument, sourceDocumentReference)) {
+                throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
+                    String.format("File Manager document [%s] is not linked to SOP document [%s].",
+                        fileReference, sourceDocumentReference));
+            }
+
+            // Move the filesystem PDF first because the current File Manager parent is used to determine its source
+            // path.
+            archiveFileSystemPDF(fileDocument, context);
+            archiveFileManagerDocument(fileDocument, context);
+        } catch (Exception e) {
+            throw new RuntimeException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.archiveFile", fileReference), e);
+        }
+    }
+
+    private void archiveFileSystemPDF(XWikiDocument fileDocument, XWikiContext context)
+        throws XWikiException, IOException
+    {
+        String fileName = fileDocument.getTitle();
+
+        Path source =
+            resolveFileSystemPDFPath(fileDocument.getParentReference(), fileName, context);
+        Path archiveDirectory =
+            resolvePathSegment(getFileSystemStorageRoot(), ARCHIVE_NAME);
+        Path destination = resolvePathSegment(archiveDirectory, fileName);
+
+        Files.createDirectories(archiveDirectory);
+        Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private void archiveFileManagerDocument(XWikiDocument fileDocument, XWikiContext context)
+        throws QueryException, XWikiException
+    {
+        String fileName = fileDocument.getTitle();
+        String wikiName = fileDocument.getDocumentReference().getWikiReference().getName();
+
+        DocumentReference archiveFolderReference =
+            getOrCreateFileManagerFolder(ARCHIVE_NAME, null, wikiName, context);
+
+        DocumentReference existingArchiveFileReference =
+            findExistingFile(fileName, archiveFolderReference, context);
+
+        if (existingArchiveFileReference != null
+            && !existingArchiveFileReference.equals(fileDocument.getDocumentReference()))
+        {
+            XWikiDocument existingArchiveFileDocument =
+                context.getWiki().getDocument(existingArchiveFileReference, context);
+            context.getWiki().deleteDocument(existingArchiveFileDocument, context);
+        }
+
+        setFileManagerParent(fileDocument, archiveFolderReference, context);
+
+        fileDocument.setAuthorReference(context.getUserReference());
+        context.getWiki().saveDocument(fileDocument,
+            localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.archiveDocument"),
+            context);
     }
 
     private BaseObject getOrCreateXObject(XWikiDocument document, LocalDocumentReference classReference,
@@ -399,21 +456,8 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
     private void storeAttachmentOnFileSystem(DocumentReference parentFolderReference, String fileName,
         XWikiAttachment attachment, XWikiContext context) throws XWikiException, IOException
     {
-        Path storageRoot =
-            environment.getPermanentDirectory().toPath().resolve(SOPS_DIRECTORY).toAbsolutePath().normalize();
-        Path destination = storageRoot;
-
-        for (String folderName : getFileManagerFolderNames(parentFolderReference, context)) {
-            destination = resolvePathSegment(destination, folderName);
-        }
-
-        destination = resolvePathSegment(destination, fileName).normalize();
-
-        if (!destination.startsWith(storageRoot)) {
-            throw new IOException(localizationManager.getTranslationPlain(
-                "sopManager.defaultFileManagerStorageManager.error.invalidArchivePath", destination));
-        }
-
+        Path destination =
+            resolveFileSystemPDFPath(parentFolderReference, fileName, context);
         Path parentDirectory = destination.getParent();
 
         try {
@@ -438,7 +482,6 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
     }
 
-
     private List<String> getFileManagerFolderNames(DocumentReference parentFolderReference, XWikiContext context)
         throws XWikiException
     {
@@ -446,8 +489,7 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         DocumentReference folderReference = parentFolderReference;
 
         while (folderReference != null
-            && !FILE_MANAGER_REFERENCE.equals(folderReference.getLocalDocumentReference()))
-        {
+            && !FILE_MANAGER_REFERENCE.equals(folderReference.getLocalDocumentReference())) {
             XWikiDocument folderDocument = context.getWiki().getDocument(folderReference, context);
             if (folderDocument.isNew() || folderDocument.getXObject(FOLDER_CLASS) == null) {
                 throw new XWikiException(XWikiException.MODULE_XWIKI_DOC, XWikiException.ERROR_XWIKI_UNKNOWN,
@@ -483,5 +525,50 @@ public class DefaultFileManagerStorageManager implements FileManagerStorageManag
         }
 
         return parent.resolve(segment);
+    }
+
+    private void setFileManagerParent(XWikiDocument fileDocument, DocumentReference parentFolderReference,
+        XWikiContext context) throws XWikiException
+    {
+        LocalDocumentReference parentReference = FILE_MANAGER_REFERENCE;
+        List<String> tags = List.of();
+
+        if (parentFolderReference != null) {
+            parentReference = parentFolderReference.getLocalDocumentReference();
+
+            if (!FILE_MANAGER_REFERENCE.equals(parentReference)) {
+                tags = List.of(parentFolderReference.getName());
+            }
+        }
+
+        fileDocument.setParentReference(parentReference);
+
+        BaseObject tagObject = getOrCreateXObject(fileDocument, TAG_CLASS, context);
+        tagObject.setDBStringListValue(TAGS, tags);
+    }
+
+    private Path getFileSystemStorageRoot()
+    {
+        return environment.getPermanentDirectory().toPath().resolve(SOPS_DIRECTORY).toAbsolutePath().normalize();
+    }
+
+    private Path resolveFileSystemPDFPath(DocumentReference parentFolderReference, String fileName,
+        XWikiContext context) throws XWikiException, IOException
+    {
+        Path storageRoot = getFileSystemStorageRoot();
+        Path filePath = storageRoot;
+
+        for (String folderName : getFileManagerFolderNames(parentFolderReference, context)) {
+            filePath = resolvePathSegment(filePath, folderName);
+        }
+
+        filePath = resolvePathSegment(filePath, fileName).normalize();
+
+        if (!filePath.startsWith(storageRoot)) {
+            throw new IOException(localizationManager.getTranslationPlain(
+                "sopManager.defaultFileManagerStorageManager.error.invalidArchivePath", filePath));
+        }
+
+        return filePath;
     }
 }

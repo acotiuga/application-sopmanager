@@ -46,4 +46,12 @@ public interface FileManagerStorageManager
      */
     DocumentReference storeAttachment(DocumentReference sourceDocumentReference, XWikiAttachment attachment,
         String fileName, int revisionNumber, BaseObject tags);
+
+    /**
+     * Moves a generated PDF to its File Manager and filesystem archive locations.
+     *
+     * @param fileReference the File Manager document containing the generated PDF
+     * @param sourceDocumentReference the SOP document expected to be linked from the generated PDF
+     */
+    void archiveFile(DocumentReference fileReference, DocumentReference sourceDocumentReference);
 }
