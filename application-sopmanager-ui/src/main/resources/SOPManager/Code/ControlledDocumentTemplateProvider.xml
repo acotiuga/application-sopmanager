@@ -241,7 +241,9 @@
       <action/>
     </property>
     <property>
-      <creationRestrictions/>
+      <creationRestrictions>
+        <value>SOPManager</value>
+      </creationRestrictions>
     </property>
     <property>
       <creationRestrictionsAreSuggestions>0</creationRestrictionsAreSuggestions>
@@ -265,7 +267,9 @@
       <terminal/>
     </property>
     <property>
-      <visibilityRestrictions/>
+      <visibilityRestrictions>
+        <value>SOPManager</value>
+      </visibilityRestrictions>
     </property>
   </object>
 </xwikidoc>
