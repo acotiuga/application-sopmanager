@@ -20,12 +20,14 @@
 package org.xwiki.contrib.sopmanager.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -74,7 +76,6 @@ import com.xpn.xwiki.objects.BaseObject;
  * Unit tests for {@link DefaultSOPManager}.
  *
  * @version $Id$
- * @since 1.0
  */
 @ComponentTest
 class DefaultSOPManagerTest
@@ -115,7 +116,7 @@ class DefaultSOPManagerTest
     private Provider<XWikiContext> xcontextProvider;
 
     @RegisterExtension
-    private static LogCaptureExtension logCapture = new LogCaptureExtension(LogLevel.WARN);
+    private LogCaptureExtension logCapture = new LogCaptureExtension(LogLevel.WARN);
 
     private XWikiContext context;
 
@@ -406,11 +407,11 @@ class DefaultSOPManagerTest
 
         assertEquals("sopManager.defaultSOPManager.error.notInWorkflow", result);
 
-        assertEquals(1, logCapture.size());
+        assertEquals(1, this.logCapture.size());
         assertEquals("Document [xwiki:Sandbox.WebHome] doesn't have the "
                 + "[SOPManager.Code.ControlledDocumentClass] object, "
                 + "cannot update review state",
-            logCapture.getMessage(0));
+            this.logCapture.getMessage(0));
 
         verifyNoInteractions(this.pdfExportManager);
         verifyNoInteractions(this.workflowEventNotifier);
@@ -427,6 +428,201 @@ class DefaultSOPManagerTest
 
         verify(this.sopObj, never()).setDateValue(eq("revisionPlannedDate"), any(Date.class));
         verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void addDocumentToReviewProcessIgnoresDocumentsWithoutControlledDocumentObject() throws Exception
+    {
+        when(this.sopDoc.getXObject(SOP_CLASS)).thenReturn(null);
+
+        this.sopManager.addDocumentToReviewProcess(this.documentReference);
+
+        verifyNoInteractions(this.rulesObjectWriter);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void addDocumentToReviewProcessLogsSaveFailure() throws Exception
+    {
+        when(this.sopObj.getIntValue("isInReview")).thenReturn(0);
+        doThrow(new XWikiException()).when(this.wiki).saveDocument(this.sopDoc, "sopManager.addPage.added",
+            this.context);
+
+        this.sopManager.addDocumentToReviewProcess(this.documentReference);
+
+        assertEquals("An error appeared when adding document [xwiki:Sandbox.WebHome] to review process",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void updateDocumentReviewStateSubmitForReviewFailsWithoutReviewerGroups() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("returnedForChanges");
+        when(this.sopObj.getLargeStringValue("reviewerGroups")).thenReturn(" ");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("submitForReview", this.documentReference));
+
+        assertEquals("sopManager.reviewPage.submitForReview.error", exception.getMessage());
+        verifyNoInteractions(this.workflowEventNotifier);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void updateDocumentReviewStateSubmitForApprovalFailsWithoutApproverGroups() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForReview");
+        when(this.sopObj.getLargeStringValue("approverGroups")).thenReturn("");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("submitForApproval", this.documentReference));
+
+        assertEquals("sopManager.reviewPage.submitForApproval.error", exception.getMessage());
+        verify(this.sopObj, never()).setLargeStringValue(eq("reviewerUser"), anyString());
+        verifyNoInteractions(this.workflowEventNotifier);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void updateDocumentReviewStateReturnForChangesGivesEditRightBackToRevisionOwner() throws Exception
+    {
+        DocumentReference revisionOwner = new DocumentReference("xwiki", List.of("XWiki"), "RevisionOwner");
+        mockRevisionOwner(revisionOwner, "John", "Doe");
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForApproval");
+        when(this.localizationManager.getTranslationPlain("sopManager.reviewPage.returnForChanges.success",
+            "John Doe")).thenReturn("Returned to John Doe");
+
+        String result = this.sopManager.updateDocumentReviewState("returnForChanges", this.documentReference);
+
+        assertEquals("Returned to John Doe", result);
+        verify(this.rightsWriter).createRule(isNull(), eq(List.of(revisionOwner)), eq(List.of(Right.EDIT)),
+            eq(RuleState.ALLOW));
+        verify(this.workflowEventNotifier).notifyReturnedForChanges(this.sopDoc, revisionOwner);
+        verify(this.sopObj).setStringValue("status", "returnedForChanges");
+        verify(this.rulesObjectWriter).persistRulesToObjects(any(), eq(this.sopDoc), any(), eq(this.context));
+        verify(this.wiki).saveDocument(this.sopDoc, "sopManager.reviewPage.returnForChanges", this.context);
+    }
+
+    @Test
+    void updateDocumentReviewStateReturnForChangesFailsWithoutRevisionOwner() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForReview");
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("returnForChanges", this.documentReference));
+
+        assertEquals("sopManager.reviewPage.returnForChanges.error", exception.getMessage());
+        verifyNoInteractions(this.workflowEventNotifier);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void updateDocumentReviewStateApproveFromReviewStoresCurrentUserAsReviewerAndApprover() throws Exception
+    {
+        DocumentReference revisionOwner = new DocumentReference("xwiki", List.of("XWiki"), "RevisionOwner");
+        DocumentReference reviewerGroup = new DocumentReference("xwiki", List.of("XWiki"), "ReviewerGroup");
+        DocumentReference pdfTemplate =
+            new DocumentReference("xwiki", List.of("SOPManager", "Code"), "GKHPDFTemplateVertical");
+        // A user without first name is presented by its last name alone.
+        mockRevisionOwner(revisionOwner, "", "Doe");
+
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForReview");
+        when(this.sopObj.getLargeStringValue("reviewerGroups")).thenReturn("xwiki:XWiki.ReviewerGroup");
+        when(this.sopObj.getLargeStringValue("pdfTemplate")).thenReturn("SOPManager.Code.GKHPDFTemplateVertical");
+        when(this.sopObj.getDateValue("revisionPlannedDate")).thenReturn(toDate(LocalDate.now().plusDays(1)));
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.ReviewerGroup", this.documentReference))
+            .thenReturn(reviewerGroup);
+        when(this.currentStringDocRefResolver.resolve("SOPManager.Code.GKHPDFTemplateVertical",
+            this.documentReference)).thenReturn(pdfTemplate);
+        when(this.serializer.serialize(this.currentUser)).thenReturn("xwiki:XWiki.Admin");
+        when(this.localizationManager.getTranslationPlain("sopManager.reviewPage.approve.success", "Doe"))
+            .thenReturn("Approved, Doe notified");
+
+        String result = this.sopManager.updateDocumentReviewState("approve", this.documentReference);
+
+        assertEquals("Approved, Doe notified", result);
+        verify(this.sopObj).setLargeStringValue("reviewerUser", "xwiki:XWiki.Admin");
+        verify(this.sopObj).setLargeStringValue("approverUser", "xwiki:XWiki.Admin");
+        verify(this.pdfExportManager).exportAndAttachPDF(this.sopDoc, pdfTemplate);
+        verify(this.workflowEventNotifier).notifyApproved(this.sopDoc, revisionOwner, List.of(reviewerGroup));
+        verify(this.sopObj).setStringValue("status", "approved");
+    }
+
+    @Test
+    void updateDocumentReviewStateApproveFailsWhenRevisionPlannedDateIsNotInTheFuture() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForApproval");
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.RevisionOwner");
+        when(this.sopObj.getLargeStringValue("reviewerGroups")).thenReturn("xwiki:XWiki.ReviewerGroup");
+        when(this.sopObj.getLargeStringValue("pdfTemplate")).thenReturn("SOPManager.Code.GKHPDFTemplateVertical");
+        when(this.sopObj.getDateValue("revisionPlannedDate")).thenReturn(toDate(LocalDate.now()));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("approve", this.documentReference));
+
+        assertEquals("sopManager.defaultSOPManager.error.revisionPlannedDateMustBeFuture", exception.getMessage());
+        verifyNoInteractions(this.pdfExportManager);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void updateDocumentReviewStateApproveFailsWithoutRevisionPlannedDate() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("submittedForApproval");
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.RevisionOwner");
+        when(this.sopObj.getLargeStringValue("reviewerGroups")).thenReturn("xwiki:XWiki.ReviewerGroup");
+        when(this.sopObj.getLargeStringValue("pdfTemplate")).thenReturn("SOPManager.Code.GKHPDFTemplateVertical");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("approve", this.documentReference));
+
+        assertEquals("sopManager.defaultSOPManager.error.revisionPlannedDateMustBeFuture", exception.getMessage());
+        verifyNoInteractions(this.pdfExportManager);
+    }
+
+    @Test
+    void updateDocumentReviewStateRejectsUnknownAction() throws Exception
+    {
+        when(this.sopObj.getStringValue("status")).thenReturn("draft");
+
+        assertThrows(IllegalArgumentException.class,
+            () -> this.sopManager.updateDocumentReviewState("publish", this.documentReference));
+
+        verifyNoInteractions(this.rightsWriter, this.workflowEventNotifier, this.rulesObjectWriter);
+        verify(this.wiki, never()).saveDocument(eq(this.sopDoc), anyString(), eq(this.context));
+    }
+
+    @Test
+    void updateDocumentReviewStateWrapsDocumentLoadFailure() throws Exception
+    {
+        XWikiException loadException = new XWikiException();
+        when(this.wiki.getDocument(this.documentReference, this.context)).thenThrow(loadException);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> this.sopManager.updateDocumentReviewState("submitForReview", this.documentReference));
+
+        assertSame(loadException, exception.getCause());
+    }
+
+    private void mockRevisionOwner(DocumentReference revisionOwner, String firstName, String lastName)
+        throws XWikiException
+    {
+        XWikiDocument revisionOwnerDoc = mock(XWikiDocument.class);
+        BaseObject userObj = mock(BaseObject.class);
+
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.RevisionOwner");
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.RevisionOwner", this.documentReference))
+            .thenReturn(revisionOwner);
+        when(this.wiki.getDocument(revisionOwner, this.context)).thenReturn(revisionOwnerDoc);
+        when(revisionOwnerDoc.getXObject(USERS_CLASS)).thenReturn(userObj);
+        when(userObj.getStringValue("first_name")).thenReturn(firstName);
+        when(userObj.getStringValue("last_name")).thenReturn(lastName);
+    }
+
+    private Date toDate(LocalDate date)
+    {
+        return Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private void verifyDefaultRevisionPlannedDate()

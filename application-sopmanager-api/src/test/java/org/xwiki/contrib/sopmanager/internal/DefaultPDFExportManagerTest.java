@@ -20,6 +20,7 @@
 package org.xwiki.contrib.sopmanager.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -71,7 +73,6 @@ import com.xpn.xwiki.web.XWikiURLFactory;
  * Unit tests for {@link DefaultPDFExportManager}.
  *
  * @version $Id$
- * @since 1.0
  */
 @ComponentTest
 class DefaultPDFExportManagerTest
@@ -303,6 +304,23 @@ class DefaultPDFExportManagerTest
         verify(this.fileManagerStorageManager, never()).storeAttachment(any(), any(), anyString(), anyInt(), any());
 
         verify(this.context).setDoc(this.attachmentDoc);
+        verify(this.context).setDoc(this.previousDoc);
+    }
+
+    @Test
+    void exportAndAttachPDFRejectsDocumentsThatAreNotControlled()
+    {
+        when(this.localizationManager.getTranslationPlain(
+            "sopManager.defaultPDFExportManager.error.attachFailed", this.documentReference))
+            .thenReturn("Failed to attach generated PDF.");
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> this.pdfExportManager.exportAndAttachPDF(this.attachmentDoc, this.pdfTemplateReference));
+
+        assertEquals("Failed to attach generated PDF.", exception.getMessage());
+        assertEquals("Document [xwiki:SOPs.Quality.Procedure] is not a controlled SOP document.",
+            assertInstanceOf(IllegalStateException.class, exception.getCause()).getMessage());
+        verifyNoInteractions(this.pdfExportJobManager, this.fileManagerStorageManager);
         verify(this.context).setDoc(this.previousDoc);
     }
 

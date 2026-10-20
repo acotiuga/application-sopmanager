@@ -19,19 +19,23 @@
  */
 package org.xwiki.contrib.sopmanager.internal;
 
-import java.io.File;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.InOrder;
 import org.xwiki.export.pdf.job.PDFExportJobRequest;
 import org.xwiki.export.pdf.job.PDFExportJobStatus;
 import org.xwiki.job.Job;
@@ -43,9 +47,16 @@ import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
 
+/**
+ * Unit tests for {@link DefaultPDFExportJobManager}.
+ *
+ * @version $Id$
+ */
 @ComponentTest
 class DefaultPDFExportJobManagerTest
 {
+    private static final String MISSING_FILE_KEY = "sopManager.defaultPDFExportManager.error.missingTemporaryFile";
+
     @InjectMockComponents
     private DefaultPDFExportJobManager jobManager;
 
@@ -58,75 +69,89 @@ class DefaultPDFExportJobManagerTest
     @MockComponent
     private ContextualLocalizationManager localizationManager;
 
+    @TempDir
+    private Path temporaryDirectory;
+
+    private PDFExportJobRequest request;
+
     private Job job;
 
     private PDFExportJobStatus status;
 
     private TemporaryResourceReference pdfReference;
 
-    private File pdfFile;
-
     @BeforeEach
     void setUp() throws Exception
     {
-        job = mock(Job.class);
-        status = mock(PDFExportJobStatus.class);
-        pdfReference = mock(TemporaryResourceReference.class);
-        pdfFile = File.createTempFile("sopmanager-test", ".pdf");
-        pdfFile.deleteOnExit();
+        this.request = mock(PDFExportJobRequest.class);
+        this.job = mock(Job.class);
+        this.status = mock(PDFExportJobStatus.class);
+        this.pdfReference = mock(TemporaryResourceReference.class);
 
-        when(jobExecutor.execute(eq("export/pdf"), any(PDFExportJobRequest.class))).thenReturn(job);
-        when(job.getStatus()).thenReturn(status);
-        when(localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.error.noTemporaryFile"))
+        when(this.jobExecutor.execute("export/pdf", this.request)).thenReturn(this.job);
+        when(this.job.getStatus()).thenReturn(this.status);
+        when(this.localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.error.noTemporaryFile"))
             .thenReturn("No temporary PDF file was generated.");
-        when(localizationManager.getTranslationPlain(
-            eq("sopManager.defaultPDFExportManager.error.missingTemporaryFile"), any()))
+        when(this.localizationManager.getTranslationPlain(eq(MISSING_FILE_KEY), any()))
             .thenReturn("The temporary PDF file is missing.");
     }
 
     @Test
-    void exportReturnsTheTemporaryPdfFile() throws Exception
+    void exportWaitsForTheJobAndReturnsTheTemporaryPDFFile() throws Exception
     {
-        when(status.getPDFFileReference()).thenReturn(pdfReference);
-        when(temporaryResourceStore.getTemporaryFile(pdfReference)).thenReturn(pdfFile);
+        File pdfFile = Files.writeString(this.temporaryDirectory.resolve("export.pdf"), "PDF content").toFile();
+        when(this.status.getPDFFileReference()).thenReturn(this.pdfReference);
+        when(this.temporaryResourceStore.getTemporaryFile(this.pdfReference)).thenReturn(pdfFile);
 
-        File result = jobManager.export(mock(PDFExportJobRequest.class));
+        assertSame(pdfFile, this.jobManager.export(this.request));
 
-        assertEquals(pdfFile, result);
+        // The status is only meaningful once the job has finished.
+        InOrder inOrder = inOrder(this.job);
+        inOrder.verify(this.job).join();
+        inOrder.verify(this.job).getStatus();
     }
 
     @Test
-    void exportThrowsWhenPdfReferenceIsMissing() throws Exception
+    void exportFailsWhenTheJobProducedNoPDFReference()
     {
-        when(status.getPDFFileReference()).thenReturn(null);
+        when(this.status.getPDFFileReference()).thenReturn(null);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
-            () -> jobManager.export(mock(PDFExportJobRequest.class)));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
 
         assertEquals("No temporary PDF file was generated.", exception.getMessage());
     }
 
     @Test
-    void exportThrowsWhenTemporaryFileIsMissing() throws Exception
+    void exportFailsWhenTheTemporaryStoreHasNoFile() throws Exception
     {
-        when(status.getPDFFileReference()).thenReturn(pdfReference);
-        when(temporaryResourceStore.getTemporaryFile(pdfReference)).thenReturn(null);
+        when(this.status.getPDFFileReference()).thenReturn(this.pdfReference);
+        when(this.temporaryResourceStore.getTemporaryFile(this.pdfReference)).thenReturn(null);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
-            () -> jobManager.export(mock(PDFExportJobRequest.class)));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
 
         assertEquals("The temporary PDF file is missing.", exception.getMessage());
     }
 
     @Test
-    void exportThrowsWhenTemporaryFileDoesNotExist() throws Exception
+    void exportFailsWhenTheTemporaryFileDoesNotExist() throws Exception
     {
-        when(status.getPDFFileReference()).thenReturn(pdfReference);
-        File missingFile = new File(pdfFile.getParentFile(), pdfFile.getName() + ".missing");
-        when(temporaryResourceStore.getTemporaryFile(pdfReference)).thenReturn(missingFile);
+        File missingFile = this.temporaryDirectory.resolve("missing.pdf").toFile();
+        when(this.status.getPDFFileReference()).thenReturn(this.pdfReference);
+        when(this.temporaryResourceStore.getTemporaryFile(this.pdfReference)).thenReturn(missingFile);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
-            () -> jobManager.export(mock(PDFExportJobRequest.class)));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
+
+        assertEquals("The temporary PDF file is missing.", exception.getMessage());
+    }
+
+    @Test
+    void exportFailsWhenTheTemporaryFileIsADirectory() throws Exception
+    {
+        File directory = Files.createDirectory(this.temporaryDirectory.resolve("export.pdf")).toFile();
+        when(this.status.getPDFFileReference()).thenReturn(this.pdfReference);
+        when(this.temporaryResourceStore.getTemporaryFile(this.pdfReference)).thenReturn(directory);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
 
         assertEquals("The temporary PDF file is missing.", exception.getMessage());
     }

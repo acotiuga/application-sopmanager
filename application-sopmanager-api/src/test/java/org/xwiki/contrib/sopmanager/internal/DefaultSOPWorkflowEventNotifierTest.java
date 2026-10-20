@@ -21,13 +21,17 @@ package org.xwiki.contrib.sopmanager.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Named;
@@ -36,8 +40,10 @@ import javax.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.xwiki.contrib.sopmanager.notification.event.ApproveReminderEvent;
 import org.xwiki.contrib.sopmanager.notification.event.ApprovedEvent;
 import org.xwiki.contrib.sopmanager.notification.event.ReturnedForChangesEvent;
+import org.xwiki.contrib.sopmanager.notification.event.ReviewReminderEvent;
 import org.xwiki.contrib.sopmanager.notification.event.SubmittedForApprovalEvent;
 import org.xwiki.contrib.sopmanager.notification.event.SubmittedForReviewEvent;
 import org.xwiki.model.reference.DocumentReference;
@@ -52,6 +58,7 @@ import org.xwiki.test.junit5.mockito.MockComponent;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.doc.XWikiDocument;
 import com.xpn.xwiki.objects.BaseObject;
 
@@ -59,7 +66,6 @@ import com.xpn.xwiki.objects.BaseObject;
  * Unit tests for {@link DefaultSOPWorkflowEventNotifier}.
  *
  * @version $Id$
- * @since 1.0
  */
 @ComponentTest
 class DefaultSOPWorkflowEventNotifierTest
@@ -138,8 +144,6 @@ class DefaultSOPWorkflowEventNotifierTest
         SubmittedForReviewEvent event = captureEvent(SubmittedForReviewEvent.class);
 
         assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
-        verify(this.currentStringDocRefResolver).resolve("XWiki.Reviewer", this.groupReference);
-        verify(this.serializer).serialize(this.reviewer);
     }
 
     @Test
@@ -165,7 +169,6 @@ class DefaultSOPWorkflowEventNotifierTest
         ReturnedForChangesEvent event = captureEvent(ReturnedForChangesEvent.class);
 
         assertEquals(Set.of("xwiki:XWiki.Owner"), event.getTarget());
-        verify(this.serializer).serialize(this.owner);
     }
 
     @Test
@@ -188,8 +191,48 @@ class DefaultSOPWorkflowEventNotifierTest
         ApprovedEvent event = captureEvent(ApprovedEvent.class);
 
         assertEquals(Set.of("xwiki:XWiki.Owner", "xwiki:XWiki.Reviewer"), event.getTarget());
-        verify(this.serializer).serialize(this.owner);
-        verify(this.serializer).serialize(this.reviewer);
+    }
+
+    @Test
+    void notifySubmittedForReviewFailsWhenAGroupCannotBeRead() throws Exception
+    {
+        XWikiException loadException = new XWikiException();
+        when(this.wiki.getDocument(this.groupReference, this.context)).thenThrow(loadException);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> this.notifier.notifySubmittedForReview(this.document, List.of(this.groupReference)));
+
+        assertEquals("Failed to read group document: xwiki:XWiki.ReviewerGroup", exception.getMessage());
+        assertSame(loadException, exception.getCause());
+        verifyNoInteractions(this.observationManager);
+    }
+
+    @Test
+    void notifyReviewReminderTargetsTheUserAndCarriesTheEventParameters()
+    {
+        Map<String, Object> eventParams = Map.of("reminderWeeks", 3);
+        when(this.serializer.serialize(this.reviewer)).thenReturn("xwiki:XWiki.Reviewer");
+
+        this.notifier.notifyReviewReminder(this.document, this.reviewer, eventParams);
+
+        ReviewReminderEvent event = captureEvent(ReviewReminderEvent.class);
+
+        assertEquals(Set.of("xwiki:XWiki.Reviewer"), event.getTarget());
+        assertEquals(eventParams, event.getEventParams());
+    }
+
+    @Test
+    void notifyApproveReminderTargetsTheUserAndCarriesTheEventParameters()
+    {
+        Map<String, Object> eventParams = Map.of("reminderWeeks", 1);
+        when(this.serializer.serialize(this.owner)).thenReturn("xwiki:XWiki.Owner");
+
+        this.notifier.notifyApproveReminder(this.document, this.owner, eventParams);
+
+        ApproveReminderEvent event = captureEvent(ApproveReminderEvent.class);
+
+        assertEquals(Set.of("xwiki:XWiki.Owner"), event.getTarget());
+        assertEquals(eventParams, event.getEventParams());
     }
 
     private <T extends Event> T captureEvent(Class<T> eventClass)
