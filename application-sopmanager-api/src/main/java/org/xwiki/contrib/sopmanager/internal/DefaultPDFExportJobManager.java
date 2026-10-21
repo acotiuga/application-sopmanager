@@ -24,6 +24,7 @@ import java.io.File;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.PDFExportJobManager;
 import org.xwiki.export.pdf.job.PDFExportJobRequest;
@@ -31,6 +32,8 @@ import org.xwiki.export.pdf.job.PDFExportJobStatus;
 import org.xwiki.job.Job;
 import org.xwiki.job.JobExecutor;
 import org.xwiki.localization.ContextualLocalizationManager;
+import org.xwiki.logging.LogLevel;
+import org.xwiki.logging.event.LogEvent;
 import org.xwiki.resource.temporary.TemporaryResourceReference;
 import org.xwiki.resource.temporary.TemporaryResourceStore;
 
@@ -63,8 +66,11 @@ public class DefaultPDFExportJobManager implements PDFExportJobManager
         TemporaryResourceReference pdfReference = status.getPDFFileReference();
 
         if (pdfReference == null) {
-            throw new RuntimeException(localizationManager.getTranslationPlain(
-                "sopManager.defaultPDFExportManager.error.noTemporaryFile"));
+            // Tell why the export failed: the error of the job, else the last error it logged.
+            String message =
+                localizationManager.getTranslationPlain("sopManager.defaultPDFExportManager.error.noTemporaryFile");
+            String cause = getCause(status);
+            throw new RuntimeException(cause == null ? message : message + ' ' + cause, status.getError());
         }
 
         File pdfFile = temporaryResourceStore.getTemporaryFile(pdfReference);
@@ -74,5 +80,14 @@ public class DefaultPDFExportJobManager implements PDFExportJobManager
         }
 
         return pdfFile;
+    }
+
+    private static String getCause(PDFExportJobStatus status)
+    {
+        if (status.getError() != null) {
+            return ExceptionUtils.getRootCauseMessage(status.getError());
+        }
+        LogEvent error = status.getLogTail() == null ? null : status.getLogTail().getLastLogEvent(LogLevel.ERROR);
+        return error == null ? null : error.getFormattedMessage();
     }
 }

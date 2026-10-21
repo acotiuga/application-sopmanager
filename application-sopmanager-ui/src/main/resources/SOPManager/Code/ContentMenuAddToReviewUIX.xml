@@ -40,8 +40,17 @@
 #if ($request.outputSyntax == 'plain')
   #set ($discard = $response.setContentType('application/json'))
   #if ("$!request.document" != '')
-    $services.sopService.addDocumentToReviewProcess($request.document)
-    $jsontool.serialize({'status': 'success'})
+    ## Only the users who can edit the document can start its review, from the content menu or from the table of the
+    ## SOP Manager.
+    #set ($reviewedDocument = $services.model.resolveDocument($request.document))
+    #set ($allowed = $services.security.authorization.hasAccess('edit', $reviewedDocument))
+    #if ($request.method != 'POST' || !$services.csrf.isTokenValid($request.form_token) || !$allowed)
+      #set ($discard = $response.setStatus(403))
+      $jsontool.serialize({'status': 'forbidden'})
+    #else
+      $services.sopService.addDocumentToReviewProcess($reviewedDocument)
+      $jsontool.serialize({'status': 'success'})
+    #end
   #end
 #end
 {{/velocity}}
@@ -140,7 +149,8 @@
     $.post({
       url : serviceURL,
       data: {
-        'document': xm.document
+        'document': xm.document,
+        'form_token': xm.form_token
       }
     }).done(function(data) {
       window.location = window.location.pathname + '?r=1#SOPReviewPages';

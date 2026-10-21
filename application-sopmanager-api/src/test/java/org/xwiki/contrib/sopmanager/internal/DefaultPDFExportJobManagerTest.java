@@ -41,6 +41,9 @@ import org.xwiki.export.pdf.job.PDFExportJobStatus;
 import org.xwiki.job.Job;
 import org.xwiki.job.JobExecutor;
 import org.xwiki.localization.ContextualLocalizationManager;
+import org.xwiki.logging.LogLevel;
+import org.xwiki.logging.event.LogEvent;
+import org.xwiki.logging.tail.LogTail;
 import org.xwiki.resource.temporary.TemporaryResourceReference;
 import org.xwiki.resource.temporary.TemporaryResourceStore;
 import org.xwiki.test.junit5.mockito.ComponentTest;
@@ -119,6 +122,33 @@ class DefaultPDFExportJobManagerTest
         RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
 
         assertEquals("No temporary PDF file was generated.", exception.getMessage());
+    }
+
+    @Test
+    void exportFailsWithTheErrorOfTheJob()
+    {
+        IllegalStateException error = new IllegalStateException("Chrome is not available");
+        when(this.status.getError()).thenReturn(error);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
+
+        assertEquals("No temporary PDF file was generated. IllegalStateException: Chrome is not available",
+            exception.getMessage());
+        assertSame(error, exception.getCause());
+    }
+
+    @Test
+    void exportFailsWithTheLastErrorLoggedByTheJob()
+    {
+        LogTail logTail = mock(LogTail.class);
+        LogEvent logEvent = mock(LogEvent.class);
+        when(this.status.getLogTail()).thenReturn(logTail);
+        when(logTail.getLastLogEvent(LogLevel.ERROR)).thenReturn(logEvent);
+        when(logEvent.getFormattedMessage()).thenReturn("Failed to print the page.");
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> this.jobManager.export(this.request));
+
+        assertEquals("No temporary PDF file was generated. Failed to print the page.", exception.getMessage());
     }
 
     @Test
