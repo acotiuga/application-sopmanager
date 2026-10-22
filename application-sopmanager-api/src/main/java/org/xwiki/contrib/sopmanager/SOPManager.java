@@ -42,6 +42,13 @@ public interface SOPManager
      * The name of the subspace where code-related/technical documents are stored.
      */
     String CODE = "Code";
+
+    /**
+     * The status of the SOP documents imported from documents (e.g. Word documents), before they are added to the
+     * review process.
+     */
+    String IMPORTED = "imported";
+
     /**
      * Reference to the class that stores review metadata for pages.
      */

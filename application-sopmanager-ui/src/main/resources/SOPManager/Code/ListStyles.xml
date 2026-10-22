@@ -1,0 +1,205 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.ListStyles" locale="">
+  <web>SOPManager.Code</web>
+  <name>ListStyles</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>SOPManager.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>SOP List Styles</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>The styles of the numbered lists of the SOP documents, as in the imported documents: the numbers at the left of the page, closed by a dot or by a parenthesis, the text indented.</content>
+  <object>
+    <name>SOPManager.Code.ListStyles</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>d7c9b8fb-e0bc-5c13-a794-7039523ac8c7</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <contentType>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>CSS|LESS</values>
+        <name>contentType</name>
+        <number>6</number>
+        <prettyName>Content Type</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </contentType>
+      <name>
+        <disabled>0</disabled>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <defaultValue/>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <unmodifiable>0</unmodifiable>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>/* The numbered lists of the SOP documents, as in the imported documents: the numbers at the left of the page, closed
+   by a dot ("1.") or by a parenthesis ("1)"), the text indented, its lines aligned. The numbers keep their style
+   (e.g. "a)", "i.") and their start. */
+ol.sop-list, ol.sop-list-parenthesis {
+  /* The numbers are drawn below; the style of the list (e.g. letters) is for the editors and the other skins. */
+  list-style-type: none !important;
+  padding-left: 1.25cm;
+}
+ol.sop-list &gt; li, ol.sop-list-parenthesis &gt; li {
+  position: relative;
+}
+ol.sop-list &gt; li::before, ol.sop-list-parenthesis &gt; li::before {
+  position: absolute;
+  left: -1.25cm;
+}
+ol.sop-list &gt; li::before {
+  content: counter(list-item) ".";
+}
+ol.sop-list-parenthesis &gt; li::before {
+  content: counter(list-item) ")";
+}
+ol.sop-list[style*="lower-alpha"] &gt; li::before {
+  content: counter(list-item, lower-alpha) ".";
+}
+ol.sop-list-parenthesis[style*="lower-alpha"] &gt; li::before {
+  content: counter(list-item, lower-alpha) ")";
+}
+ol.sop-list[style*="upper-alpha"] &gt; li::before {
+  content: counter(list-item, upper-alpha) ".";
+}
+ol.sop-list-parenthesis[style*="upper-alpha"] &gt; li::before {
+  content: counter(list-item, upper-alpha) ")";
+}
+ol.sop-list[style*="lower-roman"] &gt; li::before {
+  content: counter(list-item, lower-roman) ".";
+}
+ol.sop-list-parenthesis[style*="lower-roman"] &gt; li::before {
+  content: counter(list-item, lower-roman) ")";
+}
+ol.sop-list[style*="upper-roman"] &gt; li::before {
+  content: counter(list-item, upper-roman) ".";
+}
+ol.sop-list-parenthesis[style*="upper-roman"] &gt; li::before {
+  content: counter(list-item, upper-roman) ")";
+}</code>
+    </property>
+    <property>
+      <contentType>CSS</contentType>
+    </property>
+    <property>
+      <name>List styles</name>
+    </property>
+    <property>
+      <parse>0</parse>
+    </property>
+    <property>
+      <use>always</use>
+    </property>
+  </object>
+</xwikidoc>

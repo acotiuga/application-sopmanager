@@ -344,7 +344,7 @@
       <unmodifiable>0</unmodifiable>
       <validationMessage/>
       <validationRegExp/>
-      <values>draft|returnedForChanges|submittedForReview|submittedForApproval|approved</values>
+      <values>imported|draft|returnedForChanges|submittedForReview|submittedForApproval|approved</values>
       <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
     </status>
   </class>

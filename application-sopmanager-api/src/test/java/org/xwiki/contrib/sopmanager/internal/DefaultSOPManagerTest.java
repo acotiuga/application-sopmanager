@@ -420,6 +420,45 @@ class DefaultSOPManagerTest
     }
 
     @Test
+    void addDocumentToReviewProcessKeepsTheRevisionOfAnImportedDocument() throws Exception
+    {
+        Date plannedDate = Date.from(LocalDate.now().plusYears(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        when(this.sopObj.getIntValue("isInReview")).thenReturn(0);
+        when(this.sopObj.getStringValue("status")).thenReturn("imported");
+        when(this.sopObj.getDateValue("revisionPlannedDate")).thenReturn(plannedDate);
+        when(this.sopObj.getIntValue("revisionNumber")).thenReturn(5);
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("xwiki:XWiki.KoerbAn");
+
+        this.sopManager.addDocumentToReviewProcess(this.documentReference);
+
+        verify(this.sopObj, never()).setLargeStringValue(eq("revisionOwner"), anyString());
+        verify(this.sopObj, never()).setDateValue(eq("revisionPlannedDate"), any(Date.class));
+        verify(this.sopObj, never()).setIntValue(eq("revisionNumber"), anyInt());
+        verify(this.sopObj).setDateValue(eq("releaseDate"), any(Date.class));
+        verify(this.sopObj).setStringValue("status", "draft");
+        verify(this.sopObj).setIntValue("isInReview", 1);
+        verify(this.wiki).saveDocument(this.sopDoc, "sopManager.addPage.added", this.context);
+    }
+
+    @Test
+    void addDocumentToReviewProcessResetsThePastRevisionOfAnImportedDocument() throws Exception
+    {
+        Date plannedDate = Date.from(LocalDate.now().minusYears(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        when(this.sopObj.getIntValue("isInReview")).thenReturn(0);
+        when(this.sopObj.getStringValue("status")).thenReturn("imported");
+        when(this.sopObj.getDateValue("revisionPlannedDate")).thenReturn(plannedDate);
+        when(this.sopObj.getIntValue("revisionNumber")).thenReturn(0);
+        when(this.sopObj.getLargeStringValue("revisionOwner")).thenReturn("");
+
+        this.sopManager.addDocumentToReviewProcess(this.documentReference);
+
+        verify(this.sopObj).setLargeStringValue(eq("revisionOwner"), any());
+
+        verifyDefaultRevisionPlannedDate();
+        verify(this.sopObj).setIntValue("revisionNumber", 1);
+    }
+
+    @Test
     void addDocumentToReviewProcessDoesNotResetRevisionPlannedDateWhenAlreadyInReview() throws Exception
     {
         when(this.sopObj.getIntValue("isInReview")).thenReturn(1);

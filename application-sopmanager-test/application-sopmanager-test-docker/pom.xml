@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.xwiki.contrib</groupId>
+    <artifactId>application-sopmanager-test</artifactId>
+    <version>1.0rc21-SNAPSHOT</version>
+  </parent>
+  <artifactId>application-sopmanager-test-docker</artifactId>
+  <name>SOP Manager Application - Tests - Functional Docker Tests</name>
+  <packaging>jar</packaging>
+  <description>Functional Docker-based tests for the SOP Manager application.</description>
+  <properties>
+    <!-- Functional tests are allowed to output content to the console. -->
+    <xwiki.surefire.captureconsole.skip>true</xwiki.surefire.captureconsole.skip>
+    <!-- Run XWiki in a container, so that the tests don't need the port 8080 of the host and the PDF export can start
+         its browser container next to it. Override them with -D. -->
+    <xwiki.test.ui.servletEngine>tomcat</xwiki.test.ui.servletEngine>
+    <xwiki.test.ui.servletEngineTag>10.1-jdk21</xwiki.test.ui.servletEngineTag>
+    <xwiki.test.ui.database>postgresql</xwiki.test.ui.database>
+    <xwiki.test.ui.databaseTag>17</xwiki.test.ui.databaseTag>
+    <licensing.version>2.0.6</licensing.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <!-- The rights API used by the SOP Manager is built on XWiki 13.10: its XWiki libraries are the ones of the
+           tested XWiki. -->
+      <dependency>
+        <groupId>org.xwiki.platform</groupId>
+        <artifactId>xwiki-platform-security-authorization-bridge</artifactId>
+        <version>${platform.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <!-- The extensions below are installed in the tested XWiki instance, in this order. -->
+    <!-- Must come before the File Manager application: it provides the licensor-api feature with a licensor that
+         grants a license to every extension, so the real licensor-api is not installed. -->
+    <dependency>
+      <groupId>com.xwiki.licensing</groupId>
+      <artifactId>application-licensing-test-api</artifactId>
+      <version>${licensing.version}</version>
+      <scope>runtime</scope>
+      <!-- The licensing application is built on an older version of XWiki: its XWiki libraries are the ones of the
+           version of XWiki of this application. -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.xwiki.commons</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.rendering</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.platform</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- The File Manager, where the approved SOP documents are published as PDF. -->
+    <dependency>
+      <groupId>com.xwiki.filemanager</groupId>
+      <artifactId>application-filemanager-ui</artifactId>
+      <version>2.8.4</version>
+      <type>xar</type>
+      <scope>runtime</scope>
+      <!-- The File Manager is built on XWiki 14.10: its XWiki dependencies are the ones of the tested XWiki. -->
+      <exclusions>
+        <exclusion>
+          <groupId>com.xwiki.licensing</groupId>
+          <artifactId>application-licensing-licensor-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.platform</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.commons</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.rendering</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <!-- Bootstrap is provided by the skin of XWiki. -->
+        <exclusion>
+          <groupId>org.webjars</groupId>
+          <artifactId>bootstrap</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib</groupId>
+      <artifactId>application-sopmanager-import-ui</artifactId>
+      <version>${project.version}</version>
+      <type>xar</type>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- The PDF export and its templates, used to generate the PDF of the approved SOP documents. -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-export-pdf-ui</artifactId>
+      <version>${platform.version}</version>
+      <type>xar</type>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- The live table macros and source used by the table of the SOP Manager. -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-livetable-ui</artifactId>
+      <version>${platform.version}</version>
+      <type>xar</type>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-livedata-livetable</artifactId>
+      <version>${platform.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- The JavaScript code of the job and of the Live Data needs to display localized messages, fetched through REST. -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-localization-rest-default</artifactId>
+      <version>${platform.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-test-docker</artifactId>
+      <version>${platform.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib</groupId>
+      <artifactId>application-sopmanager-test-pageobjects</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Reads the generated PDF documents. -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-export-pdf-test-pageobjects</artifactId>
+      <version>${platform.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <testSourceDirectory>src/test/it</testSourceDirectory>
+    <testResources>
+      <!-- The documents imported by the tests, shared with the unit tests of the import API. -->
+      <testResource>
+        <directory>${project.basedir}/../../application-sopmanager-import/application-sopmanager-import-api/src/test/resources/documents</directory>
+        <targetPath>documents</targetPath>
+      </testResource>
+    </testResources>
+    <plugins>
+      <!-- The failsafe plugin is not part of the default Maven lifecycle. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <xwiki.test.ui.servletEngine>${xwiki.test.ui.servletEngine}</xwiki.test.ui.servletEngine>
+            <xwiki.test.ui.servletEngineTag>${xwiki.test.ui.servletEngineTag}</xwiki.test.ui.servletEngineTag>
+            <xwiki.test.ui.database>${xwiki.test.ui.database}</xwiki.test.ui.database>
+            <xwiki.test.ui.databaseTag>${xwiki.test.ui.databaseTag}</xwiki.test.ui.databaseTag>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

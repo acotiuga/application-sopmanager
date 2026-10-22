@@ -41,11 +41,152 @@
 {{/info}}
 
 {{velocity}}
+#set ($canEdit = $services.security.authorization.hasAccess('edit', $doc.documentReference))
+#if ($canEdit)
+  #set ($discard = $xwiki.jsx.use('SOPManager.WebHome'))
+#end
+## The import page is provided by the import module, which can be uninstalled once the documents are imported.
+#if ($canEdit &amp;&amp; $xwiki.exists('SOPManager.ImportDocuments'))
+  [[$services.rendering.escape($services.localization.render('sopManager.webHome.import'), 'xwiki/2.1')&gt;&gt;doc:SOPManager.ImportDocuments||class="btn btn-default" id="sopImportDocumentsLink"]]
+
+#end
 {{liveData
   id="sopManagerTable"
-  properties="doc.title,status,reviewerGroups,approverGroups,releaseDate,revisionPlannedDate,tags"
+  properties="doc.title,status,reviewerGroups,approverGroups,releaseDate,revisionPlannedDate,tags,sopActions"
   source="liveTable"
-  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;tags_class=XWiki.TagClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage"
+  sourceParameters="className=SOPManager.Code.ControlledDocumentClass&amp;tags_class=XWiki.TagClass&amp;translationPrefix=platform.index.&amp;queryFilters=currentlanguage&amp;resultPage=SOPManager.Code.SOPLiveTableResults"
 }}
+{
+  "meta": {
+    "propertyDescriptors": [
+      {
+        "id": "sopActions",
+        "name": "$escapetool.json($services.localization.render('sopManager.liveTable.actions'))",
+        "displayer": "html",
+        "sortable": false,
+        "filterable": false
+      }
+    ]
+  }
+}
+{{/liveData}}
 {{/velocity}}</content>
+  <object>
+    <name>SOPManager.WebHome</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>e88824d6-0dbd-599a-976c-39a8553edec4</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <defaultValue/>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <unmodifiable>0</unmodifiable>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>require(['jquery', 'xwiki-meta'], function($, xm) {
+  // Start the review of an imported document from the table of the SOP Manager.
+  var serviceURL = new XWiki.Document('ContentMenuAddToReviewUIX', 'SOPManager.Code').getURL('get',
+    'outputSyntax=plain');
+  $(document).on('click', '#sopManagerTable .sopStartReview', function(event) {
+    event.preventDefault();
+    var button = $(this).prop('disabled', true);
+    $.post(serviceURL, {
+      'document': button.attr('data-document'),
+      'form_token': xm.form_token
+    }).done(function() {
+      window.location = new XWiki.Document(XWiki.Model.resolve(button.attr('data-document'),
+        XWiki.EntityType.DOCUMENT)).getURL('view', 'r=1') + '#SOPReviewPages';
+    }).fail(function() {
+      button.prop('disabled', false);
+      new XWiki.widgets.Notification($jsontool.serialize($services.localization.render('sopManager.liveTable.startReview.error')), 'error');
+    });
+  });
+});</code>
+    </property>
+    <property>
+      <name>Start the review of the imported documents</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>onDemand</use>
+    </property>
+  </object>
 </xwikidoc>

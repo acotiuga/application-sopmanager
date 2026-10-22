@@ -163,5 +163,9 @@ sopManager.defaultFileManagerStorageManager.error.invalidArchivePath=Das erzeugt
 sopManager.defaultFileManagerStorageManager.error.createArchiveDirectory=Das erzeugte PDF konnte nicht archiviert werden, weil das Verzeichnis [{0}] nicht erstellt werden konnte. Prüfen Sie, ob XWiki Schreibrechte besitzt und ob an dieser Stelle bereits eine Datei existiert.
 sopManager.defaultFileManagerStorageManager.error.writeArchiveFile=Das erzeugte PDF konnte nicht nach [{0}] geschrieben werden. Prüfen Sie die Schreibrechte von XWiki und den verfügbaren Speicherplatz.
 sopManager.defaultFileManagerStorageManager.error.emptyArchivePathSegment=Das erzeugte PDF konnte nicht archiviert werden, weil die File-Manager-Hierarchie einen leeren Ordnernamen enthält.
-sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment=Das erzeugte PDF konnte nicht archiviert werden, weil der File-Manager-Name [{0}] kein gültiger Dateisystemname ist.</content>
+sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment=Das erzeugte PDF konnte nicht archiviert werden, weil der File-Manager-Name [{0}] kein gültiger Dateisystemname ist.
+SOPManager.Code.ControlledDocumentClass_status_imported=Importiert
+sopManager.liveTable.actions=Aktionen
+sopManager.liveTable.startReview.error=Die Überprüfung des Dokuments konnte nicht gestartet werden.
+sopManager.webHome.import=Dokumente importieren</content>
 </xwikidoc>

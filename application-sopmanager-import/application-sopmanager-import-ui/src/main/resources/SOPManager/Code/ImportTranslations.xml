@@ -1,0 +1,190 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.ImportTranslations" locale="">
+  <web>SOPManager.Code</web>
+  <name>ImportTranslations</name>
+  <language/>
+  <defaultLanguage>en</defaultLanguage>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>Import Translations</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>plain/1.0</syntaxId>
+  <hidden>true</hidden>
+  <content>sopManager.import.title=Import documents
+sopManager.import.description=Import the documents of a folder of the server as SOP documents: Word documents (docx), Word 97-2003 documents (doc, converted by the office server) and PDF documents with their structure (exported by Word). The files of the same name in different formats are versions of the same document: the analysis tells where each version comes from, which one is the original, and recommends the version keeping the most of the content and of its formatting. The persons named in the documents (who last modified them, the last modification of all their versions counting, who approved and revised them) are looked up among the users of the wiki, to be set as owner, approver and reviewer: check the user proposed for each role, compared with the names written in the document, and change it if needed. Preview the versions, select the ones to import, then import them. Each document is created in the SOP Manager space with the status "Imported", outside of the review process: start its review from the table of the SOP Manager. The code, the title and the release details of the page header and footer are stored in the SOP data and removed from the content. Existing pages are not modified.
+sopManager.import.notAllowed=You need the edit right on the SOP Manager space to import documents.
+sopManager.import.folder=Folder
+sopManager.import.folder.hint=The absolute path of the folder on the server, e.g. /var/lib/xwiki/sop-import. The files of its sub-folders are not analysed.
+sopManager.import.types=Accepted file types
+sopManager.import.types.hint=The extensions of the files to analyse, separated by commas, e.g. docx, doc, pdf.
+sopManager.import.maxDocuments=Maximum number of documents
+sopManager.import.maxDocuments.hint=Select only this number of documents for the import, to check the result before importing the whole folder. Analysing the folder again selects the next documents, since the existing pages are skipped. Leave it empty to select all the documents.
+sopManager.import.analyse=Analyse
+sopManager.import.analysis.title=Analysis of the documents
+sopManager.import.analysis.folder=Folder: {0}
+sopManager.import.analysis.unavailable=The analysis is not available anymore (the server was restarted since): analyse the folder again.
+sopManager.import.analysis.document=Document
+sopManager.import.analysis.file=File
+sopManager.import.analysis.origin=Origin
+sopManager.import.analysis.data=SOP data
+sopManager.import.analysis.original=Original
+sopManager.import.analysis.recommended=Recommended
+sopManager.import.analysis.textMatch=Same text as the recommended version: {0}%
+sopManager.import.analysis.missingOriginal=The original document is not in the folder: {0}
+sopManager.import.analysis.lastModified={0}, {1} ({2})
+sopManager.import.analysis.lastModifiedWithoutDate={0} ({1})
+sopManager.import.analysis.exists=The page exists, the document is not imported.
+sopManager.import.analysis.preview=Preview
+sopManager.import.analysis.otherFiles=Other files ({0})
+sopManager.import.analysis.none=No document to import.
+sopManager.import.analysis.submit=Import the selected documents
+sopManager.import.analysis.selected=Selected documents: {0}
+sopManager.import.analysis.again=Analyse another folder
+sopManager.import.analysis.details=Details
+sopManager.import.preview.opening=Opening the preview of {0}, as it would be imported...
+sopManager.import.preview.unavailable=This file can't be previewed: it is not a document of the analysis that can be imported.
+sopManager.import.data.revisionId=Code
+sopManager.import.data.title=Title
+sopManager.import.data.releaseDate=Release date
+sopManager.import.data.revisionNumber=Revision
+sopManager.import.data.revisionPlannedDate=Planned revision
+sopManager.import.data.lastModifiedBy=Owner (last modified by)
+sopManager.import.data.approvedBy=Approved by (document)
+sopManager.import.data.revisedBy=Revised by (document)
+sopManager.import.data.pdfTemplate=PDF template
+sopManager.import.source.application=Application
+sopManager.import.source.author=Last modified by
+sopManager.import.source.created=Created
+sopManager.import.source.modified=Modified
+sopManager.import.source.printed=Last printed
+sopManager.import.source.originalDocument=Original document
+sopManager.import.origin.ORIGINAL=Original Word document
+sopManager.import.origin.CONVERTED_FROM_DOC=Word document converted from a Word 97-2003 document
+sopManager.import.origin.EXPORTED_TO_PDF=PDF exported from a Word document
+sopManager.import.origin.CONVERTED_FROM_PDF=Word document converted from a PDF
+sopManager.import.origin.REBUILT=Word document with the page header and footer in its content (rebuilt)
+sopManager.import.origin.UNKNOWN=Unknown
+sopManager.import.report.title=Import report
+sopManager.import.report.folder=Folder: {0}
+sopManager.import.report.imported=Imported documents ({0})
+sopManager.import.report.notImported=Documents not imported ({0})
+sopManager.import.report.none=None.
+sopManager.import.report.file=File
+sopManager.import.report.compatibility=Compatibility
+sopManager.import.report.result=Result
+sopManager.import.report.document=SOP document
+sopManager.import.report.details=Details
+sopManager.import.report.unavailable=The report of this import is not available anymore (the server was restarted since): see its log above.
+sopManager.import.outcome.IMPORTED=Succeeded
+sopManager.import.outcome.SKIPPED_EXISTING=Skipped: the page exists
+sopManager.import.outcome.SKIPPED_FORMAT=Skipped: wrong format
+sopManager.import.outcome.FAILED=Failed
+sopManager.import.compatibility.COMPATIBLE=Compatible
+sopManager.import.compatibility.HEADER_FOOTER_IN_CONTENT=Compatible: header and footer in the content, removed from it
+sopManager.import.compatibility.FIXED_LAYOUT=Converted from PDF: the layout is approximated
+sopManager.import.compatibility.TAGGED_PDF=PDF with structure: the layout and part of the formatting are approximated
+sopManager.import.compatibility.NOT_SUPPORTED=Format not supported
+sopManager.import.compatibility.INVALID=Invalid file
+sopManager.import.compatibility.NOT_ACCEPTED=Type not accepted
+sopManager.import.message.notAllowed=You are not allowed to edit [{0}].
+sopManager.import.message.noFolder=No folder was given.
+sopManager.import.message.noSuchFolder=The folder [{0}] does not exist on the server, or is not an absolute path.
+sopManager.import.message.unreadableFolder=The folder [{0}] can not be read.
+sopManager.import.message.notAccepted=The type [{0}] is not one of the accepted types.
+sopManager.import.message.lockFile=[{0}] is the lock file of a document open in Word, not a document.
+sopManager.import.message.notSupported=The import of the [{0}] files is not supported.
+sopManager.import.message.untaggedPdf=The PDF has no structure (e.g. a scan): it can't be imported.
+sopManager.import.message.officeServer=The office server is not running: start it in the administration (Content, Office Server) to import the Word 97-2003 documents.
+sopManager.import.message.unreadable=The document can not be read: {0}
+sopManager.import.message.notInFolder=[{0}] is not a file of the folder.
+sopManager.import.message.exists=The page [{0}] already exists.
+sopManager.import.message.failed=The import failed: {0}
+sopManager.import.warning.invalidDate=The {0} [{1}] is not a valid date (dd.MM.yyyy): it was not imported.
+sopManager.import.warning.invalidRevision=The revision [{0}] is not a number: it was not imported.
+sopManager.import.warning.backgroundImages={0} images behind the text (page backgrounds, table borders, logo) were not imported.
+sopManager.import.warning.missingFigures={0} figures without position in the PDF were not imported.
+sopManager.import.warning.pastRevisionPlannedDate=The planned revision date [{0}] is past: set a new one before the approval.
+sopManager.import.warning.approverNotSet=Approved by [{0}] in the document: no approver was selected.
+sopManager.import.warning.reviewerNotSet=Revised by [{0}] in the document: no reviewer was selected.
+sopManager.import.role.owner=Owner
+sopManager.import.role.approver=Approver
+sopManager.import.role.reviewer=Reviewer
+sopManager.import.role.noUser=no user of the wiki found
+sopManager.import.log.analysis.start=Analysing the {0} files of the folder [{1}] (accepted types: {2}).
+sopManager.import.log.analysis.document=[{0}]: {1}: recommended version: [{2}].
+sopManager.import.log.analysis.exists=[{0}]: {1}: the page [{2}] already exists, the document will not be imported.
+sopManager.import.log.analysis.notImportable=[{0}]: {1}: no file can be imported.
+sopManager.import.log.analysis.summary=Documents that can be imported: {0} of {1}, selected: {2}.
+sopManager.import.log.start=Importing the {0} selected files of the folder [{1}].
+sopManager.import.log.imported=[{0}] ({1}): imported as [{2}].
+sopManager.import.log.failed=[{0}] ({1}): failed: {2}
+sopManager.import.log.skipped=[{0}] ({1}): not imported: {2}
+sopManager.import.log.warning=[{0}]: {1}
+sopManager.import.log.summary.imported=Imported documents ({0}): {1}
+sopManager.import.log.summary.notImported=Documents not imported ({0}): {1}
+sopManager.import.saveComment=Imported from a document
+  </content>
+  <object>
+    <name>SOPManager.Code.ImportTranslations</name>
+    <number>0</number>
+    <className>XWiki.TranslationDocumentClass</className>
+    <guid>a93abc43-94e3-5e50-9152-a22ae2fd7b4e</guid>
+    <class>
+      <name>XWiki.TranslationDocumentClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <scope>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>scope</name>
+        <number>1</number>
+        <prettyName>Scope</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>GLOBAL|WIKI|USER|ON_DEMAND</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </scope>
+    </class>
+    <property>
+      <scope>WIKI</scope>
+    </property>
+  </object>
+</xwikidoc>

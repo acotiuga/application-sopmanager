@@ -164,11 +164,7 @@ public class DefaultSOPManager implements SOPManager
             }
             boolean isInReview = sopObj.getIntValue(IS_IN_REVIEW) == 1;
             if (!isInReview) {
-                sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
-                // Set today as the default revisionDate.
-                sopObj.setDateValue("releaseDate", new Date());
-                sopObj.setDateValue(REVISION_PLANNED_DATE, getDefaultRevisionPlannedDate());
-                sopObj.setIntValue(REVISION_NUMBER, 1);
+                startRevision(sopObj, context);
                 sopObj.setStringValue(STATUS, DRAFT);
                 sopObj.setIntValue(IS_IN_REVIEW, 1);
                 sopObj.setLargeStringValue(REVIEWER_USER, "");
@@ -182,6 +178,28 @@ public class DefaultSOPManager implements SOPManager
             }
         } catch (XWikiException e) {
             logger.error("An error appeared when adding document [{}] to review process", documentReference, e);
+        }
+    }
+
+    /**
+     * Starts the revision of a document: its owner, its revision number and its planned revision date. An imported
+     * document keeps the revision of the imported document, its owner, and its planned revision date while it's still
+     * to come.
+     */
+    private void startRevision(BaseObject sopObj, XWikiContext context)
+    {
+        boolean imported = IMPORTED.equals(sopObj.getStringValue(STATUS));
+        Date plannedDate = sopObj.getDateValue(REVISION_PLANNED_DATE);
+        if (!imported || sopObj.getLargeStringValue(REVISION_OWNER).isBlank()) {
+            sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
+        }
+        // Set today as the default revisionDate.
+        sopObj.setDateValue("releaseDate", new Date());
+        if (!imported || plannedDate == null || !plannedDate.after(new Date())) {
+            sopObj.setDateValue(REVISION_PLANNED_DATE, getDefaultRevisionPlannedDate());
+        }
+        if (!imported || sopObj.getIntValue(REVISION_NUMBER) < 1) {
+            sopObj.setIntValue(REVISION_NUMBER, 1);
         }
     }
 

@@ -146,6 +146,10 @@ sopManager.defaultFileManagerStorageManager.error.createArchiveDirectory=The gen
 sopManager.defaultFileManagerStorageManager.error.writeArchiveFile=The generated PDF could not be written to [{0}]. Verify that XWiki has write permission and sufficient disk space.
 sopManager.defaultFileManagerStorageManager.error.emptyArchivePathSegment=The generated PDF could not be archived because the File Manager hierarchy contains an empty folder name.
 sopManager.defaultFileManagerStorageManager.error.invalidArchivePathSegment=The generated PDF could not be archived because the File Manager name [{0}] is not a valid filesystem name.
+SOPManager.Code.ControlledDocumentClass_status_imported=Imported
+sopManager.liveTable.actions=Actions
+sopManager.liveTable.startReview.error=The review of the document could not be started.
+sopManager.webHome.import=Import documents
   </content>
   <object>
     <name>SOPManager.Code.Translations</name>
