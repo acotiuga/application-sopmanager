@@ -1,0 +1,319 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.ImportPreviewUIX" locale="">
+  <web>SOPManager.Code</web>
+  <name>ImportPreviewUIX</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>SOPManager.ImportDocuments</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>ImportPreviewUIX</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content/>
+  <object>
+    <name>SOPManager.Code.ImportPreviewUIX</name>
+    <number>0</number>
+    <className>XWiki.UIExtensionClass</className>
+    <guid>8b97392c-f1b2-48ca-868f-991d1bc45e11</guid>
+    <class>
+      <name>XWiki.UIExtensionClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <async_cached>
+        <defaultValue>0</defaultValue>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType/>
+        <name>async_cached</name>
+        <number>3</number>
+        <prettyName>Cached</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </async_cached>
+      <async_context>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>1</multiSelect>
+        <name>async_context</name>
+        <number>4</number>
+        <prettyName>Context elements</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator>, </separator>
+        <separators>|, </separators>
+        <size>5</size>
+        <unmodifiable>0</unmodifiable>
+        <values>action=Action|doc.reference=Document|doc.revision|icon.theme=Icon theme|locale=Language|rendering.defaultsyntax=Default syntax|rendering.restricted=Restricted|rendering.targetsyntax=Target syntax|request.base=Request base URL|request.cookies|request.headers|request.parameters=Request parameters|request.remoteAddr|request.session|request.url=Request URL|request.wiki=Request wiki|sheet|user=User|wiki=Wiki</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </async_context>
+      <async_enabled>
+        <defaultValue>0</defaultValue>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType/>
+        <name>async_enabled</name>
+        <number>2</number>
+        <prettyName>Asynchronous rendering</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </async_enabled>
+      <content>
+        <disabled>0</disabled>
+        <editor>Text</editor>
+        <name>content</name>
+        <number>1</number>
+        <prettyName>Executed Content</prettyName>
+        <rows>25</rows>
+        <size>120</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </content>
+      <extensionPointId>
+        <disabled>0</disabled>
+        <name>extensionPointId</name>
+        <number>5</number>
+        <prettyName>Extension Point ID</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </extensionPointId>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>6</number>
+        <prettyName>Extension ID</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parameters>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>parameters</name>
+        <number>7</number>
+        <prettyName>Extension Parameters</prettyName>
+        <rows>10</rows>
+        <size>40</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </parameters>
+      <scope>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>scope</name>
+        <number>8</number>
+        <prettyName>Extension Scope</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>wiki=Current Wiki|user=Current User|global=Global</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </scope>
+    </class>
+    <property>
+      <async_cached>0</async_cached>
+    </property>
+    <property>
+      <async_context/>
+    </property>
+    <property>
+      <async_enabled>0</async_enabled>
+    </property>
+    <property>
+      <content>{{velocity output="false"}}
+## This UI extension is displayed on every page, but only the users who can import documents see the preview of a
+## version to import: the macros of the import are included only for them, since the other users may not be allowed to
+## view them.
+#set ($sopImportPreview = $xcontext.action == 'preview' &amp;&amp; "$!request.sopImportFile" != '' &amp;&amp; "$!request.sopImportJobId" != '' &amp;&amp; $services.sopImport.canImport())
+{{/velocity}}
+
+{{velocity}}
+#if ($sopImportPreview)
+  {{include reference="SOPManager.Code.ImportMacros"/}}
+#end
+{{/velocity}}
+
+{{velocity}}
+## The preview of a version to import, opened from the analysis of SOPManager.ImportDocuments: the details of the
+## document (its versions, its SOP data, its users) to check it, then import it. Saving the previewed page would not
+## import the version (its images, its users and its source would be missing), so the save buttons of the editor are
+## replaced by the import of the version, which then opens the imported document.
+#if ($sopImportPreview)
+  #set ($importPage = $services.model.createDocumentReference('', 'SOPManager', 'ImportDocuments'))
+  #set ($analysis = $services.sopImport.getAnalysis($request.sopImportJobId))
+  #set ($previewedCandidate = $NULL)
+  #set ($previewedVersion = $NULL)
+  #if ($analysis)
+    #foreach ($candidate in $analysis.documents)
+      #foreach ($version in $candidate.versions)
+        #if ($version.fileName == $request.sopImportFile &amp;&amp; $version.importable)
+          #set ($previewedCandidate = $candidate)
+          #set ($previewedVersion = $version)
+        #end
+      #end
+    #end
+  #end
+  #if ($previewedCandidate)
+    #set ($discard = $xwiki.ssx.use('SOPManager.ImportDocuments'))
+    #set ($discard = $xwiki.jsx.use('SOPManager.ImportDocuments'))
+    #set ($discard = $xwiki.linkx.use($services.webjars.url('selectize.js', 'css/selectize.bootstrap3.css'),
+      {'type': 'text/css', 'rel': 'stylesheet'}))
+    #set ($discard = $xwiki.ssfx.use('uicomponents/suggest/xwiki.selectize.css', true))
+    #set ($discard = $xwiki.jsfx.use('uicomponents/suggest/suggestUsersAndGroups.js', {'forceSkinAction': true,
+      'language': $xcontext.locale}))
+    ## The users selected in the analysis, or in the preview of another version.
+    #set ($sopImportSelectedUsers = {})
+    #foreach ($role in ['owner', 'approver', 'reviewer'])
+      #set ($roleUsers = $request.getParameter("sopImportUser:$role"))
+      #if ($roleUsers != $NULL)
+        #set ($discard = $sopImportSelectedUsers.put($role, $roleUsers))
+      #end
+    #end
+    ## Checked again: the document may have been imported since the analysis.
+    #set ($exists = $xwiki.exists($previewedCandidate.documentReference))
+    #set ($timestamp = "$datetool.get('yyyy-MM-dd')/$datetool.get('HH-mm-ss-SSS')")
+  #end
+  {{html clean="false"}}
+  ## Removed, and not only hidden, so that their keyboard shortcuts don't save the page either.
+  &lt;style&gt;.bottombuttons, #backtoedit { display: none; }&lt;/style&gt;
+  &lt;script&gt;
+    document.addEventListener('DOMContentLoaded', function() {
+      // The bar of the buttons, sticky at the bottom of the window, and its separator.
+      var buttons = document.getElementById('backtoedit');
+      var bar = buttons &amp;&amp; (buttons.closest('.bottombuttons') || buttons);
+      if (bar) {
+        var separator = bar.previousElementSibling;
+        if (separator &amp;&amp; separator.tagName === 'HR') {
+          separator.remove();
+        }
+        bar.remove();
+      }
+    });
+  &lt;/script&gt;
+  #if ($previewedCandidate)
+    &lt;div class="panel panel-default" id="sopImportPreviewActions" data-document="$escapetool.xml($previewedCandidate.name)"&gt;
+      &lt;div class="panel-heading"&gt;
+        &lt;strong&gt;$escapetool.xml($previewedCandidate.name)&lt;/strong&gt;
+        &lt;p class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.notSaved', [$request.sopImportFile]))&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;form class="xform panel-body" method="post" action="$escapetool.xml($xwiki.getURL($importPage, 'view'))"&gt;
+        &lt;input type="hidden" name="form_token" value="$escapetool.xml($!services.csrf.token)" /&gt;
+        &lt;input type="hidden" name="jobId" value="$escapetool.xml("sopimport/import/$timestamp")" /&gt;
+        &lt;input type="hidden" name="startJob" value="true" /&gt;
+        &lt;input type="hidden" name="open" value="true" /&gt;
+        &lt;input type="hidden" name="folder" value="$escapetool.xml($analysis.folder)" /&gt;
+        &lt;input type="hidden" name="file" value="$escapetool.xml($request.sopImportFile)" /&gt;
+        &lt;div class="row"&gt;
+          ## The versions of the document, each with its preview.
+          &lt;div class="col-xs-12 col-md-4 sopImportPreviewVersions"&gt;
+            &lt;h3&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.versions'))&lt;/h3&gt;
+            #foreach ($version in $previewedCandidate.versions)
+              #set ($previewed = $version.fileName == $previewedVersion.fileName)
+              &lt;div class="sopImportPreviewVersion#if ($previewed) sopImportRecommendedVersion#end" data-file="$escapetool.xml($version.fileName)"&gt;
+                &lt;p class="sopImportVersionFile"&gt;&lt;strong&gt;.$escapetool.xml($version.format)&lt;/strong&gt; #sopImportLabels($version)&lt;/p&gt;
+                #if ($version.importable)
+                  &lt;p&gt;$escapetool.xml($services.localization.render("sopManager.import.origin.$version.origin"))&lt;/p&gt;
+                  #if ($version.textMatch)
+                    &lt;p class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.textMatch', [$version.textMatch]))&lt;/p&gt;
+                  #end
+                  &lt;p class="xHint"&gt;$escapetool.xml($services.localization.render("sopManager.import.compatibility.$version.compatibility"))&lt;/p&gt;
+                  #if ($previewed)
+                    &lt;p&gt;&lt;span class="label label-default"&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.previewed'))&lt;/span&gt;&lt;/p&gt;
+                  #else
+                    #set ($previewQuery = $escapetool.url({'jobId': $request.sopImportJobId, 'preview': $version.fileName}))
+                    &lt;p&gt;&lt;a class="sopImportPreviewSwitch btn btn-default btn-xs" href="$escapetool.xml($xwiki.getURL($importPage, 'view', $previewQuery))"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.preview'))&lt;/a&gt;&lt;/p&gt;
+                  #end
+                #else
+                  &lt;p class="sopImportMessage"&gt;$escapetool.xml($version.message)&lt;/p&gt;
+                #end
+              &lt;/div&gt;
+            #end
+          &lt;/div&gt;
+          ## The SOP data of the previewed version, what was not imported as is, and where it comes from.
+          &lt;div class="col-xs-12 col-md-4 sopImportPreviewData"&gt;
+            &lt;h3&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.data'))&lt;/h3&gt;
+            #sopImportDocumentData($previewedCandidate $previewedVersion)
+            #sopImportWarnings($previewedVersion.warnings)
+            &lt;details class="sopImportDetails"&gt;
+              &lt;summary&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.details'))&lt;/summary&gt;
+              #sopImportProperties($previewedVersion.source 'sopManager.import.source.' 'dd.MM.yyyy HH:mm')
+            &lt;/details&gt;
+          &lt;/div&gt;
+          ## The users of the imported document, to check and change.
+          &lt;div class="col-xs-12 col-md-4 sopImportUsers"&gt;
+            &lt;h3&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.users'))&lt;/h3&gt;
+            #foreach ($role in ['owner', 'approver', 'reviewer'])
+              #sopImportUsers($previewedCandidate $role)
+            #end
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;p class="buttons"&gt;
+          #if ($exists)
+            &lt;span class="sopImportExists"&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.exists'))&lt;/span&gt;
+          #else
+            &lt;button type="submit" class="btn btn-primary" id="sopImportPreviewImport"&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.import'))&lt;/button&gt;
+          #end
+          &lt;a class="btn btn-default" id="sopImportPreviewBack" href="$escapetool.xml($xwiki.getURL($importPage, 'view', $escapetool.url({'jobId': $request.sopImportJobId})))"&gt;$escapetool.xml($services.localization.render('sopManager.import.preview.back'))&lt;/a&gt;
+        &lt;/p&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  #end
+  {{/html}}
+#end
+{{/velocity}}</content>
+    </property>
+    <property>
+      <extensionPointId>org.xwiki.platform.template.content.header.after</extensionPointId>
+    </property>
+    <property>
+      <name>org.xwiki.platform.template.content.header.after.sopManagerImportPreview</name>
+    </property>
+    <property>
+      <parameters/>
+    </property>
+    <property>
+      <scope>wiki</scope>
+    </property>
+  </object>
+</xwikidoc>

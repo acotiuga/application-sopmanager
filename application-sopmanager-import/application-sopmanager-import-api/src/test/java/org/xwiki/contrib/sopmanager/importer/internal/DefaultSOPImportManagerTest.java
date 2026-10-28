@@ -52,8 +52,6 @@ import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.officeimporter.server.OfficeServer;
-import org.xwiki.security.authorization.AuthorizationManager;
-import org.xwiki.security.authorization.Right;
 import org.xwiki.test.LogLevel;
 import org.xwiki.test.junit5.LogCaptureExtension;
 import org.xwiki.test.junit5.mockito.ComponentTest;
@@ -110,7 +108,7 @@ class DefaultSOPImportManagerTest
 
     private static final DocumentReference MUSTER = new DocumentReference("xwiki", "XWiki", "MMuster");
 
-    private static final DocumentReference SOP_HOME = new DocumentReference("xwiki", "SOPManager", "WebHome");
+    private static final DocumentReference SOP_EDITORS = new DocumentReference("xwiki", "XWiki", "SOPEditorsGroup");
 
     @InjectMockComponents
     private DefaultSOPImportManager importManager;
@@ -119,7 +117,7 @@ class DefaultSOPImportManagerTest
     private Provider<XWikiContext> xcontextProvider;
 
     @MockComponent
-    private AuthorizationManager authorizationManager;
+    private ImportRights rights;
 
     @MockComponent
     private JobProgressManager progressManager;
@@ -152,7 +150,9 @@ class DefaultSOPImportManagerTest
         when(this.context.getWiki()).thenReturn(this.wiki);
         when(this.context.getWikiId()).thenReturn("xwiki");
         when(this.context.getUserReference()).thenReturn(USER);
-        when(this.authorizationManager.hasAccess(eq(Right.EDIT), eq(USER), any())).thenReturn(true);
+        when(this.rights.canEdit(any(), eq(this.context))).thenReturn(true);
+        when(this.rights.canImport(this.context)).thenReturn(true);
+        when(this.rights.getSOPEditorsGroup(this.context)).thenReturn(SOP_EDITORS);
         // The translations: the key and its parameters.
         ContextualLocalizationManager localizationManager = mock(ContextualLocalizationManager.class);
         when(localizationManager.getTranslationPlain(anyString(), any(Object[].class))).thenAnswer(
@@ -231,16 +231,18 @@ class DefaultSOPImportManagerTest
         assertEquals(word.getData().get("releaseDate"), pdf.getData().get("releaseDate"));
         assertEquals(100, pdf.getTextMatch());
         assertTrue(nativeDocument.isSelected());
-        // The persons named in the document, and the users who may be them.
+        // The persons named in the document, the users who may be them, and the most likely one proposed.
         assertEquals(List.of(MUSTER), nativeDocument.getUsers(SOPImportManager.APPROVER));
         assertEquals("Dr. M. Muster", nativeDocument.getPeople().get(SOPImportManager.APPROVER).get(0).getName());
         assertEquals(List.of(new DocumentReference("xwiki", "XWiki", "KBeispiel"),
-            new DocumentReference("xwiki", "XWiki", "BeispielA")), nativeDocument.getUsers(SOPImportManager.REVIEWER));
+            new DocumentReference("xwiki", "XWiki", "BeispielA")),
+            nativeDocument.getPeople().get(SOPImportManager.REVIEWER).get(0).getUsers());
+        assertEquals(List.of(new DocumentReference("xwiki", "XWiki", "KBeispiel")),
+            nativeDocument.getUsers(SOPImportManager.REVIEWER));
         assertEquals(List.of(), nativeDocument.getUsers(SOPImportManager.OWNER));
         // The last modification of the versions: the PDF, exported after the Word document was written.
         assertEquals(NATIVE + PDF, nativeDocument.getLastModifiedFile());
         assertEquals("Dummy", nativeDocument.getLastModifiedBy());
-        assertNull(nativeDocument.getMissingOriginal());
 
         // The document converted from PDF, and the original PDF: the PDF is recommended.
         SOPImportCandidate converted = documents.get(1);
@@ -252,7 +254,7 @@ class DefaultSOPImportManagerTest
             false);
         assertTrue(converted.getVersions().get(1).getTextMatch() > 80);
         assertEquals("W:\\Gemeinsam\\QM\\Dokumentenlenkung\\Dokumente\\" + CONVERTED + ".doc",
-            converted.getMissingOriginal());
+            converted.getVersions().get(0).getSource().get("originalDocument"));
 
         // The document whose page header and footer were rebuilt in the content.
         SOPImportCandidate rebuilt = documents.get(2);
@@ -344,7 +346,7 @@ class DefaultSOPImportManagerTest
         // A page exists for the converted document, the clean document can't be edited, the creation of the document
         // with its page header and footer in its content fails.
         when(this.wiki.exists(reference(CONVERTED), this.context)).thenReturn(true);
-        when(this.authorizationManager.hasAccess(Right.EDIT, USER, reference(CLEAN))).thenReturn(false);
+        when(this.rights.canEdit(reference(CLEAN), this.context)).thenReturn(false);
         when(this.documentCreator.create(eq(reference(IN_CONTENT)), eq(IN_CONTENT), any(), any(), eq(this.context)))
             .thenThrow(new XWikiException(0, 0, "Saving failed"));
         Map<String, List<String>> nativeUsers = Map.of(SOPImportManager.APPROVER, List.of("xwiki:XWiki.MMuster"));
@@ -444,25 +446,27 @@ class DefaultSOPImportManagerTest
     }
 
     @Test
-    void importNeedsTheEditRightOnTheSOPManager() throws Exception
+    void importNeedsToBeAllowed() throws Exception
     {
-        when(this.authorizationManager.hasAccess(Right.EDIT, USER, SOP_HOME)).thenReturn(false);
+        // The user can edit the SOP Manager space, but is neither an administrator nor a SOP editor.
+        when(this.rights.canImport(this.context)).thenReturn(false);
+        assertFalse(this.importManager.canImport());
 
         SOPImportReport report = this.importManager.importDocuments(this.folder.toString(), List.of(NATIVE + DOCX),
             Map.of(),
             "job");
         SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), TYPES, 0, "job");
 
-        assertEquals("sopManager.import.message.notAllowed [" + SOP_HOME + "]", report.getError());
+        assertEquals("sopManager.import.message.notImporter [" + SOP_EDITORS + "]", report.getError());
         assertTrue(report.getResults().isEmpty());
-        assertEquals("sopManager.import.message.notAllowed [" + SOP_HOME + "]", analysis.getError());
+        assertEquals("sopManager.import.message.notImporter [" + SOP_EDITORS + "]", analysis.getError());
         assertTrue(analysis.getDocuments().isEmpty());
         // The other users can't read the reports, nor preview the documents.
         assertNull(this.importManager.getReport("job"));
         assertNull(this.importManager.getAnalysis("job"));
         assertNull(this.importManager.previewDocument(this.folder.toString(), NATIVE + DOCX));
         verify(this.documentCreator, never()).create(any(), anyString(), any(), any(), any());
-        assertEquals(List.of("The import failed: [" + SOP_HOME + "].", "The import failed: [" + SOP_HOME + "]."),
+        assertEquals(List.of("The import failed: [" + SOP_EDITORS + "].", "The import failed: [" + SOP_EDITORS + "]."),
             messages());
     }
 

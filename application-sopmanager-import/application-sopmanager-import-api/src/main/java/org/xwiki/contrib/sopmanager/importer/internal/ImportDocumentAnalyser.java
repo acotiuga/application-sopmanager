@@ -19,11 +19,14 @@
  */
 package org.xwiki.contrib.sopmanager.importer.internal;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -147,7 +150,7 @@ public class ImportDocumentAnalyser
         try {
             ImportedDocument document = this.documentReader.read(file);
             ImportVersionDescription.describe(version, document);
-            for (ImportWarning warning : SOPDocumentCreator.getWarnings(document)) {
+            for (ImportWarning warning : document.warnings()) {
                 version.addWarning(translate(warning));
             }
             return new ReadVersion(version, document);
@@ -166,12 +169,16 @@ public class ImportDocumentAnalyser
      * Previews the import of a file.
      *
      * @param file a file to import
-     * @return the SOP document it would be imported as: its title, its content with its images
+     * @return the SOP document it would be imported as: its title, its content with its images, the header cells of
+     *     its tables marked as in the other versions of the document
      */
     public SOPImportPreview preview(Path file)
     {
         ReadVersion version = read(file);
         ImportedDocument document = version.document();
+        if (document != null) {
+            shareTableHeaders(file, document);
+        }
         String title = SOPDocumentCreator.getTitle(ImportFolder.getBaseName(file.getFileName().toString()),
             document == null ? new SOPDocumentDetails() : document.details());
         return new SOPImportPreview(version.version(), title,
@@ -183,13 +190,15 @@ public class ImportDocumentAnalyser
      *
      * @param file a file to import
      * @param result the result of the import of the file, telling why it can't be imported
-     * @return the document read from the file, {@code null} if it can't be imported
+     * @return the document read from the file, the header cells of its tables marked as in the other versions of the
+     *     document; {@code null} if it can't be imported
      */
     public ImportedDocument read(Path file, SOPImportResult result)
     {
         try {
             ImportedDocument document = this.documentReader.read(file);
             result.setCompatibility(document.compatibility());
+            shareTableHeaders(file, document);
             return document;
         } catch (UnsupportedDocumentException e) {
             result.setCompatibility(Compatibility.NOT_SUPPORTED);
@@ -202,6 +211,42 @@ public class ImportDocumentAnalyser
             result.setMessage(translate(new ImportWarning(UNREADABLE, getMessage(e))));
         }
         return null;
+    }
+
+    /**
+     * Marks the header cells of the tables of a document as in the other versions of the document, the files of the
+     * folder with the same name in other formats: e.g. the cells of a PDF that are shaded in the Word document it was
+     * exported from.
+     */
+    private void shareTableHeaders(Path file, ImportedDocument document)
+    {
+        Set<String> headers = new HashSet<>();
+        for (Path otherVersion : getOtherVersions(file)) {
+            try {
+                headers.addAll(TableHeaders.collect(this.documentReader.read(otherVersion).content()));
+            } catch (DocumentReadException | RuntimeException e) {
+                // A version that can't be read tells no header cell.
+                this.logger.debug(FAILED_TO_READ, otherVersion, e);
+            }
+        }
+        TableHeaders.apply(document.content(), headers);
+    }
+
+    private List<Path> getOtherVersions(Path file)
+    {
+        String fileName = file.getFileName().toString();
+        String baseName = ImportFolder.getBaseName(fileName);
+        try {
+            return ImportFolder.listFiles(file.getParent()).stream().filter(other -> {
+                String otherName = other.getFileName().toString();
+                return !otherName.equals(fileName) && baseName.equals(ImportFolder.getBaseName(otherName))
+                    && !otherName.startsWith(ImportFolder.LOCK_FILE_PREFIX)
+                    && DocumentReader.FORMATS.contains(DocumentReader.getExtension(other));
+            }).toList();
+        } catch (IOException | SecurityException e) {
+            this.logger.debug("Failed to list the other versions of [{}].", file, e);
+            return List.of();
+        }
     }
 
     /**

@@ -151,15 +151,15 @@ class SOPDocumentCreatorTest
             Compatibility.COMPATIBLE, false, List.of(new ImportWarning("sopManager.import.warning.backgroundImages", 1)),
             DocumentSource.UNKNOWN);
 
-        // The approver selected; the first selected owner that doesn't exist; no reviewer.
+        // The approvers selected, as submitted by the user picker, one of them twice; the first selected owner that
+        // doesn't exist; no reviewer.
         List<ImportWarning> warnings = this.creator.create(REFERENCE, "ANA_AA_9.101_Händedesinfektion", docx,
-            Map.of(SOPImportManager.APPROVER, List.of("MMuster"), SOPImportManager.OWNER, List.of("Missing", "KBeispiel")),
-            this.context);
+            Map.of(SOPImportManager.APPROVER, List.of("MMuster, Missing,KBeispiel", "MMuster"), SOPImportManager.OWNER,
+                List.of("Missing", "KBeispiel,MMuster")), this.context);
 
         assertEquals(List.of(new ImportWarning("sopManager.import.warning.backgroundImages", 1),
-            new ImportWarning("sopManager.import.warning.pastRevisionPlannedDate", "2020-11-04"),
             new ImportWarning("sopManager.import.warning.reviewerNotSet", "K. Beispiel")), warnings);
-        verify(this.object).set("approverUser", "xwiki:XWiki.MMuster", this.context);
+        verify(this.object).set("approverUser", "xwiki:XWiki.MMuster,xwiki:XWiki.KBeispiel", this.context);
         verify(this.object).set("revisionOwner", "xwiki:XWiki.KBeispiel", this.context);
         verify(this.object, never()).set(eq("reviewerUser"), any(), any());
         verify(this.document).setSyntax(Syntax.XWIKI_2_1);

@@ -106,8 +106,9 @@ public class SOPDocumentCreator
      * @param baseName the name of the imported file, without extension
      * @param docx the imported document
      * @param users the users selected for the document, by role ({@link SOPImportManager#OWNER},
-     *     {@link SOPImportManager#APPROVER}, {@link SOPImportManager#REVIEWER}): the references of the users, the
-     *     first one of each role being set
+     *     {@link SOPImportManager#APPROVER}, {@link SOPImportManager#REVIEWER}): the references of the users, possibly
+     *     separated by commas as submitted by the user pickers; the first one is set as owner, all of them as approvers
+     *     and reviewers
      * @param context the XWiki context
      * @return what was not imported as is
      * @throws XWikiException if the document can't be saved
@@ -144,13 +145,13 @@ public class SOPDocumentCreator
         }
         setDate(sop, "releaseDate", details.getReleaseDate(), context);
         setDate(sop, "revisionPlannedDate", details.getRevisionPlannedDate(), context);
-        List<ImportWarning> warnings = new ArrayList<>(getWarnings(docx));
-        setUser(sop, "revisionOwner", users.get(SOPImportManager.OWNER), context);
-        if (!setUser(sop, "approverUser", users.get(SOPImportManager.APPROVER), context)
+        List<ImportWarning> warnings = new ArrayList<>(docx.warnings());
+        setUsers(sop, "revisionOwner", users.get(SOPImportManager.OWNER), false, context);
+        if (!setUsers(sop, "approverUser", users.get(SOPImportManager.APPROVER), true, context)
             && StringUtils.isNotBlank(details.getApprovedBy())) {
             warnings.add(new ImportWarning(WARNING_PREFIX + "approverNotSet", details.getApprovedBy()));
         }
-        if (!setUser(sop, "reviewerUser", users.get(SOPImportManager.REVIEWER), context)
+        if (!setUsers(sop, "reviewerUser", users.get(SOPImportManager.REVIEWER), true, context)
             && StringUtils.isNotBlank(details.getRevisedBy())) {
             warnings.add(new ImportWarning(WARNING_PREFIX + "reviewerNotSet", details.getRevisedBy()));
         }
@@ -161,36 +162,30 @@ public class SOPDocumentCreator
     }
 
     /**
-     * Sets a user property to the first of the selected users that exists.
+     * Sets a user property to the selected users that exist: all of them, separated by commas, if the property holds
+     * several users, the first one otherwise.
      *
      * @return whether a user was set
      */
-    private boolean setUser(BaseObject sop, String property, List<String> users, XWikiContext context)
-        throws XWikiException
+    private boolean setUsers(BaseObject sop, String property, List<String> users, boolean multiple,
+        XWikiContext context) throws XWikiException
     {
-        for (String user : users == null ? List.<String>of() : users) {
-            DocumentReference reference = this.resolver.resolve(user);
-            if (StringUtils.isNotBlank(user) && context.getWiki().exists(reference, context)) {
-                sop.set(property, this.serializer.serialize(reference), context);
-                return true;
+        List<String> existing = new ArrayList<>();
+        for (String value : users == null ? List.<String>of() : users) {
+            for (String user : StringUtils.split(StringUtils.defaultString(value), ',')) {
+                DocumentReference reference = this.resolver.resolve(user.trim());
+                String serialized = this.serializer.serialize(reference);
+                if (StringUtils.isNotBlank(user) && !existing.contains(serialized)
+                    && context.getWiki().exists(reference, context)) {
+                    existing.add(serialized);
+                }
             }
         }
-        return false;
-    }
-
-    /**
-     * @param document an imported document
-     * @return what is not imported as is: what could not be read, the planned revision date if it is past
-     */
-    public static List<ImportWarning> getWarnings(ImportedDocument document)
-    {
-        List<ImportWarning> warnings = new ArrayList<>(document.warnings());
-        SOPDocumentDetails details = document.details();
-        if (details.getRevisionPlannedDate() != null && !details.getRevisionPlannedDate().isAfter(LocalDate.now())) {
-            warnings.add(new ImportWarning(WARNING_PREFIX + "pastRevisionPlannedDate",
-                details.getRevisionPlannedDate().toString()));
+        if (existing.isEmpty()) {
+            return false;
         }
-        return warnings;
+        sop.set(property, multiple ? String.join(",", existing) : existing.get(0), context);
+        return true;
     }
 
     private static void setDate(BaseObject sop, String property, LocalDate date, XWikiContext context)

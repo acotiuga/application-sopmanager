@@ -145,47 +145,46 @@
     <property>
       <code>/* The numbered lists of the SOP documents, as in the imported documents: the numbers at the left of the page, closed
    by a dot ("1.") or by a parenthesis ("1)"), the text indented, its lines aligned. The numbers keep their style
-   (e.g. "a)", "i.") and their start. */
-ol.sop-list, ol.sop-list-parenthesis {
+   (e.g. "a)", "i.") and their start. The numbers closed by a parenthesis have the list styles defined by
+   GKH.Code.CKEditorNumberedListStyles (e.g. "gkh-lower-alpha-parenthesis"), which can be chosen in the editor. */
+ol.sop-list {
   /* The numbers are drawn below; the style of the list (e.g. letters) is for the editors and the other skins. */
   list-style-type: none !important;
   padding-left: 1.25cm;
 }
-ol.sop-list &gt; li, ol.sop-list-parenthesis &gt; li {
+ol.sop-list &gt; li {
   position: relative;
 }
-ol.sop-list &gt; li::before, ol.sop-list-parenthesis &gt; li::before {
+ol.sop-list &gt; li::before {
   position: absolute;
   left: -1.25cm;
-}
-ol.sop-list &gt; li::before {
   content: counter(list-item) ".";
-}
-ol.sop-list-parenthesis &gt; li::before {
-  content: counter(list-item) ")";
 }
 ol.sop-list[style*="lower-alpha"] &gt; li::before {
   content: counter(list-item, lower-alpha) ".";
 }
-ol.sop-list-parenthesis[style*="lower-alpha"] &gt; li::before {
-  content: counter(list-item, lower-alpha) ")";
-}
 ol.sop-list[style*="upper-alpha"] &gt; li::before {
   content: counter(list-item, upper-alpha) ".";
-}
-ol.sop-list-parenthesis[style*="upper-alpha"] &gt; li::before {
-  content: counter(list-item, upper-alpha) ")";
 }
 ol.sop-list[style*="lower-roman"] &gt; li::before {
   content: counter(list-item, lower-roman) ".";
 }
-ol.sop-list-parenthesis[style*="lower-roman"] &gt; li::before {
-  content: counter(list-item, lower-roman) ")";
-}
 ol.sop-list[style*="upper-roman"] &gt; li::before {
   content: counter(list-item, upper-roman) ".";
 }
-ol.sop-list-parenthesis[style*="upper-roman"] &gt; li::before {
+ol.sop-list[style*="gkh-decimal-parenthesis"] &gt; li::before {
+  content: counter(list-item) ")";
+}
+ol.sop-list[style*="gkh-lower-alpha-parenthesis"] &gt; li::before {
+  content: counter(list-item, lower-alpha) ")";
+}
+ol.sop-list[style*="gkh-upper-alpha-parenthesis"] &gt; li::before {
+  content: counter(list-item, upper-alpha) ")";
+}
+ol.sop-list[style*="gkh-lower-roman-parenthesis"] &gt; li::before {
+  content: counter(list-item, lower-roman) ")";
+}
+ol.sop-list[style*="gkh-upper-roman-parenthesis"] &gt; li::before {
   content: counter(list-item, upper-roman) ")";
 }</code>
     </property>

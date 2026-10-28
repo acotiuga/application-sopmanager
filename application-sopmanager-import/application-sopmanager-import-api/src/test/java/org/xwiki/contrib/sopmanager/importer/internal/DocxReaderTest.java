@@ -148,10 +148,10 @@ class DocxReaderTest
             + "|Berufsgruppe|Pflegerische und ärztliche Mitarbeiter\n"
             + "|Ziel|Vermeidung von Infektionen\n\n"
             + "**Vorgehen**\n\n"
-            + "(% class=\"sop-list-parenthesis\" %)\n"
+            + "(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n"
             + "1. Die Hände werden vor und nach jedem Patientenkontakt desinfiziert.\n"
             + "1. Das Desinfektionsmittel wird 30 Sekunden **vollständig** eingerieben.\n"
-            + "(% style=\"list-style-type: lower-alpha\" class=\"sop-list-parenthesis\" %)\n"
+            + "(% style=\"list-style-type: gkh-lower-alpha-parenthesis\" class=\"sop-list\" %)\n"
             + "11. Die Fingerkuppen und Daumen werden //besonders// beachtet.\n"
             + "1. Schmuck und Uhren werden vor Dienstbeginn abgelegt.\n\n"
             + "(% style=\"margin-left: 1.25cm\" %)\n"
@@ -289,10 +289,11 @@ class DocxReaderTest
             // Nested lists, a bulleted list after a numbered item, closed by a paragraph.
             + listItem("Eins", 0) + listItem("Unterpunkt", 1) + listItem("Zwei", 0)
             + listItem("Punkt", 0).replace("w:numId w:val=\"1\"", "w:numId w:val=\"2\"") + paragraph(text("Ende"))
-            // Merged cells.
+            // Merged cells, the cells of the header row and the shaded cells being header cells.
             + "<w:tbl><w:tr><w:trPr><w:tblHeader/></w:trPr>" + cell("A", "<w:gridSpan w:val=\"2\"/>")
-            + cell("B", "<w:vMerge w:val=\"restart\"/>") + "</w:tr><w:tr>" + cell("C", "") + cell("D", "")
-            + cell("", "<w:vMerge/>") + "</w:tr><w:tr>" + cell("E", "") + cell("F", "") + cell("", "<w:vMerge/>")
+            + cell("B", "<w:vMerge w:val=\"restart\"/>") + "</w:tr><w:tr>" + cell("C", shading("E6E6E6"))
+            + cell("D", shading("auto")) + cell("", "<w:vMerge/>") + "</w:tr><w:tr>" + cell("E", shading("FFFFFF"))
+            + cell("F", "") + cell("", "<w:vMerge/>")
             + "</w:tr></w:tbl>"
             // A cell with a list: the numbering of the document continues.
             + "<w:tbl><w:tr><w:tc>" + listItem("In der Zelle", 0) + "</w:tc></w:tr></w:tbl>"
@@ -339,7 +340,7 @@ class DocxReaderTest
             + "* Punkt\n\n"
             + "Ende\n\n"
             + "|=(% colspan=\"2\" %)A|=(% rowspan=\"3\" %)B\n"
-            + "|C|D\n"
+            + "|=C|D\n"
             + "|E|F\n\n"
             + "|(((\n(% start=\"3\" class=\"sop-list\" %)\n1. In der Zelle\n)))\n\n"
             + "Im Inhaltssteuerelement", render(docx.content()));
@@ -365,6 +366,11 @@ class DocxReaderTest
     {
         return "<w:tc><w:tcPr>" + properties + "</w:tcPr>" + paragraph("<w:r><w:t>" + text + "</w:t></w:r>")
             + "</w:tc>";
+    }
+
+    private static String shading(String fill)
+    {
+        return "<w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"" + fill + "\"/>";
     }
 
     private static void write(Path file, Map<String, String> parts) throws IOException

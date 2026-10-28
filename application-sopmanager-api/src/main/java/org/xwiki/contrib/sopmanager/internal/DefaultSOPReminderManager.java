@@ -433,18 +433,21 @@ public class DefaultSOPReminderManager implements SOPReminderManager
         }
     }
 
+    /**
+     * @return the active approvers of the document (an imported document can have several approvers), else the SOP
+     *     administrators
+     */
     private List<DocumentReference> getRevisionReminderRecipients(BaseObject controlledObject)
     {
-        String approver = StringUtils.trimToNull(controlledObject.getLargeStringValue(APPROVER_USER));
+        List<DocumentReference> approvers = getSerializedReferences(controlledObject, APPROVER_USER).stream()
+            .map(StringUtils::trimToNull)
+            .filter(Objects::nonNull)
+            .map(currentStringDocRefResolver::resolve)
+            .filter(this::isActiveUser)
+            .distinct()
+            .toList();
 
-        if (approver != null) {
-            DocumentReference approverReference = currentStringDocRefResolver.resolve(approver);
-            if (isActiveUser(approverReference)) {
-                return List.of(approverReference);
-            }
-        }
-
-        return getSOPAdministrators();
+        return approvers.isEmpty() ? getSOPAdministrators() : approvers;
     }
 
     private List<DocumentReference> getSOPAdministrators()

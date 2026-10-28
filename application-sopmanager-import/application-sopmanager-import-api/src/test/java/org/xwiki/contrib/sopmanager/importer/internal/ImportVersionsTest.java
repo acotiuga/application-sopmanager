@@ -125,7 +125,6 @@ class ImportVersionsTest
         assertNull(word97.getTextMatch());
         // 4 words of 5 and 4.
         assertEquals(89, pdf.getTextMatch());
-        assertNull(candidate.getMissingOriginal());
     }
 
     @Test
@@ -161,7 +160,6 @@ class ImportVersionsTest
 
         assertSame(word, candidate.getRecommended());
         assertNull(candidate.getOriginal());
-        assertEquals("W:\\QM\\A.doc", candidate.getMissingOriginal());
     }
 
     @Test

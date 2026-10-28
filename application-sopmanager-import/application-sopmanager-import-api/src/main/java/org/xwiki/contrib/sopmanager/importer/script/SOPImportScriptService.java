@@ -49,6 +49,16 @@ public class SOPImportScriptService implements ScriptService
     private SOPImportManager importManager;
 
     /**
+     * @return {@code true} if the current user can import documents: the administrators of the current wiki and the
+     *     members of its SOP Editors group
+     * @see SOPImportManager#canImport()
+     */
+    public boolean canImport()
+    {
+        return this.importManager.canImport();
+    }
+
+    /**
      * Analyses the documents of a folder of the server file system before their import: the files of the same name in
      * different formats, where each comes from, the SOP data read from them, the users named in them, and the version
      * recommended for the import. Nothing is created. Meant to be called from a job (e.g. the job macro), which

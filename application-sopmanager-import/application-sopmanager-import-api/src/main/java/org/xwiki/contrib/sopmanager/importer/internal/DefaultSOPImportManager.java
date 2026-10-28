@@ -37,7 +37,6 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
-import org.xwiki.contrib.sopmanager.SOPManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportAnalysis;
 import org.xwiki.contrib.sopmanager.importer.SOPImportCandidate;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
@@ -50,8 +49,6 @@ import org.xwiki.job.event.status.JobProgressManager;
 import org.xwiki.logging.marker.TranslationMarker;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReferenceSerializer;
-import org.xwiki.security.authorization.AuthorizationManager;
-import org.xwiki.security.authorization.Right;
 
 import com.xpn.xwiki.XWikiContext;
 
@@ -89,7 +86,7 @@ public class DefaultSOPImportManager implements SOPImportManager
     private Provider<XWikiContext> xcontextProvider;
 
     @Inject
-    private AuthorizationManager authorizationManager;
+    private ImportRights rights;
 
     @Inject
     private JobProgressManager progressManager;
@@ -223,14 +220,15 @@ public class DefaultSOPImportManager implements SOPImportManager
         return reportId == null || !canImport(this.xcontextProvider.get()) ? null : this.reports.get(reportId);
     }
 
-    private boolean canImport(XWikiContext context)
+    @Override
+    public boolean canImport()
     {
-        return this.authorizationManager.hasAccess(Right.EDIT, context.getUserReference(), getSOPHome(context));
+        return canImport(this.xcontextProvider.get());
     }
 
-    private static DocumentReference getSOPHome(XWikiContext context)
+    private boolean canImport(XWikiContext context)
     {
-        return new DocumentReference(context.getWikiId(), SOPManager.SOP_MANAGER, "WebHome");
+        return this.rights.canImport(context);
     }
 
     /**
@@ -242,8 +240,8 @@ public class DefaultSOPImportManager implements SOPImportManager
         Object parameter = folder;
         Path directory = null;
         if (!canImport(context)) {
-            key = NOT_ALLOWED;
-            parameter = getSOPHome(context);
+            key = "notImporter";
+            parameter = this.rights.getSOPEditorsGroup(context);
         } else if (folder.isEmpty()) {
             key = "noFolder";
         } else {
@@ -338,7 +336,7 @@ public class DefaultSOPImportManager implements SOPImportManager
             if (context.getWiki().exists(reference, context)) {
                 result.setOutcome(Outcome.SKIPPED_EXISTING);
                 result.setMessage(translate(MESSAGE_PREFIX + "exists", this.serializer.serialize(reference)));
-            } else if (!this.authorizationManager.hasAccess(Right.EDIT, context.getUserReference(), reference)) {
+            } else if (!this.rights.canEdit(reference, context)) {
                 result.setOutcome(Outcome.FAILED);
                 result.setMessage(translate(MESSAGE_PREFIX + NOT_ALLOWED, this.serializer.serialize(reference)));
             } else {

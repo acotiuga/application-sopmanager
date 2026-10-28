@@ -1,0 +1,230 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="GKH.Code.ListStyles" locale="">
+  <web>GKH.Code</web>
+  <name>ListStyles</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>List Styles</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>The layout of the lists of the page content: the markers aligned to the left, the text of the items indented, at any level.</content>
+  <object>
+    <name>GKH.Code.ListStyles</name>
+    <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>4c2375a9-0ad7-4e2b-bf56-004769af3171</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <restricted>0</restricted>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <contentType>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>CSS|LESS</values>
+        <name>contentType</name>
+        <number>6</number>
+        <prettyName>Content Type</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </contentType>
+      <name>
+        <disabled>0</disabled>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <defaultValue/>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <unmodifiable>0</unmodifiable>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>/* The lists of the page content (view, WYSIWYG editors, PDF export), ordered or not, at any level: the markers aligned
+   to the left of the list, the text of the items, with all their paragraphs, indented. The markers follow the type of
+   the list chosen in the editor ("1.", "a)", "\25E6"...) and its start. The lists with a class (e.g. trees) and the
+   lists of the table of contents and of the menus keep their own style. */
+:is(#xwikicontent, .cke_editable) :is(ol, ul):not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) {
+  /* The markers are drawn below; the type of the list (e.g. letters) is for the editors and the other skins. */
+  list-style-type: none !important;
+  padding-left: 1.25cm;
+}
+:is(#xwikicontent, .cke_editable) :is(ol, ul):not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li {
+  position: relative;
+}
+:is(#xwikicontent, .cke_editable) :is(ol, ul):not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li::before {
+  position: absolute;
+  left: -1.25cm;
+}
+:is(#xwikicontent, .cke_editable) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li::before {
+  content: "\2022";
+}
+:is(#xwikicontent, .cke_editable) :is(ol, ul) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li::before {
+  content: "\25E6";
+}
+:is(#xwikicontent, .cke_editable) :is(ol, ul) :is(ol, ul) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li::before {
+  content: "\25AA";
+}
+:is(#xwikicontent, .cke_editable) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="disc"] &gt; li::before {
+  content: "\2022";
+}
+:is(#xwikicontent, .cke_editable) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="circle"] &gt; li::before {
+  content: "\25E6";
+}
+:is(#xwikicontent, .cke_editable) ul:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="square"] &gt; li::before {
+  content: "\25AA";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *) &gt; li::before {
+  content: counter(list-item) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="decimal-leading-zero"] &gt; li::before {
+  content: counter(list-item, decimal-leading-zero) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="lower-alpha"] &gt; li::before {
+  content: counter(list-item, lower-alpha) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="upper-alpha"] &gt; li::before {
+  content: counter(list-item, upper-alpha) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="lower-roman"] &gt; li::before {
+  content: counter(list-item, lower-roman) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="upper-roman"] &gt; li::before {
+  content: counter(list-item, upper-roman) ".";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="gkh-decimal-parenthesis"] &gt; li::before {
+  content: counter(list-item) ")";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="gkh-lower-alpha-parenthesis"] &gt; li::before {
+  content: counter(list-item, lower-alpha) ")";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="gkh-upper-alpha-parenthesis"] &gt; li::before {
+  content: counter(list-item, upper-alpha) ")";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="gkh-lower-roman-parenthesis"] &gt; li::before {
+  content: counter(list-item, lower-roman) ")";
+}
+:is(#xwikicontent, .cke_editable) ol:not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="gkh-upper-roman-parenthesis"] &gt; li::before {
+  content: counter(list-item, upper-roman) ")";
+}
+:is(#xwikicontent, .cke_editable) :is(ol, ul):not([class]):not(:is(.wikitoc, .menu-horizontal, .menu-vertical) *)[style*="list-style-type: none"] &gt; li::before {
+  content: none;
+}</code>
+    </property>
+    <property>
+      <contentType>CSS</contentType>
+    </property>
+    <property>
+      <name>List styles</name>
+    </property>
+    <property>
+      <parse>0</parse>
+    </property>
+    <property>
+      <use>always</use>
+    </property>
+  </object>
+</xwikidoc>

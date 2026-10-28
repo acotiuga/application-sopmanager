@@ -62,7 +62,7 @@ public class ImportDocumentsPage extends ViewPage
      * @param file the name of the file
      * @param compatibility how well the file can be imported
      * @param result the SOP document created for the file, or what happened to the file
-     * @param details the messages and the warnings
+     * @param details the messages and the warnings, only for the other files of an analysis
      */
     public record ReportRow(String file, String compatibility, String result, String details)
     {
@@ -229,17 +229,41 @@ public class ImportDocumentsPage extends ViewPage
 
     /**
      * @param name the name of a document
-     * @return the notes about the document: the existing page, the original document missing from the folder
+     * @return the notes about the document: the existing page, displayed above its collapsed details
      */
     public String getDocumentNotes(String name)
     {
-        return getDocument(name).findElements(By.cssSelector(".sopImportExists, .sopImportMissingOriginal")).stream()
-            .map(WebElement::getText).reduce((first, second) -> first + NEW_LINE + second).orElse("");
+        return getDriver().findElementsWithoutWaiting(By.cssSelector(
+                String.format("#sopImportAnalysisTable tr[data-existing-document=\"%s\"] .sopImportExists", name)))
+            .stream().map(WebElement::getText).reduce((first, second) -> first + NEW_LINE + second).orElse("");
     }
 
     /**
      * @param name the name of a document
-     * @return the versions of the document, by format: docx, doc, pdf
+     * @return {@code true} if the details of the document are collapsed, e.g. because its page exists
+     */
+    public boolean isCollapsed(String name)
+    {
+        return !getDocument(name).isDisplayed();
+    }
+
+    /**
+     * Expands the details of a document whose page exists.
+     *
+     * @param name the name of a document
+     * @return this page
+     */
+    public ImportDocumentsPage expand(String name)
+    {
+        getDriver().findElement(By.cssSelector(String.format(
+            "#sopImportAnalysisTable tr[data-existing-document=\"%s\"] .sopImportToggle", name))).click();
+        getDriver().waitUntilCondition(driver -> getDocument(name).isDisplayed());
+        return this;
+    }
+
+    /**
+     * @param name the name of a document
+     * @return the versions of the document, by format: pdf, docx, doc
      */
     public List<Version> getVersions(String name)
     {
@@ -409,7 +433,7 @@ public class ImportDocumentsPage extends ViewPage
             .map(row -> {
                 List<WebElement> cells = row.findElements(By.tagName("td"));
                 return new ReportRow(cells.get(0).getText(), cells.get(1).getText(), cells.get(2).getText(),
-                    cells.get(3).getText());
+                    cells.size() > 3 ? cells.get(3).getText() : "");
             }).toList();
     }
 

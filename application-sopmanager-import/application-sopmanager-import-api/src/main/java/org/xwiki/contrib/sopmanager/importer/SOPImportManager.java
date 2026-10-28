@@ -55,6 +55,13 @@ public interface SOPImportManager
     String REVIEWER = "reviewer";
 
     /**
+     * @return {@code true} if the current user can import documents: the administrators of the current wiki and the
+     *     members of its SOP Editors group ({@code XWiki.SOPEditorsGroup}), which holds the SOP
+     *     Administrators group
+     */
+    boolean canImport();
+
+    /**
      * Analyses the documents of a folder of the server file system before their import: groups the files of the same
      * name in different formats (e.g. A.doc, A.docx and A.pdf, an original and its conversions), reads each of them
      * (where it comes from, its SOP data, its compatibility), and recommends the version to import, the one keeping
@@ -98,7 +105,8 @@ public interface SOPImportManager
      * @param folder the absolute path of the folder of the files
      * @param fileNames the names of the files to import, e.g. the versions selected after the analysis of the folder
      * @param users the users selected for each document, by name of the document (the name of its files) and by role
-     *     ({@link #OWNER}, {@link #APPROVER}, {@link #REVIEWER}): the references of the users, e.g. "XWiki.SStaar"
+     *     ({@link #OWNER}, {@link #APPROVER}, {@link #REVIEWER}): the references of the users, e.g. "XWiki.SStaar",
+     *     possibly separated by commas; a document has a single owner, but can have several approvers and reviewers
      * @param reportId the identifier under which the report is kept, to be retrieved with {@link #getReport(String)};
      *     can be {@code null}
      * @return the report of the import

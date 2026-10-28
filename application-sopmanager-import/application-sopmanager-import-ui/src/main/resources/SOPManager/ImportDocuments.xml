@@ -36,72 +36,13 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
-  <content>{{velocity output="false"}}
-## The values read from the documents: the dates formatted, the PDF template by its title.
-#macro (sopImportValue $key $value $dateFormat)
-#if ($value.class.simpleName == 'Date')$escapetool.xml($datetool.format($dateFormat, $value))#elseif ($key == 'pdfTemplate')$escapetool.xml($xwiki.getDocument($value).plainTitle)#else$escapetool.xml("$value")#end
-#end
-#macro (sopImportProperties $properties $prefix $dateFormat)
-  #if (!$properties.isEmpty())
-    &lt;table class="sopImportProperties"&gt;
-      #foreach ($entry in $properties.entrySet())
-        &lt;tr&gt;
-          &lt;th&gt;$escapetool.xml($services.localization.render("$prefix$entry.key"))&lt;/th&gt;
-          &lt;td data-property="$escapetool.xml($entry.key)"&gt;#sopImportValue($entry.key $entry.value $dateFormat)&lt;/td&gt;
-        &lt;/tr&gt;
-      #end
-    &lt;/table&gt;
-  #end
-#end
-## The user of a role in a document: a user picker, filled with the user of the wiki most likely to be the person
-## named in the document, which is displayed to check the user.
-#macro (sopImportUsers $candidate $role)
-  #set ($persons = $candidate.people.get($role))
-  #set ($roleUsers = $candidate.getUsers($role))
-  #set ($roleUser = '')
-  #if (!$roleUsers.isEmpty())
-    #set ($roleUser = $services.model.serialize($roleUsers.get(0), 'compactwiki'))
-  #end
-  &lt;div class="sopImportRole" data-role="$role"&gt;
-    &lt;label class="sopImportRoleName"&gt;$escapetool.xml($services.localization.render("sopManager.import.role.$role"))&lt;/label&gt;
-    #if ($persons &amp;&amp; !$persons.isEmpty())
-      &lt;span class="sopImportRoleWritten xHint"&gt;#foreach ($person in $persons)#if ($foreach.index &gt; 0), #end$escapetool.xml($person.name)#end&lt;/span&gt;
-      #if ($roleUsers.isEmpty())
-        &lt;span class="sopImportNoUser xHint"&gt;($escapetool.xml($services.localization.render('sopManager.import.role.noUser')))&lt;/span&gt;
-      #end
-    #end
-    &lt;input type="text" class="suggest-users sopImportUser" name="user:$escapetool.xml($candidate.name):$role" value="$escapetool.xml($roleUser)"#if ($candidate.exists) disabled="disabled"#end /&gt;
-  &lt;/div&gt;
-#end
-#macro (sopImportWarnings $warnings)
-  #if (!$warnings.isEmpty())
-    &lt;ul class="sopImportWarnings"&gt;
-      #foreach ($warning in $warnings)
-        &lt;li&gt;$escapetool.xml($warning)&lt;/li&gt;
-      #end
-    &lt;/ul&gt;
-  #end
-#end
-#macro (sopImportLabels $version)
-  #if ($version.original)
-    &lt;span class="label label-info sopImportOriginal"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.original'))&lt;/span&gt;
-  #end
-  #if ($version.recommended)
-    &lt;span class="label label-success sopImportRecommended"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.recommended'))&lt;/span&gt;
-  #end
-#end
-## Who last modified a document, when, and in which version.
-#macro (sopImportLastModification $candidate $data)
-  #if ($candidate.lastModifiedBy)
-    #if ($candidate.lastModified)
-      #set ($discard = $data.put('lastModifiedBy', $services.localization.render('sopManager.import.analysis.lastModified', [$candidate.lastModifiedBy, $datetool.format('dd.MM.yyyy', $candidate.lastModified), $candidate.lastModifiedFile])))
-    #else
-      #set ($discard = $data.put('lastModifiedBy', $services.localization.render('sopManager.import.analysis.lastModifiedWithoutDate', [$candidate.lastModifiedBy, $candidate.lastModifiedFile])))
-    #end
-  #end
-#end
+  <content>{{include reference="SOPManager.Code.ImportMacros"/}}
+
+{{velocity output="false"}}
 ## The report of an import.
-#macro (sopImportResultRow $result $imported)
+## The details (the messages and the warnings) are displayed for the other files of an analysis, not in the report of
+## an import, where the reason why a document was not imported is displayed with the result.
+#macro (sopImportResultRow $result $imported $withDetails)
   &lt;tr data-file="$escapetool.xml($result.fileName)"&gt;
     &lt;td class="sopImportFile"&gt;$escapetool.xml($result.fileName)&lt;/td&gt;
     &lt;td class="sopImportCompatibility"&gt;#if ($result.compatibility)$escapetool.xml($services.localization.render("sopManager.import.compatibility.$result.compatibility"))#end&lt;/td&gt;
@@ -111,15 +52,20 @@
         &lt;a href="$escapetool.xml($resultDoc.getURL())"&gt;$escapetool.xml($resultDoc.plainTitle)&lt;/a&gt;
       &lt;/td&gt;
     #else
-      &lt;td class="sopImportResult"&gt;$escapetool.xml($services.localization.render("sopManager.import.outcome.$result.outcome"))&lt;/td&gt;
+      &lt;td class="sopImportResult"&gt;
+        $escapetool.xml($services.localization.render("sopManager.import.outcome.$result.outcome"))
+        #if (!$withDetails &amp;&amp; "$!result.message" != '')&lt;p class="xHint"&gt;$escapetool.xml($result.message)&lt;/p&gt;#end
+      &lt;/td&gt;
     #end
-    &lt;td class="sopImportDetails"&gt;
-      #if ("$!result.message" != '')&lt;p&gt;$escapetool.xml($result.message)&lt;/p&gt;#end
-      #sopImportWarnings($result.warnings)
-    &lt;/td&gt;
+    #if ($withDetails)
+      &lt;td class="sopImportDetails"&gt;
+        #if ("$!result.message" != '')&lt;p&gt;$escapetool.xml($result.message)&lt;/p&gt;#end
+        #sopImportWarnings($result.warnings)
+      &lt;/td&gt;
+    #end
   &lt;/tr&gt;
 #end
-#macro (sopImportResultTable $id $title $results $imported)
+#macro (sopImportResultTable $id $title $results $imported $withDetails)
   &lt;h3 id="${id}Title"&gt;$escapetool.xml($title)&lt;/h3&gt;
   #if ($results.isEmpty())
     &lt;p class="noitems"&gt;$escapetool.xml($services.localization.render('sopManager.import.report.none'))&lt;/p&gt;
@@ -134,12 +80,14 @@
           #else
             &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.import.report.result'))&lt;/th&gt;
           #end
-          &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.import.report.details'))&lt;/th&gt;
+          #if ($withDetails)
+            &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.import.report.details'))&lt;/th&gt;
+          #end
         &lt;/tr&gt;
       &lt;/thead&gt;
       &lt;tbody&gt;
         #foreach ($result in $results)
-          #sopImportResultRow($result $imported)
+          #sopImportResultRow($result $imported $withDetails)
         #end
       &lt;/tbody&gt;
     &lt;/table&gt;
@@ -157,8 +105,8 @@
       #if ($report.error)
         &lt;div class="box errormessage" id="sopImportError"&gt;$escapetool.xml($report.error)&lt;/div&gt;
       #else
-        #sopImportResultTable('sopImportImported' $services.localization.render('sopManager.import.report.imported', [$report.imported.size()]) $report.imported true)
-        #sopImportResultTable('sopImportNotImported' $services.localization.render('sopManager.import.report.notImported', [$report.notImported.size()]) $report.notImported false)
+        #sopImportResultTable('sopImportImported' $services.localization.render('sopManager.import.report.imported', [$report.imported.size()]) $report.imported true false)
+        #sopImportResultTable('sopImportNotImported' $services.localization.render('sopManager.import.report.notImported', [$report.notImported.size()]) $report.notImported false false)
       #end
     #end
     &lt;p&gt;&lt;a href="$escapetool.xml($doc.getURL('view'))" id="sopImportAgain"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.again'))&lt;/a&gt;&lt;/p&gt;
@@ -166,8 +114,8 @@
   {{/html}}
 
 #end
-## The analysis of a folder: one row per document, one column per format, each version with its selection and its
-## preview.
+## The analysis of a folder: one row per document, one column per format (PDF, Word, and Word 97-2003 if the folder has
+## such documents), each version with its selection and its preview.
 #macro (sopImportFormatCell $candidate $byFormat $format $analysisId)
   #set ($version = $byFormat.get($format))
   #if (!$version)
@@ -203,6 +151,8 @@
 #end
 #macro (displaySOPImportAnalysis $analysis $analysisId)
   ## The user pickers.
+  #set ($discard = $xwiki.linkx.use($services.webjars.url('selectize.js', 'css/selectize.bootstrap3.css'),
+    {'type': 'text/css', 'rel': 'stylesheet'}))
   #set ($discard = $xwiki.ssfx.use('uicomponents/suggest/xwiki.selectize.css', true))
   #set ($discard = $xwiki.jsfx.use('uicomponents/suggest/suggestUsersAndGroups.js', {'forceSkinAction': true,
     'language': $xcontext.locale}))
@@ -224,17 +174,25 @@
           &lt;input type="hidden" name="jobId" value="$escapetool.xml("sopimport/import/$timestamp")" /&gt;
           &lt;input type="hidden" name="startJob" value="true" /&gt;
           &lt;input type="hidden" name="folder" value="$escapetool.xml($analysis.folder)" /&gt;
+          #set ($formats = ['pdf', 'docx'])
+          #foreach ($candidate in $analysis.documents)
+            #foreach ($version in $candidate.versions)
+              #if ($version.format == 'doc' &amp;&amp; !$formats.contains('doc'))
+                #set ($discard = $formats.add('doc'))
+              #end
+            #end
+          #end
           &lt;table class="table table-bordered table-condensed" id="sopImportAnalysisTable"&gt;
             &lt;colgroup&gt;
               &lt;col class="sopImportDocumentColumn" /&gt;
-              &lt;col class="sopImportFormatColumn" /&gt;
-              &lt;col class="sopImportFormatColumn" /&gt;
-              &lt;col class="sopImportFormatColumn" /&gt;
+              #foreach ($format in $formats)
+                &lt;col class="sopImportFormatColumn" /&gt;
+              #end
             &lt;/colgroup&gt;
             &lt;thead&gt;
               &lt;tr&gt;
                 &lt;th&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.document'))&lt;/th&gt;
-                #foreach ($format in ['docx', 'doc', 'pdf'])
+                #foreach ($format in $formats)
                   &lt;th class="sopImportFormatHeader"&gt;$format.toUpperCase()&lt;/th&gt;
                 #end
               &lt;/tr&gt;
@@ -245,15 +203,20 @@
                 #foreach ($version in $candidate.versions)
                   #set ($discard = $byFormat.put($version.format, $version))
                 #end
-                &lt;tr class="sopImportCandidate" data-document="$escapetool.xml($candidate.name)"&gt;
+                ## The documents whose page exists are not imported: they are collapsed to a line saying so, which can
+                ## be expanded to see the details of their versions.
+                #set ($candidateId = "sopImportCandidate-$foreach.count")
+                #if ($candidate.exists)
+                  &lt;tr class="sopImportExistingCandidate" data-existing-document="$escapetool.xml($candidate.name)"&gt;
+                    &lt;td colspan="$mathtool.add($formats.size(), 1)"&gt;
+                      &lt;button type="button" class="btn btn-link sopImportToggle" aria-expanded="false" aria-controls="$candidateId" title="$escapetool.xml($services.localization.render('sopManager.import.analysis.showDetails'))"&gt;&lt;strong&gt;$escapetool.xml($candidate.name)&lt;/strong&gt;&lt;/button&gt;
+                      &lt;span class="sopImportExists"&gt;&lt;a href="$escapetool.xml($xwiki.getURL($candidate.documentReference))"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.exists'))&lt;/a&gt;&lt;/span&gt;
+                    &lt;/td&gt;
+                  &lt;/tr&gt;
+                #end
+                &lt;tr class="sopImportCandidate#if ($candidate.exists) hidden#end" id="$candidateId" data-document="$escapetool.xml($candidate.name)"&gt;
                   &lt;td class="sopImportDocumentName"&gt;
                     &lt;strong&gt;$escapetool.xml($candidate.name)&lt;/strong&gt;
-                    #if ($candidate.exists)
-                      &lt;p class="sopImportExists"&gt;&lt;a href="$escapetool.xml($xwiki.getURL($candidate.documentReference))"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.exists'))&lt;/a&gt;&lt;/p&gt;
-                    #end
-                    #if ($candidate.missingOriginal)
-                      &lt;p class="sopImportMissingOriginal"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.missingOriginal', [$candidate.missingOriginal]))&lt;/p&gt;
-                    #end
                     #if ($candidate.recommended)
                       ## The SOP data of the recommended version, with the owner (who last modified the document) above
                       ## the approver.
@@ -275,7 +238,7 @@
                       &lt;/div&gt;
                     #end
                   &lt;/td&gt;
-                  #foreach ($format in ['docx', 'doc', 'pdf'])
+                  #foreach ($format in $formats)
                     #sopImportFormatCell($candidate $byFormat $format $analysisId)
                   #end
                 &lt;/tr&gt;
@@ -289,7 +252,7 @@
         &lt;/form&gt;
       #end
       #if (!$analysis.otherFiles.isEmpty())
-        #sopImportResultTable('sopImportOtherFiles' $services.localization.render('sopManager.import.analysis.otherFiles', [$analysis.otherFiles.size()]) $analysis.otherFiles false)
+        #sopImportResultTable('sopImportOtherFiles' $services.localization.render('sopManager.import.analysis.otherFiles', [$analysis.otherFiles.size()]) $analysis.otherFiles false true)
       #end
     #end
     &lt;p&gt;&lt;a href="$escapetool.xml($doc.getURL('view'))" id="sopImportAgain"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.again'))&lt;/a&gt;&lt;/p&gt;
@@ -298,7 +261,9 @@
 
 #end
 ## The preview of a version: its content and its SOP data are sent to the preview action of the editor, for the page
-## it would be imported as, which displays the page without saving it.
+## it would be imported as, which displays the page without saving it. Saving it from there would not import it (the
+## images, the users and the source of the document would be missing), so the preview offers to import the version
+## instead (SOPManager.Code.ImportPreviewUIX), with the users selected in the analysis, and hides the save buttons.
 #macro (displaySOPImportPreview $analysis $fileName)
   #set ($previewedCandidate = $NULL)
   #if ($analysis)
@@ -328,6 +293,22 @@
         &lt;input type="hidden" name="objectPolicy" value="updateOrCreate" /&gt;
         &lt;input type="hidden" name="${sopClass}status" value="imported" /&gt;
         &lt;input type="hidden" name="${sopClass}isInReview" value="0" /&gt;
+        ## What the preview imports, and the page the buttons of the editor post to (instead of this page).
+        &lt;input type="hidden" name="sopImportJobId" value="$escapetool.xml($jobId)" /&gt;
+        &lt;input type="hidden" name="sopImportFile" value="$escapetool.xml($fileName)" /&gt;
+        ## The users selected before (in the analysis, or in the preview of another version), the most likely otherwise.
+        #foreach ($role in ['owner', 'approver', 'reviewer'])
+          #set ($roleUsers = $request.getParameter("sopImportUser:$role"))
+          #if ($roleUsers == $NULL)
+            #set ($roleUsers = [])
+            #foreach ($roleUser in $previewedCandidate.getUsers($role))
+              #set ($discard = $roleUsers.add($services.model.serialize($roleUser, 'compactwiki')))
+            #end
+            #set ($roleUsers = $stringtool.join($roleUsers, ','))
+          #end
+          &lt;input type="hidden" name="sopImportUser:$role" value="$escapetool.xml($roleUsers)" /&gt;
+        #end
+        &lt;input type="hidden" name="xcontinue" value="$escapetool.xml($xwiki.getURL($previewedCandidate.documentReference, 'edit', 'editor=wiki'))" /&gt;
         #set ($sopFields = ['revisionId', 'revisionNumber', 'pdfTemplate'])
         #set ($sopDateFields = ['releaseDate', 'revisionPlannedDate'])
         #foreach ($entry in $preview.version.data.entrySet())
@@ -351,9 +332,8 @@
 {{/velocity}}
 
 {{velocity output="false"}}
-## Only the users who can edit the SOP Manager space can import documents: the import checks it too.
-#set ($sopHome = $services.model.createDocumentReference('', 'SOPManager', 'WebHome'))
-#set ($canImport = $services.security.authorization.hasAccess('edit', $sopHome))
+## Only the wiki administrators and the SOP editors can import documents: the import checks it too.
+#set ($canImport = $services.sopImport.canImport())
 ## The job analysing the documents, then the job importing the selected ones: their identifiers are generated when the
 ## forms are displayed, so that the jobs can be found after they started. The variables are prefixed: the display of
 ## the job by the job macro sets variables in the same context.
@@ -394,7 +374,10 @@
   #if ($sopImportPreviewName != '')
     #displaySOPImportPreview($services.sopImport.getAnalysis($jobId) $sopImportPreviewName)
   #elseif ($jobId == '')
-    $services.localization.render('sopManager.import.description')
+    #foreach ($paragraph in ['intro', 'versions', 'users', 'steps', 'result'])
+      $services.rendering.escape($services.localization.render("sopManager.import.description.$paragraph"), 'xwiki/2.1')
+
+    #end
 
     {{html clean="false"}}
     &lt;form class="xform" id="sopImportForm" method="post" action="$escapetool.xml($doc.getURL('view'))"&gt;
@@ -468,15 +451,26 @@
 
 {{velocity}}
 #if ($startJob)
-  ## Display the job, without starting it again when the page is reloaded.
-  $response.sendRedirect($doc.getURL('view', $escapetool.url({'jobId': $jobId})))
+  ## Display the job, without starting it again when the page is reloaded. The import of a single version from its
+  ## preview opens the imported document when it's done ("open").
+  #set ($jobQuery = {'jobId': $jobId})
+  #if ("$!request.open" == 'true')
+    #set ($discard = $jobQuery.put('open', 'true'))
+  #end
+  $response.sendRedirect($doc.getURL('view', $escapetool.url($jobQuery)))
 #elseif ($canImport &amp;&amp; $sopImportDisplayedJobId != '')
   #set ($jobStatus = $services.job.getJobStatus($jobId.split('/')))
   #if ($jobStatus &amp;&amp; $jobStatus.state.name() == 'FINISHED')
     #if ($sopImportJobType == 'analysis')
       #displaySOPImportAnalysis($services.sopImport.getAnalysis($jobId) $jobId)
     #else
-      #displaySOPImportReport($services.sopImport.getReport($jobId))
+      #set ($report = $services.sopImport.getReport($jobId))
+      #if ("$!request.open" == 'true' &amp;&amp; $report &amp;&amp; $report.imported.size() == 1 &amp;&amp; $report.notImported.isEmpty())
+        ## Continue with the imported document (to edit it, to start its review), the report otherwise.
+        $response.sendRedirect($xwiki.getURL($report.imported.get(0).documentReference))
+      #else
+        #displaySOPImportReport($report)
+      #end
     #end
   #elseif ($jobStatus)
 
@@ -605,6 +599,21 @@
   if (selection.length) {
     updateCount();
   }
+  // The documents whose page exists are collapsed: expand them to see their details.
+  selection.on('click', '.sopImportToggle', function() {
+    var expanded = $(this).attr('aria-expanded') !== 'true';
+    $(this).attr('aria-expanded', expanded);
+    $('#' + $(this).attr('aria-controls')).toggleClass('hidden', !expanded);
+  });
+
+  // From the preview of a version, preview another version with the users selected in the preview.
+  $(document).on('click', '#sopImportPreviewActions .sopImportPreviewSwitch', function() {
+    var users = {};
+    $('#sopImportPreviewActions .sopImportRole').each(function() {
+      users['sopImportUser:' + $(this).attr('data-role')] = $(this).find('input.sopImportUser').val();
+    });
+    this.href += '&amp;' + $.param(users);
+  });
 
   // Preview a version directly in the preview mode of the editor: the window is opened on click (not blocked as a
   // popup), the content of the version is converted on the server, then sent to the preview action in this window.
@@ -622,6 +631,11 @@
       // Without running the script of the page, which submits the form.
       var form = $('&lt;div&gt;&lt;/div&gt;').append($.parseHTML(html)).find('#sopImportPreviewForm');
       if (form.length) {
+        // The users selected in the analysis, to import the version with them from the preview.
+        link.closest('tr').find('.sopImportRole').each(function() {
+          var role = $(this).attr('data-role');
+          form.find('input[name="sopImportUser:' + role + '"]').val($(this).find('input.sopImportUser').val());
+        });
         form.attr('target', windowName).addClass('hidden').appendTo(document.body);
         form[0].submit();
         form.remove();
@@ -771,6 +785,11 @@
   text-align: center;
   vertical-align: middle;
 }
+#sopImportAnalysisTable .label, #sopImportAnalysisTable .btn {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+}
 #sopImportAnalysisTable .sopImportVersionFile {
   font-weight: normal;
   word-break: break-all;
@@ -783,7 +802,10 @@
   font-size: .9em;
   color: #777;
 }
+/* Fixed layout, so that long values wrap instead of widening the cell. */
 .sopImportProperties {
+  table-layout: fixed;
+  width: 100%;
   margin: .3em 0;
   font-size: .9em;
 }
@@ -793,22 +815,21 @@
   border: 0;
 }
 .sopImportProperties th {
+  width: 40%;
   font-weight: normal;
   color: #777;
-  white-space: nowrap;
 }
+/* The table fits the width of the page content: the columns don't grow with their content. */
 #sopImportAnalysisTable {
   table-layout: fixed;
   width: 100%;
+  max-width: 100%;
   font-size: .9em;
 }
 #sopImportAnalysisTable .sopImportDocumentColumn {
   width: 40%;
 }
-#sopImportAnalysisTable .sopImportFormatColumn {
-  width: 20%;
-}
-#sopImportAnalysisTable td {
+#sopImportAnalysisTable td, #sopImportAnalysisTable th {
   overflow-wrap: anywhere;
 }
 .sopImportRole {
@@ -818,11 +839,80 @@
   display: block;
   margin: 0;
 }
-.sopImportRole .selectize-control {
+/* The user pickers, as small as the rest of the text (selectize up to XWiki 17, Tom Select from XWiki 18). */
+.sopImportRole .selectize-control, .sopImportRole .ts-wrapper {
+  max-width: 100%;
   margin-top: .2em;
+  font-size: inherit;
 }
-.sopImportMissingOriginal, .sopImportExists {
+.sopImportRole .selectize-input, .sopImportRole .ts-control {
+  min-height: 0;
+  padding: 2px 6px;
+  font-size: inherit;
+  line-height: 1.5;
+}
+/* Less room kept for the loading spinner (and the arrow of the single picker). */
+.sopImportRole .selectize-control.multi .selectize-input, .sopImportRole .ts-wrapper.multi .ts-control {
+  padding-right: 22px;
+}
+.sopImportRole .selectize-control.single .selectize-input, .sopImportRole .ts-wrapper.single .ts-control {
+  padding-right: 42px;
+}
+/* Long user names wrap instead of widening the picker. */
+.sopImportRole .xwiki-selectize-option {
+  max-width: 100%;
+  white-space: normal;
+}
+.sopImportRole .selectize-dropdown .xwiki-selectize-option, .sopImportRole .ts-dropdown .xwiki-selectize-option {
+  white-space: nowrap;
+}
+.sopImportRole .selectize-input &gt; input, .sopImportRole .ts-control &gt; input {
+  height: auto;
+  min-width: 0;
+  font-size: inherit;
+}
+.sopImportRole .selectize-dropdown, .sopImportRole .ts-dropdown {
+  font-size: inherit;
+}
+.sopImportExists {
   font-size: .9em;
+}
+#sopImportAnalysisTable .sopImportExistingCandidate td {
+  background-color: #f5f5f5;
+}
+#sopImportAnalysisTable .sopImportToggle {
+  padding: 0 .5em 0 0;
+  color: inherit;
+}
+#sopImportAnalysisTable .sopImportToggle::before {
+  content: '\25B8';
+  display: inline-block;
+  width: 1em;
+}
+#sopImportAnalysisTable .sopImportToggle[aria-expanded="true"]::before {
+  content: '\25BE';
+}
+#sopImportPreviewActions h3 {
+  margin-top: 0;
+  font-size: 1.1em;
+}
+#sopImportPreviewActions .panel-heading p {
+  margin: 0;
+}
+#sopImportPreviewActions .sopImportPreviewVersion {
+  margin-bottom: .5em;
+  padding: .3em .5em;
+  border-left: 3px solid #ddd;
+}
+#sopImportPreviewActions .sopImportPreviewVersion p {
+  margin: 0 0 .2em;
+}
+#sopImportPreviewActions .sopImportRecommendedVersion {
+  border-left-color: #5cb85c;
+  background-color: rgba(92, 184, 92, .08);
+}
+#sopImportPreviewActions .sopImportUsers, #sopImportPreviewActions .sopImportPreviewData {
+  overflow-wrap: anywhere;
 }</code>
     </property>
     <property>

@@ -164,22 +164,28 @@
     </property>
     <property>
       <footer>{{velocity}}
+## The names of the users of a property, which can hold several users separated by commas (e.g. the approvers of an
+## imported document).
 #macro (extractDocumentName $serializedRef $output)
-  #set ($name = '')
-  #if ("$!serializedRef" != '')
-    #set ($userDoc = $xwiki.getDocument($serializedRef))
-    #set ($userObj = $userDoc.getObject('XWiki.XWikiUsers'))
-    #if ($userObj)
-      #set ($firstName = $!userObj.getValue('first_name'))
-      #set ($lastName = $!userObj.getValue('last_name'))
-      #set ($name = "$!firstName $!lastName")
-      #set ($name = $name.trim())
-    #end
-    #if ("$!name" == '')
-      #set ($name = $serializedRef)
+  #set ($names = [])
+  #foreach ($userRef in "$!serializedRef".split('\s*,\s*'))
+    #if ($userRef.trim() != '')
+      #set ($name = '')
+      #set ($userDoc = $xwiki.getDocument($userRef.trim()))
+      #set ($userObj = $userDoc.getObject('XWiki.XWikiUsers'))
+      #if ($userObj)
+        #set ($firstName = $!userObj.getValue('first_name'))
+        #set ($lastName = $!userObj.getValue('last_name'))
+        #set ($name = "$!firstName $!lastName")
+        #set ($name = $name.trim())
+      #end
+      #if ("$!name" == '')
+        #set ($name = $userRef.trim())
+      #end
+      #set ($discard = $names.add($name))
     #end
   #end
-  #set ($discard = $output.add($name))
+  #set ($discard = $output.add($stringtool.join($names, ', ')))
 #end
 
 #set ($controlledObj = $tdoc.getObject('SOPManager.Code.ControlledDocumentClass'))

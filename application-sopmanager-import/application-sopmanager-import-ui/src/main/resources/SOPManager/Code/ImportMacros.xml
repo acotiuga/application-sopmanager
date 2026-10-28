@@ -1,0 +1,128 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="SOPManager.Code.ImportMacros" locale="">
+  <web>SOPManager.Code</web>
+  <name>ImportMacros</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>SOPManager.ImportDocuments</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>ImportMacros</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity output="false"}}
+## The display of the analysis of the documents to import, shared by SOPManager.ImportDocuments and the preview of a
+## version (SOPManager.Code.ImportPreviewUIX).
+## The values read from the documents, the dates formatted.
+#macro (sopImportValue $value $dateFormat)
+#if ($value.class.simpleName == 'Date')$escapetool.xml($datetool.format($dateFormat, $value))#else$escapetool.xml("$value")#end
+#end
+## The PDF template, chosen from the orientation of the document, is not displayed.
+#macro (sopImportProperties $properties $prefix $dateFormat)
+  #if (!$properties.isEmpty())
+    &lt;table class="sopImportProperties"&gt;
+      #foreach ($entry in $properties.entrySet())
+        #if ($entry.key != 'pdfTemplate')
+          &lt;tr&gt;
+            &lt;th&gt;$escapetool.xml($services.localization.render("$prefix$entry.key"))&lt;/th&gt;
+            &lt;td data-property="$escapetool.xml($entry.key)"&gt;#sopImportValue($entry.value $dateFormat)&lt;/td&gt;
+          &lt;/tr&gt;
+        #end
+      #end
+    &lt;/table&gt;
+  #end
+#end
+## The users of a role in a document: a user picker, filled with the user of the wiki most likely to be each person
+## named in the document, whose names are displayed to check the users. A document has a single owner, but can have
+## several approvers and reviewers. The users selected before, if any, by role in $sopImportSelectedUsers (comma
+## separated), are displayed instead.
+#macro (sopImportUsers $candidate $role)
+  #set ($persons = $candidate.people.get($role))
+  #set ($roleUsers = [])
+  #if ($sopImportSelectedUsers &amp;&amp; $sopImportSelectedUsers.containsKey($role))
+    #set ($roleUsers = $stringtool.split($sopImportSelectedUsers.get($role), ','))
+  #else
+    #foreach ($roleUser in $candidate.getUsers($role))
+      #set ($discard = $roleUsers.add($services.model.serialize($roleUser, 'compactwiki')))
+    #end
+  #end
+  &lt;div class="sopImportRole" data-role="$role"&gt;
+    &lt;label class="sopImportRoleName"&gt;$escapetool.xml($services.localization.render("sopManager.import.role.$role"))&lt;/label&gt;
+    #if ($persons &amp;&amp; !$persons.isEmpty())
+      &lt;span class="sopImportRoleWritten xHint"&gt;#foreach ($person in $persons)#if ($foreach.index &gt; 0), #end$escapetool.xml($person.name)#end&lt;/span&gt;
+      #if ($roleUsers.isEmpty())
+        &lt;span class="sopImportNoUser xHint"&gt;($escapetool.xml($services.localization.render('sopManager.import.role.noUser')))&lt;/span&gt;
+      #end
+    #end
+    &lt;input type="text" class="suggest-users sopImportUser" name="user:$escapetool.xml($candidate.name):$role" value="$escapetool.xml($stringtool.join($roleUsers, ','))"#if ($role == 'owner') data-xwiki-selectize="$escapetool.xml('{"maxItems":1}')"#else multiple="multiple"#end#if ($candidate.exists) disabled="disabled"#end /&gt;
+  &lt;/div&gt;
+#end
+#macro (sopImportWarnings $warnings)
+  #if (!$warnings.isEmpty())
+    &lt;ul class="sopImportWarnings"&gt;
+      #foreach ($warning in $warnings)
+        &lt;li&gt;$escapetool.xml($warning)&lt;/li&gt;
+      #end
+    &lt;/ul&gt;
+  #end
+#end
+#macro (sopImportLabels $version)
+  #if ($version.original)
+    &lt;span class="label label-info sopImportOriginal"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.original'))&lt;/span&gt;
+  #end
+  #if ($version.recommended)
+    &lt;span class="label label-success sopImportRecommended"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.recommended'))&lt;/span&gt;
+  #end
+#end
+## Who last modified a document, when, and in which version.
+#macro (sopImportLastModification $candidate $data)
+  #if ($candidate.lastModifiedBy)
+    #if ($candidate.lastModified)
+      #set ($discard = $data.put('lastModifiedBy', $services.localization.render('sopManager.import.analysis.lastModified', [$candidate.lastModifiedBy, $datetool.format('dd.MM.yyyy', $candidate.lastModified), $candidate.lastModifiedFile])))
+    #else
+      #set ($discard = $data.put('lastModifiedBy', $services.localization.render('sopManager.import.analysis.lastModifiedWithoutDate', [$candidate.lastModifiedBy, $candidate.lastModifiedFile])))
+    #end
+  #end
+#end
+## The SOP data of a version of a document, with who last modified the document (any version) above the approver.
+#macro (sopImportDocumentData $candidate $version)
+  #set ($documentData = {})
+  #foreach ($entry in $version.data.entrySet())
+    #if ($entry.key == 'approvedBy')
+      #sopImportLastModification($candidate $documentData)
+    #end
+    #set ($discard = $documentData.put($entry.key, $entry.value))
+  #end
+  #if (!$documentData.containsKey('lastModifiedBy'))
+    #sopImportLastModification($candidate $documentData)
+  #end
+  #sopImportProperties($documentData 'sopManager.import.data.' 'dd.MM.yyyy')
+#end
+{{/velocity}}</content>
+</xwikidoc>

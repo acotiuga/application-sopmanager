@@ -86,7 +86,7 @@
       <freeText/>
       <hint>The user that approved the document.</hint>
       <largeStorage>0</largeStorage>
-      <multiSelect>0</multiSelect>
+      <multiSelect>1</multiSelect>
       <name>approverUser</name>
       <number>13</number>
       <picker>1</picker>
@@ -237,7 +237,7 @@
       <freeText/>
       <hint>The user that reviewed the document.</hint>
       <largeStorage>0</largeStorage>
-      <multiSelect>0</multiSelect>
+      <multiSelect>1</multiSelect>
       <name>reviewerUser</name>
       <number>12</number>
       <picker>1</picker>

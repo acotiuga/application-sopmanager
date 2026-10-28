@@ -45,8 +45,9 @@
 #if ($canEdit)
   #set ($discard = $xwiki.jsx.use('SOPManager.WebHome'))
 #end
-## The import page is provided by the import module, which can be uninstalled once the documents are imported.
-#if ($canEdit &amp;&amp; $xwiki.exists('SOPManager.ImportDocuments'))
+## The import page is provided by the import module, which can be uninstalled once the documents are imported. Only the
+## wiki administrators and the SOP editors can import documents.
+#if ($xwiki.exists('SOPManager.ImportDocuments') &amp;&amp; $services.sopImport.canImport())
   [[$services.rendering.escape($services.localization.render('sopManager.webHome.import'), 'xwiki/2.1')&gt;&gt;doc:SOPManager.ImportDocuments||class="btn btn-default" id="sopImportDocumentsLink"]]
 
 #end

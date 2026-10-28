@@ -121,7 +121,6 @@ public final class ImportVersions
                 version.setTextMatch(document == null ? null : getTextMatch(words, getWords(document.content())));
             }
         }
-        candidate.setMissingOriginal(getMissingOriginal(versions, documents));
     }
 
     private static int getRank(SOPImportVersion version)
@@ -171,24 +170,6 @@ public final class ImportVersions
     {
         ImportedDocument document = documents.get(version);
         return document == null ? null : document.source().created();
-    }
-
-    /**
-     * @return the original document printed in a version, if it is not one of the versions
-     */
-    private static String getMissingOriginal(List<SOPImportVersion> versions,
-        Map<SOPImportVersion, ImportedDocument> documents)
-    {
-        for (ImportedDocument document : documents.values()) {
-            String path = document.source().originalDocument();
-            if (path != null) {
-                String fileName = path.substring(Math.max(path.lastIndexOf('\\'), path.lastIndexOf('/')) + 1);
-                if (versions.stream().noneMatch(version -> version.getFileName().equalsIgnoreCase(fileName))) {
-                    return path;
-                }
-            }
-        }
-        return null;
     }
 
     /**

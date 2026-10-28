@@ -75,6 +75,8 @@ class ImportDocumentsIT
 
     private static final String READER = "SopReader";
 
+    private static final String WRITER = "SopWriter";
+
     private static final String DOCX_DOC_PDF = "docx, doc, pdf";
 
     private static final String WRONG_FORMAT = "Skipped: wrong format";
@@ -117,17 +119,21 @@ class ImportDocumentsIT
         setup.loginAsSuperAdmin();
         setup.createUser(EDITOR, PASSWORD, null, "first_name", "Sop", "last_name", "Editor");
         setup.createUser(READER, PASSWORD, null, "first_name", "Sop", "last_name", "Reader");
+        setup.createUser(WRITER, PASSWORD, null, "first_name", "Sop", "last_name", "Writer");
         // The users named in the documents: the approver, and two users who may be the reviewer, "K. Beispiel".
         setup.createUser("MMuster", PASSWORD, null, "first_name", "Max", "last_name", "Muster");
         setup.createUser("KBeispiel", PASSWORD, null, "first_name", "Karl", "last_name", "Beispiel");
         setup.createUser("BeispielKl", PASSWORD, null, "first_name", "Klaus", "last_name", "");
-        // The editor writes the SOP documents, reviews and approves them.
+        // The editor imports the SOP documents, writes them, reviews and approves them.
         for (String group : List.of("SOPEditorsGroup", "SOPReviewersGroup", "SOPApproversGroup")) {
             setup.addObject("XWiki", group, "XWiki.XWikiGroups", "member", "XWiki." + EDITOR);
         }
         // The SOP editors can edit the pages of the SOP Manager.
         setup.addObject(new LocalDocumentReference("SOPManager", "WebPreferences"), "XWiki.XWikiGlobalRights",
             "groups", "XWiki.SOPEditorsGroup", "levels", "edit", "allow", "1");
+        // The writer can edit the SOP documents, but can't import them: not being a SOP editor.
+        setup.addObject(new LocalDocumentReference("SOPManager", "WebPreferences"), "XWiki.XWikiGlobalRights",
+            "users", "XWiki." + WRITER, "levels", "edit", "allow", "1");
         folder = SOPTestUtils.copyDocumentsToServer(setup, getDocuments());
         // The approved SOP documents are exported to PDF on the server. XWiki runs in a container: the browser printing
         // the PDF documents is started in its network, and loads the pages from its address in this network. Its
@@ -166,14 +172,16 @@ class ImportDocumentsIT
 
     @Test
     @Order(1)
-    void importNeedsTheEditRightOnTheSOPManager(TestUtils setup)
+    void importNeedsAnAdministratorOrASOPEditor(TestUtils setup)
     {
-        setup.login(READER, PASSWORD);
-        ImportDocumentsPage importPage = ImportDocumentsPage.gotoPage();
-        assertFalse(importPage.isFormDisplayed());
-        assertEquals("You need the edit right on the SOP Manager space to import documents.",
-            importPage.getErrorMessage());
-        assertFalse(SOPManagerHomePage.gotoPage().hasImportLink());
+        for (String user : List.of(READER, WRITER)) {
+            setup.login(user, PASSWORD);
+            ImportDocumentsPage importPage = ImportDocumentsPage.gotoPage();
+            assertFalse(importPage.isFormDisplayed());
+            assertEquals("Only the wiki administrators and the members of the SOP Editors group can import "
+                + "documents.", importPage.getErrorMessage());
+            assertFalse(SOPManagerHomePage.gotoPage().hasImportLink());
+        }
     }
 
     @Test
@@ -192,8 +200,8 @@ class ImportDocumentsIT
         assertEquals(List.of(NATIVE.page(), CONVERTED.page(), IN_CONTENT.page(), DAMAGED, WORD_97.page(), SCAN,
             CLEAN.page()), analysis.getDocuments());
         // The native Word document is the original, the PDF was exported from it.
-        assertEquals(List.of(new Version(NATIVE.file(), ORIGINAL_RECOMMENDED, ORIGINAL_WORD, true, true),
-            new Version(NATIVE.file(PDF), List.of(), EXPORTED_TO_PDF, false, true)), analysis.getVersions(NATIVE.page()));
+        assertEquals(List.of(new Version(NATIVE.file(PDF), List.of(), EXPORTED_TO_PDF, false, true),
+            new Version(NATIVE.file(), ORIGINAL_RECOMMENDED, ORIGINAL_WORD, true, true)), analysis.getVersions(NATIVE.page()));
         assertEquals(List.of("doc"), analysis.getMissingFormats(NATIVE.page()));
         assertEquals("Same text as the recommended version: 100%", analysis.getTextMatch(NATIVE.file(PDF)));
         Map<String, String> data = analysis.getVersionData(NATIVE.file());
@@ -203,14 +211,11 @@ class ImportDocumentsIT
         assertEquals("5", data.get("revisionNumber"));
         assertEquals("04.11.2028", data.get("revisionPlannedDate"));
         assertEquals(data, analysis.getVersionData(NATIVE.file(PDF)));
-        // The document converted from PDF: the original PDF is recommended, the Word document it was made from is
-        // not in the folder.
-        assertEquals(List.of(
-            new Version(CONVERTED.file(), List.of(), "Word document converted from a PDF", false, true),
-            new Version(CONVERTED.file(PDF), ORIGINAL_RECOMMENDED, EXPORTED_TO_PDF, true, true)),
+        // The document converted from PDF: the original PDF is recommended.
+        assertEquals(List.of(new Version(CONVERTED.file(PDF), ORIGINAL_RECOMMENDED, EXPORTED_TO_PDF, true, true),
+            new Version(CONVERTED.file(), List.of(), "Word document converted from a PDF", false, true)),
             analysis.getVersions(CONVERTED.page()));
-        assertEquals("The original document is not in the folder: W:\\Gemeinsam\\QM\\Dokumentenlenkung\\Dokumente\\"
-            + CONVERTED.file("doc"), analysis.getDocumentNotes(CONVERTED.page()));
+        assertEquals("", analysis.getDocumentNotes(CONVERTED.page()));
         assertEquals(List.of(new Version(IN_CONTENT.file(), List.of(RECOMMENDED),
             "Word document with the page header and footer in its content (rebuilt)", false, true)),
             analysis.getVersions(IN_CONTENT.page()));
@@ -264,6 +269,9 @@ class ImportDocumentsIT
             assertFalse(content.contains("Freigabe am"), content);
             assertEquals(2, preview.getTableCount(), file);
             assertEquals(1, preview.getImageCount(), file);
+            // The version is imported from the preview, not saved as previewed.
+            assertTrue(preview.canImport(), file);
+            assertFalse(preview.hasSaveButtons(), file);
             analysis = preview.close();
         }
         ImportPreviewPage preview = analysis.preview(WORD_97.file("doc"));
@@ -301,10 +309,13 @@ class ImportDocumentsIT
         setup.login(EDITOR, PASSWORD);
         ImportDocumentsPage analysis = ImportDocumentsPage.gotoPage().analyse(folder, DOCX_DOC_PDF, null);
 
-        // The documents already imported are skipped.
+        // The documents already imported are skipped: collapsed, their details can be expanded.
         for (SOPTestUtils.Document document : List.of(NATIVE, CONVERTED)) {
             assertTrue(analysis.getDocumentNotes(document.page()).startsWith("The page exists, the document is not "
                 + "imported."), analysis.getDocumentNotes(document.page()));
+            assertTrue(analysis.isCollapsed(document.page()));
+            analysis.expand(document.page());
+            assertFalse(analysis.isCollapsed(document.page()));
             assertTrue(analysis.getVersions(document.page()).stream().noneMatch(Version::enabled));
         }
         assertEquals(List.of(IN_CONTENT.file(), WORD_97.file(), CLEAN.file()), analysis.getSelectedFiles());
@@ -351,7 +362,7 @@ class ImportDocumentsIT
         assertTrue(content.contains("1. Die Hände werden vor und nach jedem Patientenkontakt desinfiziert."),
             content);
         // The numbers closed by a parenthesis, and the indentation of the paragraphs, as in the document.
-        assertTrue(content.contains("(% class=\"sop-list-parenthesis\" %)\n1. Die Hände"), content);
+        assertTrue(content.contains("(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n1. Die Hände"), content);
         assertTrue(content.contains("(% style=\"margin-left: 1.25cm\" %)\nDie Hände trocknen an der Luft."), content);
         assertTrue(content.contains("[[image:photo.png||width=\"167\"]]"), content);
         SOPTestUtils.assertNoHeaderOrFooter("ANA_AA_9.101", content);

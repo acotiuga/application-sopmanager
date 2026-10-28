@@ -222,14 +222,15 @@ public class DocxBlockConverter
 
     /**
      * @param table a table
-     * @return the table block, the merged cells spanning the rows and columns
+     * @return the table block, the merged cells spanning the rows and columns, the header cells being the cells of
+     *     the rows repeated as header rows and the shaded cells
      */
     public TableBlock convertTable(Element table)
     {
         List<Block> rows = new ArrayList<>();
         Map<Integer, TableCellBlock> mergeOrigins = new HashMap<>();
         for (Element row : children(table, TR)) {
-            boolean header = path(row, "trPr", "tblHeader") != null;
+            boolean headerRow = path(row, "trPr", "tblHeader") != null;
             List<Block> cells = new ArrayList<>();
             int column = 0;
             for (Element cell : children(row, TC)) {
@@ -244,11 +245,7 @@ public class DocxBlockConverter
                             + 1));
                     }
                 } else {
-                    TableCellBlock block = header ? new TableHeadCellBlock(convertCell(cell))
-                        : new TableCellBlock(convertCell(cell));
-                    if (span > 1) {
-                        block.setParameter("colspan", String.valueOf(span));
-                    }
+                    TableCellBlock block = convertCell(cell, headerRow || isShaded(properties), span);
                     if (merge != null) {
                         mergeOrigins.put(column, block);
                     } else {
@@ -261,6 +258,27 @@ public class DocxBlockConverter
             rows.add(new TableRowBlock(cells));
         }
         return new TableBlock(rows);
+    }
+
+    /**
+     * @param cellProperties the properties of a cell
+     * @return whether the cell has a background color, as the header cells of the tables of the SOP documents (e.g.
+     *     the labels of the scope of the document, or the titles of the drawers in grey)
+     */
+    private static boolean isShaded(Element cellProperties)
+    {
+        String fill = attribute(child(cellProperties, "shd"), "fill");
+        return !fill.isEmpty() && !"auto".equalsIgnoreCase(fill) && !"FFFFFF".equalsIgnoreCase(fill);
+    }
+
+    private TableCellBlock convertCell(Element cell, boolean header, int span)
+    {
+        List<Block> content = convertCell(cell);
+        TableCellBlock block = header ? new TableHeadCellBlock(content) : new TableCellBlock(content);
+        if (span > 1) {
+            block.setParameter("colspan", String.valueOf(span));
+        }
+        return block;
     }
 
     private List<Block> convertCell(Element cell)

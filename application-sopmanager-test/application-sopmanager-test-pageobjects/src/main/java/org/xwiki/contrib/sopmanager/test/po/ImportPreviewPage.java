@@ -75,6 +75,23 @@ public class ImportPreviewPage extends ViewPage
     }
 
     /**
+     * @return whether the preview offers to import the version, instead of saving the page
+     */
+    public boolean canImport()
+    {
+        return !getDriver().findElementsWithoutWaiting(By.id("sopImportPreviewImport")).isEmpty();
+    }
+
+    /**
+     * @return whether the save buttons of the editor are displayed, which would save the page without importing it
+     */
+    public boolean hasSaveButtons()
+    {
+        return !getDriver().findElementsWithoutWaiting(By.cssSelector("#backtoedit input[name^='action_save']"))
+            .isEmpty();
+    }
+
+    /**
      * @return the number of tables of the content of the previewed page
      */
     public int getTableCount()

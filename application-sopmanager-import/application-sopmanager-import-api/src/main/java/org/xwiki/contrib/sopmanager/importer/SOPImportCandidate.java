@@ -46,8 +46,6 @@ public class SOPImportCandidate
 
     private boolean selected;
 
-    private String missingOriginal;
-
     private final Map<String, List<SOPImportPerson>> people = new LinkedHashMap<>();
 
     private String lastModifiedBy;
@@ -134,15 +132,6 @@ public class SOPImportCandidate
     }
 
     /**
-     * @return the original document named in the files (e.g. the path printed in their footer) that is not among
-     *     them, {@code null} if none
-     */
-    public String getMissingOriginal()
-    {
-        return this.missingOriginal;
-    }
-
-    /**
      * @return the persons named in the recommended version, by role ({@link SOPImportManager#OWNER},
      *     {@link SOPImportManager#APPROVER}, {@link SOPImportManager#REVIEWER}), with the users who may be them: the
      *     owner is who last modified the document, the approver and the reviewer are named in the recommended version
@@ -155,15 +144,16 @@ public class SOPImportCandidate
     /**
      * @param role a role: {@link SOPImportManager#OWNER}, {@link SOPImportManager#APPROVER},
      *     {@link SOPImportManager#REVIEWER}
-     * @return the users who may have this role, from the persons named in the recommended version
+     * @return the users proposed for this role: the most likely user of each person named in the recommended version,
+     *     a single one for the owner
      */
     public List<DocumentReference> getUsers(String role)
     {
         List<DocumentReference> users = new ArrayList<>();
         for (SOPImportPerson person : this.people.getOrDefault(role, List.of())) {
-            person.getUsers().stream().filter(user -> !users.contains(user)).forEach(users::add);
+            person.getUsers().stream().findFirst().filter(user -> !users.contains(user)).ifPresent(users::add);
         }
-        return users;
+        return SOPImportManager.OWNER.equals(role) && users.size() > 1 ? users.subList(0, 1) : users;
     }
 
     /**
@@ -201,13 +191,5 @@ public class SOPImportCandidate
         this.lastModifiedBy = by;
         this.lastModified = on;
         this.lastModifiedFile = file;
-    }
-
-    /**
-     * @param missingOriginal the original document named in the files that is not among them
-     */
-    public void setMissingOriginal(String missingOriginal)
-    {
-        this.missingOriginal = missingOriginal;
     }
 }

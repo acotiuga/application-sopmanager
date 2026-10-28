@@ -308,6 +308,34 @@ class DefaultSOPReminderManagerTest
     }
 
     @Test
+    void sendDueRemindersSendsRevisionReminderToTheActiveApprovers() throws Exception
+    {
+        Date revisionPlannedDate = toDate(TODAY.plusMonths(1));
+        DocumentReference documentReference = new DocumentReference("xwiki", List.of("SOPs"), "ImportedDocument");
+        DocumentReference approver = new DocumentReference("xwiki", List.of("XWiki"), "ApproverUser");
+        DocumentReference otherApprover = new DocumentReference("xwiki", List.of("XWiki"), "OtherApprover");
+        DocumentReference inactiveApprover = new DocumentReference("xwiki", List.of("XWiki"), "InactiveUser");
+
+        // The approvers of an imported document.
+        when(this.approvedQuery.<DocumentReference>execute()).thenReturn(List.of(documentReference));
+        XWikiDocument approvedDocument = mockApprovedDocument(documentReference, revisionPlannedDate,
+            "xwiki:XWiki.ApproverUser, xwiki:XWiki.InactiveUser,xwiki:XWiki.OtherApprover");
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.ApproverUser")).thenReturn(approver);
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.OtherApprover")).thenReturn(otherApprover);
+        when(this.currentStringDocRefResolver.resolve("xwiki:XWiki.InactiveUser")).thenReturn(inactiveApprover);
+        mockUser(approver, true);
+        mockUser(otherApprover, true);
+        mockUser(inactiveApprover, false);
+
+        this.testedManager.sendDueReminders();
+
+        Map<String, Object> parameters = Map.of("revisionReminder", true, "revisionPlannedDate", revisionPlannedDate);
+        verify(this.workflowEventNotifier).notifyApproveReminder(approvedDocument, approver, parameters);
+        verify(this.workflowEventNotifier).notifyApproveReminder(approvedDocument, otherApprover, parameters);
+        verifyNoMoreInteractions(this.workflowEventNotifier);
+    }
+
+    @Test
     void sendDueRemindersSendsRevisionReminderToSOPAdministratorsWhenApproverIsInactive() throws Exception
     {
         Date revisionPlannedDate = toDate(TODAY.plusMonths(1));
