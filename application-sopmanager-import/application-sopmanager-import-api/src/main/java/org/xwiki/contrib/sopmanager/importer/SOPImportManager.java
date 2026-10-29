@@ -62,22 +62,36 @@ public interface SOPImportManager
     boolean canImport();
 
     /**
-     * Analyses the documents of a folder of the server file system before their import: groups the files of the same
-     * name in different formats (e.g. A.doc, A.docx and A.pdf, an original and its conversions), reads each of them
-     * (where it comes from, its SOP data, its compatibility), and recommends the version to import, the one keeping
-     * the most of the content and of its formatting. Nothing is created. The progress and the result of each document
-     * are logged, so this is meant to be called from a job.
+     * Lists the sub-folders and the files of a folder of the server file system, to choose the files to import: the
+     * documents of each folder are imported below the page of the folder, e.g. "BB/AA/Document.docx" as
+     * SOPManager.BB.AA.Document.WebHome.
      *
-     * @param folder the absolute path of the folder, whose files (not the ones of its sub-folders) are analysed
+     * @param folder the absolute path of the folder
+     * @return the folder and its sub-folders with their files, {@code null} if the current user can't import
+     *     documents, or the folder doesn't exist or can't be read
+     */
+    SOPImportFolder getFolders(String folder);
+
+    /**
+     * Analyses the documents of a folder of the server file system before their import: groups the files of the same
+     * name in different formats in the same folder (e.g. A.doc, A.docx and A.pdf, an original and its conversions),
+     * reads each of them (where it comes from, its SOP data, its compatibility), and recommends the version to import,
+     * the one keeping the most of the content and of its formatting. The recommended version of each document that can
+     * be imported is selected. Nothing is created. The progress and the result of each document are logged, so this
+     * is meant to be called from a job. The files are named by their path relative to the folder, e.g.
+     * "BB/AA/Document.docx".
+     *
+     * @param folder the absolute path of the folder
+     * @param fileNames the files to analyse, by path relative to the folder, e.g. "BB/AA/Document.docx" (see
+     *     {@link #getFolders(String)}); {@code null} to analyse all the files of the folder and of its sub-folders
      * @param acceptedTypes the extensions of the files to analyse, separated by commas or spaces (e.g. "docx, doc,
      *     pdf")
-     * @param maxDocuments the maximum number of documents selected for the import by default, e.g. to try the import
-     *     on a few documents first; 0 or less to select all the documents that can be imported
      * @param analysisId the identifier under which the analysis is kept, to be retrieved with
      *     {@link #getAnalysis(String)}; can be {@code null}
      * @return the analysis of the folder
      */
-    SOPImportAnalysis analyseDocuments(String folder, String acceptedTypes, int maxDocuments, String analysisId);
+    SOPImportAnalysis analyseDocuments(String folder, List<String> fileNames, String acceptedTypes,
+        String analysisId);
 
     /**
      * @param analysisId the identifier given to {@link #analyseDocuments(String, String, int, String)}
@@ -88,8 +102,8 @@ public interface SOPImportManager
     /**
      * Previews the import of a file: converts it as it would be imported, without creating anything.
      *
-     * @param folder the absolute path of the folder of the file
-     * @param fileName the name of the file
+     * @param folder the absolute path of the imported folder
+     * @param fileName the path of the file relative to the folder, e.g. "BB/AA/Document.docx"
      * @return the preview of the SOP document, or {@code null} if the current user can't import documents, or the
      *     file is not a document of the folder
      */
@@ -97,14 +111,17 @@ public interface SOPImportManager
 
     /**
      * Imports files of a folder of the server file system as SOP documents, created in the SOP Manager space with the
-     * status {@link #IMPORTED} and outside of the review process. The details of the page header and footer of the
-     * documents (code, title, release details) are stored in the SOP object, and removed from the content. Existing
-     * pages are left untouched: only one file of the same name is imported. The progress and the result of each file
-     * are logged, so this is meant to be called from a job.
+     * status {@link #IMPORTED} and outside of the review process. The files of the sub-folders are imported below the
+     * pages of their folders, which are created if needed. The details of the page header and footer of the documents
+     * (code, title, release details) are stored in the SOP object, and removed from the content. Existing pages are
+     * left untouched: only one file of the same name in the same folder is imported. The progress and the result of
+     * each file are logged, so this is meant to be called from a job.
      *
-     * @param folder the absolute path of the folder of the files
-     * @param fileNames the names of the files to import, e.g. the versions selected after the analysis of the folder
-     * @param users the users selected for each document, by name of the document (the name of its files) and by role
+     * @param folder the absolute path of the imported folder
+     * @param fileNames the paths of the files to import relative to the folder, e.g. the versions selected after the
+     *     analysis of the folder
+     * @param users the users selected for each document, by name of the document (the path of its files without
+     *     extension, see {@link SOPImportCandidate#getName()}) and by role
      *     ({@link #OWNER}, {@link #APPROVER}, {@link #REVIEWER}): the references of the users, e.g. "XWiki.SStaar",
      *     possibly separated by commas; a document has a single owner, but can have several approvers and reviewers
      * @param reportId the identifier under which the report is kept, to be retrieved with {@link #getReport(String)};

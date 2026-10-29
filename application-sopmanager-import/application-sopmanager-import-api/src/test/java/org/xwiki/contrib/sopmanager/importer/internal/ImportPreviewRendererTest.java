@@ -79,8 +79,9 @@ class ImportPreviewRendererTest
         doAnswer(invocation -> {
             List<Block> blocks = ((Block) invocation.getArgument(0)).getChildren().get(0).getChildren();
             ImageBlock photo = (ImageBlock) blocks.get(0);
-            assertEquals("data:image/png;base64,AQID", photo.getReference().getReference());
-            assertEquals(ResourceType.URL, photo.getReference().getType());
+            // A data URI, displayed by the browser.
+            assertEquals("image/png;base64,AQID", photo.getReference().getReference());
+            assertEquals(ResourceType.DATA, photo.getReference().getType());
             assertTrue(photo.getReference().isTyped());
             assertEquals("10", photo.getParameter("width"));
             // The images a browser doesn't display, and the missing ones: their name.

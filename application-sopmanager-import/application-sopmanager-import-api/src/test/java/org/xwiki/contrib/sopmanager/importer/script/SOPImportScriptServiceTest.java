@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.contrib.sopmanager.importer.SOPImportAnalysis;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportPreview;
 import org.xwiki.contrib.sopmanager.importer.SOPImportReport;
@@ -57,10 +58,18 @@ class SOPImportScriptServiceTest
     void analyseDocuments()
     {
         SOPImportAnalysis analysis = new SOPImportAnalysis(FOLDER);
-        when(this.importManager.analyseDocuments(FOLDER, "docx", 2, JOB)).thenReturn(analysis);
-        assertSame(analysis, this.scriptService.analyseDocuments(FOLDER, "docx", 2, JOB));
+        when(this.importManager.analyseDocuments(FOLDER, List.of("BB/AA/A.docx"), "docx", JOB)).thenReturn(analysis);
+        assertSame(analysis, this.scriptService.analyseDocuments(FOLDER, List.of("BB/AA/A.docx"), "docx", JOB));
         when(this.importManager.getAnalysis(JOB)).thenReturn(analysis);
         assertSame(analysis, this.scriptService.getAnalysis(JOB));
+    }
+
+    @Test
+    void getFolders()
+    {
+        SOPImportFolder folder = new SOPImportFolder("import", "");
+        when(this.importManager.getFolders(FOLDER)).thenReturn(folder);
+        assertSame(folder, this.scriptService.getFolders(FOLDER));
     }
 
     @Test

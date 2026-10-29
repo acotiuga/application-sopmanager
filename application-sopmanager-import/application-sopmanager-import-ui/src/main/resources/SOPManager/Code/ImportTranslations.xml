@@ -40,15 +40,19 @@
 sopManager.import.description.intro=Import the documents of a folder of the server as SOP documents: Word documents (docx), Word 97-2003 documents (doc, converted by the office server) and PDF documents with their structure (exported by Word).
 sopManager.import.description.versions=The files of the same name in different formats are versions of the same document. The analysis tells where each version comes from and which one is the original, and recommends the version keeping the most of the content and of its formatting.
 sopManager.import.description.users=The persons named in the documents (who last modified, approved and revised them) are looked up among the users of the wiki, to be set as owner, approver and reviewer. Check the user proposed for each role against the names written in the document, and change it if needed.
-sopManager.import.description.steps=Preview the versions, select the ones to import, then import them.
+sopManager.import.description.steps=Choose the folder to import, select the documents to import in the tree of its sub-folders, then analyse them. Preview the versions, select the ones to import, then import them. The documents of the sub-folders are imported below pages named after the sub-folders: BB/AA/Document.docx in the chosen folder becomes SOP Manager > BB > AA > Document, so the same document can be imported from different folders.
 sopManager.import.description.result=Each document is created in the SOP Manager space with the status "Imported", outside of the review process: start its review from the table of the SOP Manager. The code, the title and the release details of the page header and footer are stored in the SOP data and removed from the content. Existing pages are not modified.
 sopManager.import.notAllowed=Only the wiki administrators and the members of the SOP Editors group can import documents.
+sopManager.import.step.folder=1. Choose the folder
+sopManager.import.step.folders=2. Select the documents to import
 sopManager.import.folder=Folder
-sopManager.import.folder.hint=The absolute path of the folder on the server, e.g. /var/lib/xwiki/sop-import. The files of its sub-folders are not analysed.
+sopManager.import.folder.hint=The absolute path of the folder on the server, e.g. /usr/local/xwiki/data/sopsToImport. Its sub-folders are listed next, to choose the ones to import.
+sopManager.import.browse=Show the folders
+sopManager.import.folders.hint=Expand a folder to see its sub-folders and its documents. The files of a folder with the same name in different formats (e.g. PDF and Word) are the versions of one document: they are selected together, and the analysis recommends the version to import. All the documents are selected. Selecting or unselecting a folder selects or unselects all its documents, which can then be selected or unselected one by one.
+sopManager.import.folders.node={0} ({1} documents)
+sopManager.import.folders.node.one={0} (1 document)
 sopManager.import.types=Accepted file types
 sopManager.import.types.hint=The extensions of the files to analyse, separated by commas, e.g. docx, doc, pdf.
-sopManager.import.maxDocuments=Maximum number of documents
-sopManager.import.maxDocuments.hint=Select only this number of documents for the import, to check the result before importing the whole folder. Analysing the folder again selects the next documents, since the existing pages are skipped. Leave it empty to select all the documents.
 sopManager.import.analyse=Analyse
 sopManager.import.analysis.title=Analysis of the documents
 sopManager.import.analysis.folder=Folder: {0}
@@ -125,6 +129,7 @@ sopManager.import.compatibility.NOT_ACCEPTED=Type not accepted
 sopManager.import.message.notAllowed=You are not allowed to edit [{0}].
 sopManager.import.message.notImporter=Only the wiki administrators and the members of [{0}] can import documents.
 sopManager.import.message.noFolder=No folder was given.
+sopManager.import.message.noSelectedFile=No file of [{0}] was selected.
 sopManager.import.message.noSuchFolder=The folder [{0}] does not exist on the server, or is not an absolute path.
 sopManager.import.message.unreadableFolder=The folder [{0}] can not be read.
 sopManager.import.message.notAccepted=The type [{0}] is not one of the accepted types.
@@ -159,6 +164,7 @@ sopManager.import.log.warning=[{0}]: {1}
 sopManager.import.log.summary.imported=Imported documents ({0}): {1}
 sopManager.import.log.summary.notImported=Documents not imported ({0}): {1}
 sopManager.import.saveComment=Imported from a document
+sopManager.import.folderSaveComment=Created for a folder of imported documents
   </content>
   <object>
     <name>SOPManager.Code.ImportTranslations</name>

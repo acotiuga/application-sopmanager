@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xwiki.component.embed.EmbeddableComponentManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportResult.Compatibility;
+import org.xwiki.contrib.sopmanager.importer.SOPImportVersion.Origin;
 import org.xwiki.rendering.block.XDOM;
 import org.xwiki.rendering.renderer.BlockRenderer;
 import org.xwiki.rendering.renderer.printer.DefaultWikiPrinter;
@@ -234,6 +235,21 @@ class DocxReaderTest
             + "Diese Hausordnung gilt für alle Mitarbeiter.\n\n"
             + "== Ruhezeiten ==\n\n"
             + "Die Ruhezeiten werden von **22 Uhr** bis **6 Uhr** eingehalten.", render(docx.content()));
+    }
+
+    @Test
+    void readOrigin() throws Exception
+    {
+        for (String name : List.of("ANA_AA_9.101_Dummy-Haendedesinfektion.docx",
+            "ANA_AA_9.102_Dummy-Bestueckung-Notfallwagen.docx", "ANA_AA_9.103_Dummy-Check-Arbeitsplatz.docx",
+            "ANA_AA_9.105_Dummy-Altformat.docx", "Dummy-Hausordnung.docx")) {
+            // The same origin as told by the conversion of the content.
+            assertEquals(ImportVersions.getOrigin(DocumentReader.DOCX, read(name)),
+                new DocxReader(new DocxPackage(document(name))).readOrigin(), name);
+        }
+        assertEquals(Origin.CONVERTED_FROM_PDF,
+            new DocxReader(new DocxPackage(document("ANA_AA_9.102_Dummy-Bestueckung-Notfallwagen.docx")))
+                .readOrigin());
     }
 
     @Test

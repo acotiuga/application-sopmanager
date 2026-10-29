@@ -74,6 +74,14 @@ public class SOPDocumentCreator
 
     private static final String WARNING_PREFIX = "sopManager.import.warning.";
 
+    private static final String WEB_HOME = "WebHome";
+
+    /**
+     * The separator of the folders in the paths of the imported files, see
+     * {@link org.xwiki.contrib.sopmanager.importer.SOPImportFolder#SEPARATOR}.
+     */
+    private static final String SEPARATOR = "/";
+
     @Inject
     @Named("xwiki/2.1")
     private BlockRenderer renderer;
@@ -88,19 +96,27 @@ public class SOPDocumentCreator
     @Inject
     private EntityReferenceSerializer<String> serializer;
 
+    @Inject
+    private ImportFolderPages folderPages;
+
     /**
-     * @param baseName the name of the imported file, without extension
+     * @param baseName the path of the imported file relative to the imported folder, without extension, e.g.
+     *     "BB/AA/Document"
      * @param wiki the wiki where to import the file
-     * @return the SOP document of the imported file: a page of the SOP Manager space, named after the file
+     * @return the SOP document of the imported file: a page of the SOP Manager space named after the file, below the
+     *     pages of its folders, e.g. SOPManager.BB.AA.Document.WebHome
      */
     public DocumentReference getReference(String baseName, String wiki)
     {
-        return new DocumentReference(wiki, List.of(SOPManager.SOP_MANAGER, baseName), "WebHome");
+        List<String> spaces = new ArrayList<>();
+        spaces.add(SOPManager.SOP_MANAGER);
+        spaces.addAll(List.of(baseName.split(SEPARATOR)));
+        return new DocumentReference(wiki, spaces, WEB_HOME);
     }
 
     /**
      * Creates the SOP document of an imported document, with the status "imported", outside of the review
-     * process.
+     * process, and the pages of its folders that don't exist yet.
      *
      * @param reference the SOP document to create
      * @param baseName the name of the imported file, without extension
@@ -117,6 +133,7 @@ public class SOPDocumentCreator
     public List<ImportWarning> create(DocumentReference reference, String baseName, ImportedDocument docx,
         Map<String, List<String>> users, XWikiContext context) throws XWikiException, IOException
     {
+        this.folderPages.create(reference, context);
         SOPDocumentDetails details = docx.details();
         XWikiDocument document = context.getWiki().getDocument(reference, context).clone();
         document.setSyntax(Syntax.XWIKI_2_1);

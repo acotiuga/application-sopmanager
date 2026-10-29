@@ -1,6 +1,7 @@
 org.xwiki.contrib.sopmanager.importer.internal.DefaultSOPImportManager
 org.xwiki.contrib.sopmanager.importer.internal.DocumentReader
 org.xwiki.contrib.sopmanager.importer.internal.ImportDocumentAnalyser
+org.xwiki.contrib.sopmanager.importer.internal.ImportFolderPages
 org.xwiki.contrib.sopmanager.importer.internal.ImportPreviewRenderer
 org.xwiki.contrib.sopmanager.importer.internal.ImportRights
 org.xwiki.contrib.sopmanager.importer.internal.ImportUserResolver

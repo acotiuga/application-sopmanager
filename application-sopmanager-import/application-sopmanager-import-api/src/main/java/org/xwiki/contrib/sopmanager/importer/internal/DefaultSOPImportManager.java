@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -39,6 +41,7 @@ import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.importer.SOPImportAnalysis;
 import org.xwiki.contrib.sopmanager.importer.SOPImportCandidate;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportPreview;
 import org.xwiki.contrib.sopmanager.importer.SOPImportReport;
@@ -61,6 +64,7 @@ import com.xpn.xwiki.XWikiContext;
  */
 @Component
 @Singleton
+@SuppressWarnings("checkstyle:ClassFanOutComplexity")
 public class DefaultSOPImportManager implements SOPImportManager
 {
     private static final int MAX_KEPT = 20;
@@ -78,6 +82,8 @@ public class DefaultSOPImportManager implements SOPImportManager
     private static final String FAILED = "failed";
 
     private static final String LOCK_FILE = "lockFile";
+
+    private static final String UNREADABLE_FOLDER = "unreadableFolder";
 
     @Inject
     private Logger logger;
@@ -119,7 +125,22 @@ public class DefaultSOPImportManager implements SOPImportManager
     }
 
     @Override
-    public SOPImportAnalysis analyseDocuments(String folder, String acceptedTypes, int maxDocuments,
+    public SOPImportFolder getFolders(String folder)
+    {
+        XWikiContext context = this.xcontextProvider.get();
+        Path directory = canImport(context) ? ImportFolder.getDirectory(StringUtils.trimToEmpty(folder)) : null;
+        if (directory != null) {
+            try {
+                return ImportFolder.listFolders(directory);
+            } catch (IOException | SecurityException e) {
+                this.logger.debug("Failed to list the sub-folders of [{}].", directory, e);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SOPImportAnalysis analyseDocuments(String folder, List<String> fileNames, String acceptedTypes,
         String analysisId)
     {
         SOPImportAnalysis analysis = new SOPImportAnalysis(StringUtils.trimToEmpty(folder));
@@ -127,7 +148,8 @@ public class DefaultSOPImportManager implements SOPImportManager
             this.analyses.put(analysisId, analysis);
         }
         XWikiContext context = this.xcontextProvider.get();
-        List<Path> files = getFiles(analysis.getFolder(), context, analysis::setError);
+        Path directory = getDirectory(analysis.getFolder(), context, analysis::setError);
+        List<Path> files = directory == null ? null : listFiles(directory, fileNames, analysis::setError);
         if (files == null) {
             return analysis;
         }
@@ -136,10 +158,10 @@ public class DefaultSOPImportManager implements SOPImportManager
             + " [{}] (accepted types: {}).", files.size(), analysis.getFolder(), String.join(COMMA, types));
         Map<String, List<Path>> documents = new LinkedHashMap<>();
         for (Path file : files) {
-            SOPImportResult skipped = checkFile(file, types);
+            String fileName = ImportFolder.getPath(directory, file);
+            SOPImportResult skipped = checkFile(file, fileName, types);
             if (skipped == null) {
-                documents.computeIfAbsent(ImportFolder.getBaseName(file.getFileName().toString()),
-                    name -> new ArrayList<>()).add(file);
+                documents.computeIfAbsent(ImportFolder.getBaseName(fileName), name -> new ArrayList<>()).add(file);
             } else {
                 analysis.getOtherFiles().add(skipped);
                 log(skipped);
@@ -157,7 +179,7 @@ public class DefaultSOPImportManager implements SOPImportManager
         } finally {
             this.progressManager.popLevelProgress(this);
         }
-        select(analysis, maxDocuments);
+        select(analysis);
         return analysis;
     }
 
@@ -173,10 +195,10 @@ public class DefaultSOPImportManager implements SOPImportManager
         XWikiContext context = this.xcontextProvider.get();
         Path directory = canImport(context) ? ImportFolder.getDirectory(StringUtils.trimToEmpty(folder)) : null;
         Path file = directory == null ? null : ImportFolder.getFile(directory, fileName);
-        if (file == null || fileName.startsWith(ImportFolder.LOCK_FILE_PREFIX)) {
+        if (file == null || ImportFolder.isLockFile(fileName)) {
             return null;
         }
-        return this.analyser.preview(file);
+        return this.analyser.preview(file, fileName);
     }
 
     @Override
@@ -188,10 +210,10 @@ public class DefaultSOPImportManager implements SOPImportManager
             this.reports.put(reportId, report);
         }
         XWikiContext context = this.xcontextProvider.get();
-        if (getFiles(report.getFolder(), context, report::setError) == null) {
+        Path directory = getDirectory(report.getFolder(), context, report::setError);
+        if (directory == null) {
             return report;
         }
-        Path directory = ImportFolder.getDirectory(report.getFolder());
         // Each file once, in the order of the selection.
         List<String> names = fileNames == null ? List.of() : new ArrayList<>(new LinkedHashSet<>(fileNames));
         this.logger.info(new TranslationMarker(LOG_PREFIX + "start"),
@@ -232,9 +254,10 @@ public class DefaultSOPImportManager implements SOPImportManager
     }
 
     /**
-     * @return the files of the folder, {@code null} if the folder can't be read (the error is given to the consumer)
+     * @return the imported folder, {@code null} if the current user can't import documents or the folder doesn't
+     *     exist (the error is given to the consumer)
      */
-    private List<Path> getFiles(String folder, XWikiContext context, Consumer<String> error)
+    private Path getDirectory(String folder, XWikiContext context, Consumer<String> error)
     {
         String key;
         Object parameter = folder;
@@ -248,30 +271,56 @@ public class DefaultSOPImportManager implements SOPImportManager
             directory = ImportFolder.getDirectory(folder);
             key = directory == null ? "noSuchFolder" : null;
         }
-        if (key == null) {
-            try {
-                return ImportFolder.listFiles(directory);
-            } catch (IOException | SecurityException e) {
-                key = "unreadableFolder";
-            }
+        if (key != null) {
+            fail(key, parameter, error);
         }
-        error.accept(translate(MESSAGE_PREFIX + key, parameter));
-        this.logger.error(new TranslationMarker(MESSAGE_PREFIX + key), "The import failed: [{}].", parameter);
-        return null;
+        return directory;
     }
 
     /**
+     * @param fileNames the paths of the selected files, relative to the imported folder; {@code null} for all the files
+     *     of the imported folder and of its sub-folders
+     * @return the selected files that are files of the imported folder or of its sub-folders, the files of each folder
+     *     together, sorted by name; {@code null} if no file is selected or the folder can't be read (the error is given
+     *     to the consumer)
+     */
+    private List<Path> listFiles(Path directory, List<String> fileNames, Consumer<String> error)
+    {
+        List<String> paths;
+        try {
+            paths = fileNames == null ? ImportFolder.getFilePaths(ImportFolder.listFolders(directory)) : fileNames;
+        } catch (IOException | SecurityException e) {
+            fail(UNREADABLE_FOLDER, directory, error);
+            return null;
+        }
+        if (paths.isEmpty()) {
+            fail("noSelectedFile", directory, error);
+            return null;
+        }
+        // The files of each folder together, each folder before its sub-folders.
+        return paths.stream().filter(Objects::nonNull).distinct()
+            .sorted(Comparator.comparing(ImportFolder::getParent).thenComparing(ImportFolder::getName))
+            .map(path -> ImportFolder.getFile(directory, path)).filter(Objects::nonNull).toList();
+    }
+
+    private void fail(String key, Object parameter, Consumer<String> error)
+    {
+        error.accept(translate(MESSAGE_PREFIX + key, parameter));
+        this.logger.error(new TranslationMarker(MESSAGE_PREFIX + key), "The import failed: [{}].", parameter);
+    }
+
+    /**
+     * @param fileName the path of the file relative to the imported folder
      * @return the result of a file that is not a document to import, {@code null} if it is one
      */
-    private SOPImportResult checkFile(Path file, Set<String> types)
+    private SOPImportResult checkFile(Path file, String fileName, Set<String> types)
     {
-        String fileName = file.getFileName().toString();
         String extension = DocumentReader.getExtension(file);
         SOPImportResult result = new SOPImportResult(fileName);
         if (!types.contains(extension)) {
             skip(result, Compatibility.NOT_ACCEPTED, "notAccepted", extension);
-        } else if (fileName.startsWith(ImportFolder.LOCK_FILE_PREFIX)) {
-            skip(result, Compatibility.INVALID, LOCK_FILE, fileName);
+        } else if (ImportFolder.isLockFile(fileName)) {
+            skip(result, Compatibility.INVALID, LOCK_FILE, ImportFolder.getName(fileName));
         } else if (!DocumentReader.FORMATS.contains(extension)) {
             skip(result, Compatibility.NOT_SUPPORTED, "notSupported", extension);
         } else {
@@ -289,22 +338,20 @@ public class DefaultSOPImportManager implements SOPImportManager
 
     /**
      * Selects the documents to import by default: the recommended version of the documents that are not imported
-     * yet, up to the maximum number of documents.
+     * yet.
      */
-    private void select(SOPImportAnalysis analysis, int maxDocuments)
+    private void select(SOPImportAnalysis analysis)
     {
-        int selected = 0;
         int importable = 0;
         for (SOPImportCandidate candidate : analysis.getDocuments()) {
             if (!candidate.isExists() && candidate.getRecommended() != null) {
                 importable++;
-                candidate.setSelected(maxDocuments <= 0 || selected < maxDocuments);
-                selected += candidate.isSelected() ? 1 : 0;
+                candidate.setSelected(true);
             }
         }
         this.logger.info(new TranslationMarker(LOG_PREFIX + "analysis.summary"),
             "Documents that can be imported: {} of {}, selected: {}.", importable, analysis.getDocuments().size(),
-            selected);
+            importable);
     }
 
     private SOPImportResult importFile(Path directory, String name, Map<String, List<String>> users,
@@ -315,8 +362,8 @@ public class DefaultSOPImportManager implements SOPImportManager
         if (file == null) {
             result.setOutcome(Outcome.FAILED);
             result.setMessage(translate(MESSAGE_PREFIX + "notInFolder", name));
-        } else if (name.startsWith(ImportFolder.LOCK_FILE_PREFIX)) {
-            skip(result, Compatibility.INVALID, LOCK_FILE, name);
+        } else if (ImportFolder.isLockFile(name)) {
+            skip(result, Compatibility.INVALID, LOCK_FILE, ImportFolder.getName(name));
         } else {
             ImportedDocument document = this.analyser.read(file, result);
             if (document != null) {
@@ -340,8 +387,8 @@ public class DefaultSOPImportManager implements SOPImportManager
                 result.setOutcome(Outcome.FAILED);
                 result.setMessage(translate(MESSAGE_PREFIX + NOT_ALLOWED, this.serializer.serialize(reference)));
             } else {
-                for (ImportWarning warning : this.documentCreator.create(reference, baseName, document, users,
-                    context)) {
+                for (ImportWarning warning : this.documentCreator.create(reference, ImportFolder.getName(baseName),
+                    document, users, context)) {
                     result.addWarning(this.analyser.translate(warning));
                 }
                 result.setOutcome(Outcome.IMPORTED);

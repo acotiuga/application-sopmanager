@@ -168,7 +168,9 @@
 ## imported document).
 #macro (extractDocumentName $serializedRef $output)
   #set ($names = [])
-  #foreach ($userRef in "$!serializedRef".split('\s*,\s*'))
+  ## Velocity can't call a method on a string literal.
+  #set ($serializedRefs = "$!serializedRef")
+  #foreach ($userRef in $serializedRefs.split('\s*,\s*'))
     #if ($userRef.trim() != '')
       #set ($name = '')
       #set ($userDoc = $xwiki.getDocument($userRef.trim()))

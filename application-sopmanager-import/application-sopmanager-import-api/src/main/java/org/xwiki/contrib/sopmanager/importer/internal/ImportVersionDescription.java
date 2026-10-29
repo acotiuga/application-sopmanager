@@ -48,7 +48,7 @@ public final class ImportVersionDescription
         version.setOrigin(ImportVersions.getOrigin(version.getFormat(), document));
         version.setCompatibility(document.compatibility());
 
-        String baseName = ImportFolder.getBaseName(version.getFileName());
+        String baseName = ImportFolder.getBaseName(ImportFolder.getName(version.getFileName()));
         SOPDocumentDetails details = document.details();
         Map<String, Object> data = version.getData();
         put(data, "revisionId", SOPDocumentCreator.getRevisionId(baseName, details));

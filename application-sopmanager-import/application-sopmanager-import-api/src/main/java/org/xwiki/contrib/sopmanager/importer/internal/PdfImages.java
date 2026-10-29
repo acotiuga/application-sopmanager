@@ -85,7 +85,7 @@ public class PdfImages
     public ImageBlock extract(PDStructureElement figure, PDPage page)
     {
         PDRectangle box = getBoundingBox(figure);
-        int pageIndex = page == null ? -1 : this.document.getPages().indexOf(page);
+        int pageIndex = getPageIndex(page);
         byte[] content = box == null || pageIndex < 0 ? null : render(pageIndex, page, box);
         if (content == null) {
             this.missing++;
@@ -99,6 +99,27 @@ public class PdfImages
         ImageBlock image = new ImageBlock(reference, false);
         image.setParameter("width", String.valueOf(Math.round(box.getWidth() * PIXELS_PER_INCH / POINTS_PER_INCH)));
         return image;
+    }
+
+    /**
+     * @param figure a figure of the structure tree
+     * @param page the page of the figure
+     * @return the distance from the top of the page to the top of the figure, in points; {@code null} if the figure
+     *     has no bounding box
+     */
+    public Float getTop(PDStructureElement figure, PDPage page)
+    {
+        PDRectangle box = getBoundingBox(figure);
+        return box == null || page == null ? null : page.getCropBox().getUpperRightY() - box.getUpperRightY();
+    }
+
+    /**
+     * @param page a page of the PDF
+     * @return its index, -1 if it's not a page of the PDF
+     */
+    public int getPageIndex(PDPage page)
+    {
+        return page == null ? -1 : this.document.getPages().indexOf(page);
     }
 
     private static PDRectangle getBoundingBox(PDStructureElement figure)

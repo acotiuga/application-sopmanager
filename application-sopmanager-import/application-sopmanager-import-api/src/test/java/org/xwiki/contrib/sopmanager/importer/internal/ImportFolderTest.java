@@ -26,9 +26,12 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for {@link ImportFolder}.
@@ -48,10 +51,14 @@ class ImportFolderTest
         Files.writeString(subfolder.resolve("B.docx"), "B");
 
         assertEquals(file, ImportFolder.getFile(this.folder, "A.docx"));
-        // Only the files of the folder.
+        assertEquals(subfolder.resolve("B.docx"), ImportFolder.getFile(this.folder, "Sub/B.docx"));
+        // Only the files inside the folder, by plain relative path.
         assertNull(ImportFolder.getFile(this.folder, "Sub"));
-        assertNull(ImportFolder.getFile(this.folder, "Sub/B.docx"));
         assertNull(ImportFolder.getFile(subfolder, "../A.docx"));
+        assertNull(ImportFolder.getFile(this.folder, "Sub/../A.docx"));
+        assertNull(ImportFolder.getFile(this.folder, "./A.docx"));
+        assertNull(ImportFolder.getFile(this.folder, "Sub//B.docx"));
+        assertNull(ImportFolder.getFile(this.folder, this.folder.resolve("A.docx").toString()));
         assertNull(ImportFolder.getFile(subfolder, ".."));
         assertNull(ImportFolder.getFile(this.folder, "..\\A.docx"));
         assertNull(ImportFolder.getFile(this.folder, "A\0.docx"));
@@ -59,6 +66,44 @@ class ImportFolderTest
         assertNull(ImportFolder.getFile(this.folder, null));
         assertNull(ImportFolder.getFile(this.folder, "C.docx"));
         assertEquals(List.of(file), ImportFolder.listFiles(this.folder));
+    }
+
+    @Test
+    void getFolder() throws Exception
+    {
+        Path subfolder = Files.createDirectories(this.folder.resolve("BB/AA"));
+        Files.writeString(subfolder.resolve("A.docx"), "A");
+
+        assertEquals(this.folder, ImportFolder.getFolder(this.folder, ""));
+        assertEquals(subfolder, ImportFolder.getFolder(this.folder, "BB/AA"));
+        assertEquals("BB/AA/A.docx", ImportFolder.getPath(this.folder, subfolder.resolve("A.docx")));
+        assertNull(ImportFolder.getFolder(this.folder, "BB/AA/A.docx"));
+        assertNull(ImportFolder.getFolder(this.folder, ".."));
+        assertNull(ImportFolder.getFolder(this.folder, "BB/.."));
+        assertNull(ImportFolder.getFolder(this.folder, null));
+    }
+
+    @Test
+    void listFolders() throws Exception
+    {
+        Files.createDirectories(this.folder.resolve("BB/CC/AA"));
+        Files.createDirectories(this.folder.resolve("BB/AA"));
+        Files.createDirectories(this.folder.resolve(".git/objects"));
+        Files.writeString(this.folder.resolve("BB/AA/A.docx"), "A");
+        Files.writeString(this.folder.resolve("BB/AA/A.pdf"), "A");
+
+        SOPImportFolder root = ImportFolder.listFolders(this.folder);
+
+        assertEquals(this.folder.getFileName().toString(), root.getName());
+        assertEquals("", root.getPath());
+        // Sorted by name, without the hidden folders.
+        assertEquals(List.of("", "BB", "BB/AA", "BB/CC", "BB/CC/AA"), ImportFolder.getFolderPaths(root));
+        assertEquals(List.of("A.docx", "A.pdf"), root.getChildren().get(0).getChildren().get(0).getFiles());
+        assertEquals(2, root.getChildren().get(0).getChildren().get(0).getFileCount());
+        assertEquals(List.of("BB/AA/A.docx", "BB/AA/A.pdf"), ImportFolder.getFilePaths(root));
+        // The Word document can't be read: the PDF is the version to import.
+        assertEquals(List.of("A.pdf"), root.getChildren().get(0).getChildren().get(0).getRecommendedFiles());
+        assertEquals(List.of(), root.getRecommendedFiles());
     }
 
     @Test
@@ -74,6 +119,13 @@ class ImportFolderTest
     {
         assertEquals("ANA_AA_7.212_Wagen", ImportFolder.getBaseName("ANA_AA_7.212_Wagen.docx"));
         assertEquals("Notes", ImportFolder.getBaseName("Notes"));
+        assertEquals("BB/AA/ANA_AA_7.212_Wagen", ImportFolder.getBaseName("BB/AA/ANA_AA_7.212_Wagen.docx"));
+        assertEquals("BB.2/Notes", ImportFolder.getBaseName("BB.2/Notes"));
+        assertEquals("Wagen.docx", ImportFolder.getName("BB/AA/Wagen.docx"));
+        assertEquals("BB/AA", ImportFolder.getParent("BB/AA/Wagen.docx"));
+        assertEquals("", ImportFolder.getParent("Wagen.docx"));
+        assertTrue(ImportFolder.isLockFile("BB/~$Wagen.docx"));
+        assertFalse(ImportFolder.isLockFile("~$BB/Wagen.docx"));
     }
 
     @Test

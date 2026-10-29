@@ -36,6 +36,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Element;
 import org.xwiki.contrib.sopmanager.importer.SOPImportResult.Compatibility;
+import org.xwiki.contrib.sopmanager.importer.SOPImportVersion.Origin;
 import org.xwiki.rendering.block.Block;
 import org.xwiki.rendering.block.XDOM;
 
@@ -74,10 +75,7 @@ public class DocxReader
      */
     public ImportedDocument read() throws DocumentReadException
     {
-        Element body = child(this.docx.getXml(DocxPackage.DOCUMENT), "body");
-        if (body == null) {
-            throw new DocumentReadException("Not a Word document: no body.");
-        }
+        Element body = getBody();
         Map<String, DocxPackage.Relationship> relationships = this.docx.getRelationships(DocxPackage.DOCUMENT);
         DocxStyles styles = new DocxStyles(getPart(relationships, "styles"), getPart(relationships, "numbering"));
         DocxInlineConverter inlineConverter = new DocxInlineConverter(this.docx, relationships);
@@ -97,8 +95,7 @@ public class DocxReader
         } else {
             List<Element> content = removeHeaderFooter(elements, details);
             blocks = blockConverter.convert(content);
-            compatibility = content.size() < elements.size() && !inParts ? Compatibility.HEADER_FOOTER_IN_CONTENT
-                : Compatibility.COMPATIBLE;
+            compatibility = getCompatibility(elements, content, inParts);
         }
 
         List<ImportWarning> warnings = new ArrayList<>(details.getWarnings());
@@ -109,6 +106,43 @@ public class DocxReader
         return new ImportedDocument(new XDOM(blocks), inlineConverter.getImages(), details, compatibility,
             isLandscape(section), warnings,
             DocxProperties.read(this.docx, details.getOriginalDocument()));
+    }
+
+    /**
+     * Reads where the document comes from, as {@link #read()} tells it, without converting its content.
+     *
+     * @return where the document comes from
+     * @throws DocumentReadException if the document can't be read
+     */
+    public Origin readOrigin() throws DocumentReadException
+    {
+        Element body = getBody();
+        SOPDocumentDetails details = new SOPDocumentDetails();
+        boolean inParts = readHeaderFooterParts(getLastSection(body),
+            this.docx.getRelationships(DocxPackage.DOCUMENT), details);
+        List<Element> elements = DocxBlockConverter.flatten(children(body));
+        Compatibility compatibility = FixedLayoutConverter.isFixedLayout(elements) ? Compatibility.FIXED_LAYOUT
+            : getCompatibility(elements, removeHeaderFooter(elements, details), inParts);
+        return ImportVersions.getOrigin(DocumentReader.DOCX, compatibility,
+            DocxProperties.read(this.docx, details.getOriginalDocument()));
+    }
+
+    private Element getBody() throws DocumentReadException
+    {
+        Element body = child(this.docx.getXml(DocxPackage.DOCUMENT), "body");
+        if (body == null) {
+            throw new DocumentReadException("Not a Word document: no body.");
+        }
+        return body;
+    }
+
+    /**
+     * @return whether the content had the page header and footer, removed from it
+     */
+    private static Compatibility getCompatibility(List<Element> elements, List<Element> content, boolean inParts)
+    {
+        return content.size() < elements.size() && !inParts ? Compatibility.HEADER_FOOTER_IN_CONTENT
+            : Compatibility.COMPATIBLE;
     }
 
     private Element getPart(Map<String, DocxPackage.Relationship> relationships, String type)

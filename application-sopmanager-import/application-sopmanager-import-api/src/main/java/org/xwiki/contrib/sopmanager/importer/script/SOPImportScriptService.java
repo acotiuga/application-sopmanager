@@ -28,6 +28,7 @@ import javax.inject.Singleton;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.importer.SOPImportAnalysis;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportPreview;
 import org.xwiki.contrib.sopmanager.importer.SOPImportReport;
@@ -59,23 +60,35 @@ public class SOPImportScriptService implements ScriptService
     }
 
     /**
+     * @param folder the absolute path of a folder of the server file system
+     * @return the folder and its sub-folders with their files, to choose the files to import; {@code null} if the
+     *     current user can't import documents, or the folder doesn't exist
+     * @see SOPImportManager#getFolders(String)
+     */
+    public SOPImportFolder getFolders(String folder)
+    {
+        return this.importManager.getFolders(folder);
+    }
+
+    /**
      * Analyses the documents of a folder of the server file system before their import: the files of the same name in
      * different formats, where each comes from, the SOP data read from them, the users named in them, and the version
      * recommended for the import. Nothing is created. Meant to be called from a job (e.g. the job macro), which
      * displays the progress and the log of each document.
      *
      * @param folder the absolute path of the folder
+     * @param fileNames the files to analyse, by path relative to the folder, e.g. "BB/AA/Document.docx";
+     *     {@code null} for all the files of the folder and of its sub-folders
      * @param acceptedTypes the extensions of the files to analyse, separated by commas (e.g. "docx, doc, pdf")
-     * @param maxDocuments the maximum number of documents selected for the import by default, 0 or less to select
-     *     all of them
      * @param analysisId the identifier under which the analysis is kept, e.g. the identifier of the job analysing the
      *     documents
      * @return the analysis of the folder
-     * @see SOPImportManager#analyseDocuments(String, String, int, String)
+     * @see SOPImportManager#analyseDocuments(String, List, String, String)
      */
-    public SOPImportAnalysis analyseDocuments(String folder, String acceptedTypes, int maxDocuments, String analysisId)
+    public SOPImportAnalysis analyseDocuments(String folder, List<String> fileNames, String acceptedTypes,
+        String analysisId)
     {
-        return this.importManager.analyseDocuments(folder, acceptedTypes, maxDocuments, analysisId);
+        return this.importManager.analyseDocuments(folder, fileNames, acceptedTypes, analysisId);
     }
 
     /**
@@ -91,8 +104,8 @@ public class SOPImportScriptService implements ScriptService
     /**
      * Previews the import of a file, without creating anything.
      *
-     * @param folder the absolute path of the folder of the file
-     * @param fileName the name of the file
+     * @param folder the absolute path of the imported folder
+     * @param fileName the path of the file relative to the folder, e.g. "BB/AA/Document.docx"
      * @return the preview, {@code null} if the current user can't import documents, or the file is not a document of
      *     the folder
      * @see SOPImportManager#previewDocument(String, String)
@@ -106,8 +119,9 @@ public class SOPImportScriptService implements ScriptService
      * Imports files of a folder of the server file system as SOP documents, with the status "imported". Meant to be
      * called from a job (e.g. the job macro), which displays the progress and the log of each file.
      *
-     * @param folder the absolute path of the folder
-     * @param fileNames the names of the files to import, e.g. the versions selected after the analysis of the folder
+     * @param folder the absolute path of the imported folder
+     * @param fileNames the paths of the files to import relative to the folder, e.g. the versions selected after the
+     *     analysis of the folder
      * @param users the users selected for each file, by file name and role ("owner", "approver", "reviewer"): the
      *     references of the users, e.g. "XWiki.SStaar"
      * @param reportId the identifier under which the report is kept, e.g. the identifier of the job importing the

@@ -198,7 +198,27 @@
               &lt;/tr&gt;
             &lt;/thead&gt;
             &lt;tbody&gt;
+              ## The documents of each folder below the path of the folder, from the imported folder, when the
+              ## documents of several folders are analysed.
+              #set ($sopImportFolderPaths = [])
               #foreach ($candidate in $analysis.documents)
+                #if (!$sopImportFolderPaths.contains($candidate.folder))
+                  #set ($discard = $sopImportFolderPaths.add($candidate.folder))
+                #end
+              #end
+              #set ($sopImportRootName = $stringtool.substringAfterLast($stringtool.removeEnd($analysis.folder, '/'), '/'))
+              #set ($sopImportFolderPath = $NULL)
+              #foreach ($candidate in $analysis.documents)
+                #if ($sopImportFolderPaths.size() &gt; 1 &amp;&amp; $candidate.folder != $sopImportFolderPath)
+                  #set ($sopImportFolderPath = $candidate.folder)
+                  #set ($sopImportFolderLabel = $sopImportRootName)
+                  #if ($sopImportFolderPath != '')
+                    #set ($sopImportFolderLabel = "$sopImportRootName/$sopImportFolderPath")
+                  #end
+                  &lt;tr class="sopImportFolderRow" data-folder="$escapetool.xml($sopImportFolderPath)"&gt;
+                    &lt;th colspan="$mathtool.add($formats.size(), 1)"&gt;&lt;span class="fa fa-folder-open-o" aria-hidden="true"&gt;&lt;/span&gt; $escapetool.xml($sopImportFolderLabel.replace('/', ' / '))&lt;/th&gt;
+                  &lt;/tr&gt;
+                #end
                 #set ($byFormat = {})
                 #foreach ($version in $candidate.versions)
                   #set ($discard = $byFormat.put($version.format, $version))
@@ -209,14 +229,14 @@
                 #if ($candidate.exists)
                   &lt;tr class="sopImportExistingCandidate" data-existing-document="$escapetool.xml($candidate.name)"&gt;
                     &lt;td colspan="$mathtool.add($formats.size(), 1)"&gt;
-                      &lt;button type="button" class="btn btn-link sopImportToggle" aria-expanded="false" aria-controls="$candidateId" title="$escapetool.xml($services.localization.render('sopManager.import.analysis.showDetails'))"&gt;&lt;strong&gt;$escapetool.xml($candidate.name)&lt;/strong&gt;&lt;/button&gt;
+                      &lt;button type="button" class="btn btn-link sopImportToggle" aria-expanded="false" aria-controls="$candidateId" title="$escapetool.xml($services.localization.render('sopManager.import.analysis.showDetails'))"&gt;&lt;strong&gt;$escapetool.xml($candidate.baseName)&lt;/strong&gt;&lt;/button&gt;
                       &lt;span class="sopImportExists"&gt;&lt;a href="$escapetool.xml($xwiki.getURL($candidate.documentReference))"&gt;$escapetool.xml($services.localization.render('sopManager.import.analysis.exists'))&lt;/a&gt;&lt;/span&gt;
                     &lt;/td&gt;
                   &lt;/tr&gt;
                 #end
                 &lt;tr class="sopImportCandidate#if ($candidate.exists) hidden#end" id="$candidateId" data-document="$escapetool.xml($candidate.name)"&gt;
                   &lt;td class="sopImportDocumentName"&gt;
-                    &lt;strong&gt;$escapetool.xml($candidate.name)&lt;/strong&gt;
+                    &lt;strong&gt;$escapetool.xml($candidate.baseName)&lt;/strong&gt;
                     #if ($candidate.recommended)
                       ## The SOP data of the recommended version, with the owner (who last modified the document) above
                       ## the approver.
@@ -379,34 +399,54 @@
 
     #end
 
+    ## First the folder to import, then its sub-folders to import, chosen in its tree.
+    #set ($sopImportFolder = "$!request.folder.trim()")
+    #set ($sopImportFolders = $NULL)
+    #if ($sopImportFolder != '')
+      #set ($sopImportFolders = $services.sopImport.getFolders($sopImportFolder))
+    #end
     {{html clean="false"}}
-    &lt;form class="xform" id="sopImportForm" method="post" action="$escapetool.xml($doc.getURL('view'))"&gt;
-      &lt;input type="hidden" name="form_token" value="$escapetool.xml($!services.csrf.token)" /&gt;
-      &lt;input type="hidden" name="jobId" value="$escapetool.xml("sopimport/analysis/$timestamp")" /&gt;
-      &lt;input type="hidden" name="startJob" value="true" /&gt;
+    &lt;form class="xform" id="sopImportFolderForm" method="get" action="$escapetool.xml($doc.getURL('view'))"&gt;
+      &lt;h2&gt;$escapetool.xml($services.localization.render('sopManager.import.step.folder'))&lt;/h2&gt;
       &lt;dl&gt;
         &lt;dt&gt;
           &lt;label for="sopImportFolder"&gt;$escapetool.xml($services.localization.render('sopManager.import.folder'))&lt;/label&gt;
           &lt;span class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.folder.hint'))&lt;/span&gt;
         &lt;/dt&gt;
         &lt;dd&gt;&lt;input type="text" id="sopImportFolder" name="folder" required="required"
-          value="$!escapetool.xml($request.folder)" /&gt;&lt;/dd&gt;
-        &lt;dt&gt;
-          &lt;label for="sopImportTypes"&gt;$escapetool.xml($services.localization.render('sopManager.import.types'))&lt;/label&gt;
-          &lt;span class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.types.hint'))&lt;/span&gt;
-        &lt;/dt&gt;
-        &lt;dd&gt;&lt;input type="text" id="sopImportTypes" name="types" value="$escapetool.xml($types)" /&gt;&lt;/dd&gt;
-        &lt;dt&gt;
-          &lt;label for="sopImportMaxDocuments"&gt;$escapetool.xml($services.localization.render('sopManager.import.maxDocuments'))&lt;/label&gt;
-          &lt;span class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.maxDocuments.hint'))&lt;/span&gt;
-        &lt;/dt&gt;
-        &lt;dd&gt;&lt;input type="number" min="1" step="1" id="sopImportMaxDocuments" name="maxDocuments"
-          value="$!escapetool.xml($request.maxDocuments)" /&gt;&lt;/dd&gt;
+          value="$escapetool.xml($sopImportFolder)" /&gt;&lt;/dd&gt;
       &lt;/dl&gt;
       &lt;p&gt;
-        &lt;button type="submit" class="btn btn-primary" id="sopImportAnalyse"&gt;$escapetool.xml($services.localization.render('sopManager.import.analyse'))&lt;/button&gt;
+        &lt;button type="submit" class="btn #if ($sopImportFolders)btn-default#{else}btn-primary#end" id="sopImportBrowse"&gt;$escapetool.xml($services.localization.render('sopManager.import.browse'))&lt;/button&gt;
       &lt;/p&gt;
     &lt;/form&gt;
+    #if ($sopImportFolder != '' &amp;&amp; !$sopImportFolders)
+      &lt;div class="box errormessage" id="sopImportFolderError"&gt;$escapetool.xml($services.localization.render('sopManager.import.message.noSuchFolder', [$sopImportFolder]))&lt;/div&gt;
+    #elseif ($sopImportFolders)
+      #set ($discard = $xwiki.linkx.use($services.webjars.url('org.xwiki.platform:xwiki-platform-tree-webjar', 'tree.min.css', {'evaluate': true}), {'type': 'text/css', 'rel': 'stylesheet'}))
+      &lt;form class="xform" id="sopImportForm" method="post" action="$escapetool.xml($doc.getURL('view'))"&gt;
+        &lt;input type="hidden" name="form_token" value="$escapetool.xml($!services.csrf.token)" /&gt;
+        &lt;input type="hidden" name="jobId" value="$escapetool.xml("sopimport/analysis/$timestamp")" /&gt;
+        &lt;input type="hidden" name="startJob" value="true" /&gt;
+        &lt;input type="hidden" name="folder" value="$escapetool.xml($sopImportFolder)" /&gt;
+        &lt;h2&gt;$escapetool.xml($services.localization.render('sopManager.import.step.folders'))&lt;/h2&gt;
+        &lt;p class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.folders.hint'))&lt;/p&gt;
+        &lt;div id="sopImportFolderTree" class="jstree-no-links" data-checkboxes="true" data-icons="true" data-edges="true" data-responsive="true"
+          data-folders="$escapetool.xml($jsontool.serialize($sopImportFolders))"
+          data-node-label="$escapetool.xml($services.localization.render('sopManager.import.folders.node', ['__name__', '__count__']))"
+          data-node-label-one="$escapetool.xml($services.localization.render('sopManager.import.folders.node.one', ['__name__']))"&gt;&lt;/div&gt;
+        &lt;dl&gt;
+          &lt;dt&gt;
+            &lt;label for="sopImportTypes"&gt;$escapetool.xml($services.localization.render('sopManager.import.types'))&lt;/label&gt;
+            &lt;span class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.import.types.hint'))&lt;/span&gt;
+          &lt;/dt&gt;
+          &lt;dd&gt;&lt;input type="text" id="sopImportTypes" name="types" value="$escapetool.xml($types)" /&gt;&lt;/dd&gt;
+        &lt;/dl&gt;
+        &lt;p&gt;
+          &lt;button type="submit" class="btn btn-primary" id="sopImportAnalyse"&gt;$escapetool.xml($services.localization.render('sopManager.import.analyse'))&lt;/button&gt;
+        &lt;/p&gt;
+      &lt;/form&gt;
+    #end
     {{/html}}
   #end
 #end
@@ -417,11 +457,12 @@
 ## Runs in the job, with the parameters of the request that started it: the logs of the analysis or of the import are
 ## the logs of the job, and its result is kept under the identifier of the job.
 #if ($request.jobId.contains('/analysis/'))
-  #set ($maxDocuments = $numbertool.toNumber("$!request.maxDocuments.trim()"))
-  #if (!$maxDocuments)
-    #set ($maxDocuments = 0)
+  ## The files selected in the tree, by path relative to the imported folder.
+  #set ($selectedFiles = [])
+  #foreach ($selectedFile in $request.getParameterValues('selectedFile'))
+    #set ($discard = $selectedFiles.add($selectedFile))
   #end
-  #set ($discard = $services.sopImport.analyseDocuments($request.folder.trim(), $request.types, $maxDocuments.intValue(), $request.jobId))
+  #set ($discard = $services.sopImport.analyseDocuments($request.folder.trim(), $selectedFiles, $request.types, $request.jobId))
 #else
   #set ($files = [])
   #foreach ($file in $request.getParameterValues('file'))
@@ -599,6 +640,105 @@
   if (selection.length) {
     updateCount();
   }
+  // The tree of the folder to import: its sub-folders, collapsed, then its documents. A document is the files of the
+  // folder with the same name in different formats (e.g. a PDF and a Word document), its versions: they are selected
+  // together, the analysis recommending the version to import. All the documents are selected at first; selecting or
+  // unselecting a folder selects or unselects all its documents, which can then be changed one by one.
+  var folderTree = $('#sopImportFolderTree');
+  if (folderTree.length) {
+    var fileIcons = {docx: 'fa fa-file-word-o', doc: 'fa fa-file-word-o', pdf: 'fa fa-file-pdf-o'};
+    var getExtension = function(fileName) {
+      return fileName.indexOf('.') &lt; 0 ? '' : fileName.substring(fileName.lastIndexOf('.') + 1);
+    };
+    // The name of a file without its extension, as the import names the documents.
+    var getBaseName = function(fileName) {
+      return (fileName.indexOf('.') &lt; 0 ? fileName : fileName.substring(0, fileName.lastIndexOf('.'))).trim();
+    };
+    // The documents of a folder: its files grouped by name, in the order of their names.
+    var getDocuments = function(folder) {
+      var documents = [];
+      var byName = {};
+      folder.files.forEach(function(fileName) {
+        var baseName = getBaseName(fileName);
+        if (!byName.hasOwnProperty(baseName)) {
+          byName[baseName] = {name: baseName, files: []};
+          documents.push(byName[baseName]);
+        }
+        byName[baseName].files.push(fileName);
+      });
+      return documents;
+    };
+    var toDocumentNode = function(folder, entry) {
+      var prefix = folder.path ? folder.path + '/' : '';
+      var extensions = entry.files.map(getExtension);
+      // The icon of the version likely to be recommended for the import, else of the single file.
+      var iconFile = entry.files.filter(function(fileName) {
+        return folder.recommendedFiles.indexOf(fileName) &gt;= 0;
+      })[0] || entry.files[0];
+      var icon = fileIcons[getExtension(iconFile).toLowerCase()] || 'fa fa-file-o';
+      return {
+        id: 'document:' + prefix + entry.name,
+        // A single file is named as is, the versions of a document by their formats.
+        text: entry.files.length === 1 ? entry.files[0]
+          : entry.name + ' (' + extensions.join(', ') + ')',
+        icon: icon,
+        state: {selected: true},
+        data: {
+          type: 'document',
+          paths: entry.files.map(function(fileName) {
+            return prefix + fileName;
+          })
+        }
+      };
+    };
+    // The documents of a folder and of all its sub-folders.
+    var countDocuments = function(folder) {
+      return folder.children.reduce(function(count, child) {
+        return count + countDocuments(child);
+      }, getDocuments(folder).length);
+    };
+    var toFolderNode = function(folder) {
+      var documentCount = countDocuments(folder);
+      var label = folderTree.attr(documentCount === 1 ? 'data-node-label-one' : 'data-node-label');
+      return {
+        id: 'folder:' + folder.path,
+        text: label.replace('__name__', folder.name).replace('__count__', documentCount),
+        icon: 'fa fa-folder-o',
+        iconOpened: 'fa fa-folder-open-o',
+        // Only the imported folder is expanded.
+        state: {opened: folder.path === '', selected: true},
+        data: {path: folder.path, type: 'folder'},
+        children: folder.children.map(toFolderNode).concat(getDocuments(folder).map(function(entry) {
+          return toDocumentNode(folder, entry);
+        }))
+      };
+    };
+    require(['xwiki-tree'], function() {
+      folderTree.xtree({
+        core: {
+          data: [toFolderNode(JSON.parse(folderTree.attr('data-folders')))],
+          multiple: true,
+          // Keep the sub-folders collapsed, although their documents are selected.
+          expand_selected_onload: false
+        },
+        checkbox: {
+          three_state: true
+        }
+      });
+    });
+    // The files of the selected documents are submitted with the form.
+    $('#sopImportForm').on('submit', function() {
+      var form = $(this);
+      form.find('input[name="selectedFile"]').remove();
+      $.each(folderTree.jstree(true).get_selected(true), function(index, node) {
+        if (node.data &amp;&amp; node.data.type === 'document') {
+          node.data.paths.forEach(function(path) {
+            $('&lt;input type="hidden" name="selectedFile" /&gt;').val(path).appendTo(form);
+          });
+        }
+      });
+    });
+  }
   // The documents whose page exists are collapsed: expand them to see their details.
   selection.on('click', '.sopImportToggle', function() {
     var expanded = $(this).attr('aria-expanded') !== 'true';
@@ -767,8 +907,16 @@
       <code>#sopImportForm input[type="text"] {
   max-width: 40em;
 }
-#sopImportForm input[type="number"] {
-  max-width: 10em;
+#sopImportFolderForm input[type="text"] {
+  max-width: 40em;
+}
+#sopImportFolderTree {
+  margin: .5em 0 1em;
+  max-height: 30em;
+  overflow: auto;
+}
+#sopImportAnalysisTable .sopImportFolderRow th {
+  background-color: #eef3f7;
 }
 #sopImportReport .sopImportDetails ul, .sopImportWarnings {
   margin-bottom: 0;

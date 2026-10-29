@@ -31,8 +31,8 @@ import org.xwiki.test.ui.po.SuggestInputElement;
 import org.xwiki.test.ui.po.ViewPage;
 
 /**
- * The page importing documents as SOP documents: SOPManager.ImportDocuments. The documents of a folder are analysed,
- * then the selected versions are imported.
+ * The page importing documents as SOP documents: SOPManager.ImportDocuments. The folder to import is chosen, then the
+ * sub-folders to import in its tree; their documents are analysed, then the selected versions are imported.
  *
  * @version $Id$
  */
@@ -51,6 +51,16 @@ public class ImportDocumentsPage extends ViewPage
     private static final String VALUE = "value";
 
     private static final String VERSION_CHECKBOX = "input[name=\"file\"]";
+
+    private static final String FOLDER_TREE = "jQuery('#sopImportFolderTree').jstree(true)";
+
+    private static final String RETURN_FOLDER_TREE = "return " + FOLDER_TREE;
+
+    private static final String VAR_FOLDER_TREE = "var tree = " + FOLDER_TREE + ";";
+
+    private static final String FOLDER = "folder";
+
+    private static final String DOCUMENT = "document";
 
     private static final By PREVIEW_LINK = By.className("sopImportPreviewLink");
 
@@ -105,7 +115,7 @@ public class ImportDocumentsPage extends ViewPage
      */
     public boolean isFormDisplayed()
     {
-        return !getDriver().findElementsWithoutWaiting(By.id("sopImportForm")).isEmpty();
+        return !getDriver().findElementsWithoutWaiting(By.id("sopImportFolderForm")).isEmpty();
     }
 
     /**
@@ -120,19 +130,170 @@ public class ImportDocumentsPage extends ViewPage
     }
 
     /**
-     * Analyses the documents of a folder and waits for the analysis.
+     * Analyses the documents of a folder and of all its sub-folders, and waits for the analysis.
      *
      * @param folder the folder of the documents, on the server
      * @param types the accepted file types
-     * @param maxDocuments the maximum number of documents selected for the import, {@code null} to select all of
-     *     them
      * @return the page with the analysis
      */
-    public ImportDocumentsPage analyse(String folder, String types, Integer maxDocuments)
+    public ImportDocumentsPage analyse(String folder, String types)
+    {
+        return browse(folder).analyse(types);
+    }
+
+    /**
+     * Displays the tree of the sub-folders of a folder, to select the ones to import.
+     *
+     * @param folder the folder of the documents, on the server
+     * @return the page with the tree of the folder
+     */
+    public ImportDocumentsPage browse(String folder)
     {
         set("sopImportFolder", folder);
+        getDriver().findElement(By.id("sopImportBrowse")).click();
+        ImportDocumentsPage page = new ImportDocumentsPage();
+        if (page.getFolderError().isEmpty()) {
+            getDriver().waitUntilElementIsVisible(By.cssSelector("#sopImportFolderTree .jstree-anchor"));
+        }
+        return page;
+    }
+
+    /**
+     * @return the error displayed when the folder to import can't be listed, empty if there's none
+     */
+    public String getFolderError()
+    {
+        List<WebElement> errors = getDriver().findElementsWithoutWaiting(By.id("sopImportFolderError"));
+        return errors.isEmpty() ? "" : errors.get(0).getText();
+    }
+
+    /**
+     * @return the paths of the folders of the tree, relative to the folder to import (empty for the folder itself)
+     */
+    public List<String> getFolders()
+    {
+        return getTreeNodes(FOLDER, false, false);
+    }
+
+    /**
+     * @return the documents of the tree, by the path of their files without extension, e.g. "BB/AA/Document" for
+     *     "BB/AA/Document.docx" and "BB/AA/Document.pdf"
+     */
+    public List<String> getTreeDocuments()
+    {
+        return getTreeNodes(DOCUMENT, false, false);
+    }
+
+    /**
+     * @return the paths of the files of the documents of the tree, e.g. "BB/AA/Document.docx"
+     */
+    public List<String> getTreeFiles()
+    {
+        return getTreeNodes(DOCUMENT, false, true);
+    }
+
+    /**
+     * @return the paths of the files of the selected documents of the tree, the ones analysed
+     */
+    public List<String> getSelectedTreeFiles()
+    {
+        return getTreeNodes(DOCUMENT, true, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> getTreeNodes(String type, boolean selected, boolean files)
+    {
+        return (List<String>) getDriver().executeScript(VAR_FOLDER_TREE
+            + "return Object.values(tree._model.data).filter(node => node.data && node.data.type === arguments[0]"
+            + " && (!arguments[1] || tree.is_selected(node))).flatMap(node => arguments[2] ? node.data.paths"
+            + " : [node.id.substring(node.id.indexOf(':') + 1)]).sort();", type, selected, files);
+    }
+
+    /**
+     * @param path the path of a folder of the tree, e.g. "BB/AA"
+     * @return the label of the folder in the tree: its name and the number of documents of the folder and of its
+     *     sub-folders
+     */
+    public String getFolderLabel(String path)
+    {
+        return getTreeLabel(FOLDER + ':' + path);
+    }
+
+    /**
+     * @param path a document of the tree, by the path of its files without extension, e.g. "BB/AA/Document"
+     * @return the label of the document in the tree: the name of its file, or its name and its formats
+     */
+    public String getDocumentLabel(String path)
+    {
+        return getTreeLabel(DOCUMENT + ':' + path);
+    }
+
+    /**
+     * @param path the path of a document of the tree, relative to the imported folder and without extension
+     * @return the icon of the document, e.g. "fa fa-file-pdf-o"
+     */
+    public String getDocumentIcon(String path)
+    {
+        return (String) getDriver().executeScript(RETURN_FOLDER_TREE + ".get_node(arguments[0]).icon;",
+            DOCUMENT + ':' + path);
+    }
+
+    private String getTreeLabel(String id)
+    {
+        return (String) getDriver().executeScript(RETURN_FOLDER_TREE + ".get_node(arguments[0]).text;", id);
+    }
+
+    /**
+     * @param path the path of a folder of the tree, e.g. "BB/AA"
+     * @return whether the folder is expanded, showing its sub-folders and its documents
+     */
+    public boolean isFolderExpanded(String path)
+    {
+        return (Boolean) getDriver().executeScript(RETURN_FOLDER_TREE + ".is_open(arguments[0]);",
+            FOLDER + ':' + path);
+    }
+
+    /**
+     * Selects or unselects a folder of the tree, as by checking its box: all its documents are selected or unselected
+     * with it.
+     *
+     * @param path the path of a folder of the tree, e.g. "BB/AA"
+     * @param selected whether to select the folder
+     */
+    public void setFolderSelected(String path, boolean selected)
+    {
+        setTreeNodeSelected(FOLDER + ':' + path, selected);
+    }
+
+    /**
+     * Selects or unselects a document of the tree, with all its versions, as by checking its box.
+     *
+     * @param path a document of the tree, by the path of its files without extension, e.g. "BB/AA/Document"
+     * @param selected whether to select the document
+     */
+    public void setDocumentSelected(String path, boolean selected)
+    {
+        setTreeNodeSelected(DOCUMENT + ':' + path, selected);
+    }
+
+    private void setTreeNodeSelected(String id, boolean selected)
+    {
+        getDriver().executeScript(VAR_FOLDER_TREE
+            + "if (arguments[1]) { tree.select_node(arguments[0]); } else { tree.deselect_node(arguments[0]); }",
+            id, selected);
+        getDriver().waitUntilCondition(driver -> Boolean.valueOf(selected).equals(getDriver().executeScript(
+            RETURN_FOLDER_TREE + ".is_selected(arguments[0]);", id)));
+    }
+
+    /**
+     * Analyses the selected documents of the tree, and waits for the analysis.
+     *
+     * @param types the accepted file types
+     * @return the page with the analysis
+     */
+    public ImportDocumentsPage analyse(String types)
+    {
         set("sopImportTypes", types);
-        set("sopImportMaxDocuments", maxDocuments == null ? "" : String.valueOf(maxDocuments));
         getDriver().findElement(By.id("sopImportAnalyse")).click();
         // The page displays the progress of the job, then reloads to display its result.
         getDriver().waitUntilCondition(driver -> !getDriver().findElementsWithoutWaiting(ANALYSIS).isEmpty(),
@@ -327,6 +488,29 @@ public class ImportDocumentsPage extends ViewPage
         if (!checkbox.isSelected()) {
             checkbox.click();
         }
+    }
+
+    /**
+     * Unselects a version for the import.
+     *
+     * @param file the name of the version
+     */
+    public void unselect(String file)
+    {
+        WebElement checkbox = getVersion(file).findElement(By.cssSelector(VERSION_CHECKBOX));
+        if (checkbox.isSelected()) {
+            checkbox.click();
+        }
+    }
+
+    /**
+     * @return the paths of the folders displayed above their documents in the analysis, relative to the analysed
+     *     folder (empty for the folder itself); none when the documents of a single folder are analysed
+     */
+    public List<String> getAnalysedFolders()
+    {
+        return getDriver().findElementsWithoutWaiting(By.cssSelector("#sopImportAnalysisTable tr.sopImportFolderRow"))
+            .stream().map(row -> row.getAttribute("data-folder")).toList();
     }
 
     /**

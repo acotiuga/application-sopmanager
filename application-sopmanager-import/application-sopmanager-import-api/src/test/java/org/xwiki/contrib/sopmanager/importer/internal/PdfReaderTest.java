@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureElement;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -224,6 +225,58 @@ class PdfReaderTest
             + "[[image:figure-1.png||width=\"53\"]]\n\n"
             + "Hinweis\n\n"
             + "Im Container.", render(pdf.content()));
+    }
+
+    @Test
+    void readTableWithIconsInItsLastColumn() throws Exception
+    {
+        // A list of equipment, as written by Word: the icons drawn in the last column of the table, next to its
+        // sections, follow the table in the structure tree, and its cells spanning several columns are not marked. The
+        // first row ends a section continued from the previous page.
+        Path file;
+        try (TaggedPdf pdf = new TaggedPdf()) {
+            PDStructureElement document = pdf.getRoot();
+            PDStructureElement table = pdf.element("Table", document);
+            writeRow(pdf, table, 700, REGULAR, "Stauschlauch", null, 3);
+            writeRow(pdf, table, 686, BOLD, "A ATEMWEG", "Check", 3);
+            writeRow(pdf, table, 672, REGULAR, "Absaugkatheter", "CH 16", 4);
+            writeRow(pdf, table, 658, BOLD, "B BEATMUNG", "Check", 3);
+            writeRow(pdf, table, 644, REGULAR, "King Vision", null, 3);
+            // The icons, their top next to the titles of the sections.
+            pdf.figure(document, 450, 666, true);
+            pdf.figure(document, 450, 638, true);
+            pdf.line(pdf.element("P", document), 72, 500, "Nach der Tabelle.");
+            file = pdf.save(this.folder.resolve("icons.pdf"));
+        }
+
+        ImportedDocument pdf = new PdfReader(file).read();
+
+        // One table per section, the cells of its last column merged into a single cell holding its icon; the first
+        // cell of the shorter rows spans the missing columns.
+        String column = "(% rowspan=\"2\" style=\"vertical-align: top; text-align: center;\" %)";
+        assertEquals(List.of("figure-1.png", "figure-2.png"), List.copyOf(pdf.images().keySet()));
+        assertEquals("|(% colspan=\"2\" %)Stauschlauch||(% style=\"vertical-align: top; text-align: center;\" %)\n\n"
+            + "|(% colspan=\"2\" %)**A ATEMWEG**|Check|" + column + "[[image:figure-1.png||width=\"53\"]]\n"
+            + "|Absaugkatheter|CH 16|\n\n"
+            + "|(% colspan=\"2\" %)**B BEATMUNG**|Check|" + column + "[[image:figure-2.png||width=\"53\"]]\n"
+            + "|(% colspan=\"2\" %)King Vision|\n\n"
+            + "Nach der Tabelle.", render(pdf.content()));
+    }
+
+    /**
+     * Writes a row of a list of equipment: its text and its cells, the last ones empty.
+     */
+    private static void writeRow(TaggedPdf pdf, PDStructureElement table, float y, PDFont font, String item,
+        String detail, int cells) throws Exception
+    {
+        PDStructureElement row = pdf.element("TR", table);
+        pdf.line(pdf.element("P", pdf.element("TD", row)), 72, y, new TaggedPdf.Run(item, font));
+        if (detail != null) {
+            pdf.line(pdf.element("P", pdf.element("TD", row)), 200, y, detail);
+        }
+        for (int i = detail == null ? 1 : 2; i < cells; i++) {
+            pdf.element("TD", row);
+        }
     }
 
     private static void writeHeaderFooter(TaggedPdf pdf) throws Exception

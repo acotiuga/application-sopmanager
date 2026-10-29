@@ -92,6 +92,9 @@ class SOPDocumentCreatorTest
     @MockComponent
     private EntityReferenceSerializer<String> serializer;
 
+    @MockComponent
+    private ImportFolderPages folderPages;
+
     private XWikiContext context;
 
     private XWiki wiki;
@@ -171,6 +174,7 @@ class SOPDocumentCreatorTest
         verify(this.document).setAttachment(eq("photo.png"), any(InputStream.class), eq(this.context));
         verify(this.attachment).setAuthorReference(USER);
         verify(this.object).set("status", "imported", this.context);
+        verify(this.folderPages).create(REFERENCE, this.context);
         verify(this.object).set("isInReview", 0, this.context);
         verify(this.object).set("pdfTemplate", "SOPManager.Code.GKHPDFTemplateVertical", this.context);
         verify(this.object).set("revisionId", "ANA_AA_9.101", this.context);
@@ -207,5 +211,7 @@ class SOPDocumentCreatorTest
         assertEquals("Titel", SOPDocumentCreator.getTitle("ANA_AA_9.1 - Titel", details));
         assertNull(SOPDocumentCreator.getRevisionId("Hausordnung", details));
         assertEquals(REFERENCE, this.creator.getReference("ANA_AA_9.101_Händedesinfektion", "xwiki"));
+        assertEquals(new DocumentReference("xwiki", List.of("SOPManager", "BB", "AA", "ANA_AA_9.101"), "WebHome"),
+            this.creator.getReference("BB/AA/ANA_AA_9.101", "xwiki"));
     }
 }

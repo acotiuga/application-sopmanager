@@ -39,6 +39,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.xwiki.component.util.ReflectionUtils;
 import org.xwiki.contrib.sopmanager.importer.SOPImportAnalysis;
 import org.xwiki.contrib.sopmanager.importer.SOPImportCandidate;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportPreview;
 import org.xwiki.contrib.sopmanager.importer.SOPImportReport;
@@ -159,7 +160,7 @@ class DefaultSOPImportManagerTest
             invocation -> invocation.getArgument(0) + " " + Arrays.toString(
                 Arrays.copyOfRange(invocation.getArguments(), 1, invocation.getArguments().length)));
         when(this.documentCreator.getReference(anyString(), eq("xwiki"))).thenAnswer(
-            invocation -> new DocumentReference("xwiki", List.of("SOPManager", invocation.getArgument(0)), "WebHome"));
+            invocation -> new SOPDocumentCreator().getReference(invocation.getArgument(0), "xwiki"));
         when(this.serializer.serialize(any())).thenAnswer(invocation -> invocation.getArgument(0).toString());
         // The documents are read and analysed by the real reader and analyser, without office server.
         DocumentReader reader = new DocumentReader();
@@ -180,7 +181,8 @@ class DefaultSOPImportManagerTest
         when(this.analyser.getUsers()).thenReturn(List.of(new ImportUserResolver.User(MUSTER, "Max", "Muster"),
             new ImportUserResolver.User(new DocumentReference("xwiki", "XWiki", "KBeispiel"), "Karl", "Beispiel"),
             new ImportUserResolver.User(new DocumentReference("xwiki", "XWiki", "BeispielA"), "Anna", "")));
-        when(this.analyser.preview(any())).thenAnswer(invocation -> realAnalyser.preview(invocation.getArgument(0)));
+        when(this.analyser.preview(any(), anyString())).thenAnswer(
+            invocation -> realAnalyser.preview(invocation.getArgument(0), invocation.getArgument(1)));
         when(this.analyser.analyse(anyString(), any(), any(), any())).thenAnswer(invocation -> realAnalyser.analyse(
             invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
         when(this.analyser.read(any())).thenAnswer(invocation -> realAnalyser.read((Path) invocation.getArgument(0)));
@@ -207,7 +209,7 @@ class DefaultSOPImportManagerTest
     {
         when(this.wiki.exists(reference(CLEAN), this.context)).thenReturn(true);
 
-        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), TYPES, 0, "job");
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), null, TYPES, "job");
 
         assertSame(analysis, this.importManager.getAnalysis("job"));
         assertNull(analysis.getError());
@@ -323,16 +325,104 @@ class DefaultSOPImportManagerTest
     }
 
     @Test
-    void analyseSelectsTheFirstDocuments()
+    void analyseTheWordDocuments()
     {
-        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), null, 2, null);
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), null, null, null);
 
-        // Only the Word documents.
+        // Only the Word documents, all those that can be imported selected.
         assertEquals(List.of(NATIVE, CONVERTED, IN_CONTENT, DAMAGED, WORD_97, CLEAN),
             analysis.getDocuments().stream().map(SOPImportCandidate::getName).toList());
-        assertEquals(List.of(true, true, false, false, false, false),
+        assertEquals(List.of(true, true, true, false, true, true),
             analysis.getDocuments().stream().map(SOPImportCandidate::isSelected).toList());
-        assertEquals("Documents that can be imported: 5 of 6, selected: 2.", messages().get(messages().size() - 1));
+        assertEquals("Documents that can be imported: 5 of 6, selected: 5.", messages().get(messages().size() - 1));
+    }
+
+    /**
+     * The same documents in different folders, e.g. AA/BB/AA and AA/BB/CC/AA, are different documents.
+     */
+    private void createSubfolders() throws IOException
+    {
+        Files.createDirectories(this.folder.resolve("BB/AA"));
+        Files.createDirectories(this.folder.resolve("BB/CC/AA"));
+        Files.createDirectory(this.folder.resolve(".hidden"));
+        for (String subfolder : List.of("BB/AA/", "BB/CC/AA/")) {
+            Files.copy(this.folder.resolve(NATIVE + DOCX), this.folder.resolve(subfolder + NATIVE + DOCX));
+        }
+    }
+
+    @Test
+    void getFolders() throws Exception
+    {
+        createSubfolders();
+
+        SOPImportFolder folders = this.importManager.getFolders(this.folder.toString());
+
+        assertEquals(this.folder.getFileName().toString(), folders.getName());
+        assertEquals(List.of("", "BB", "BB/AA", "BB/CC", "BB/CC/AA", "Unterordner.docx"),
+            ImportFolder.getFolderPaths(folders));
+        assertEquals(12, folders.getFileCount());
+        assertTrue(folders.getFiles().contains("Notizen.txt"));
+        SOPImportFolder bb = folders.getChildren().get(0);
+        assertEquals("BB", bb.getName());
+        assertEquals(List.of(), bb.getFiles());
+        assertEquals(List.of("AA", "CC"), bb.getChildren().stream().map(SOPImportFolder::getName).toList());
+        assertEquals(List.of(NATIVE + DOCX), bb.getChildren().get(0).getFiles());
+        assertEquals(List.of("BB/AA/" + NATIVE + DOCX, "BB/CC/AA/" + NATIVE + DOCX),
+            ImportFolder.getFilePaths(bb));
+
+        assertNull(this.importManager.getFolders("relative"));
+        when(this.rights.canImport(this.context)).thenReturn(false);
+        assertNull(this.importManager.getFolders(this.folder.toString()));
+    }
+
+    @Test
+    void analyseTheSelectedFiles() throws Exception
+    {
+        createSubfolders();
+
+        // Only the selected files, the files of each folder together; the paths that are not files of the folder are
+        // ignored.
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(),
+            List.of("BB/CC/AA/" + NATIVE + DOCX, "BB/AA/" + NATIVE + DOCX, "../" + NATIVE + DOCX, "BB",
+                "BB/AA/Missing.docx", "BB/AA/" + NATIVE + DOCX), TYPES, null);
+
+        assertNull(analysis.getError());
+        List<SOPImportCandidate> documents = analysis.getDocuments();
+        assertEquals(List.of("BB/AA/" + NATIVE, "BB/CC/AA/" + NATIVE),
+            documents.stream().map(SOPImportCandidate::getName).toList());
+        SOPImportCandidate candidate = documents.get(1);
+        assertEquals("BB/CC/AA", candidate.getFolder());
+        assertEquals(NATIVE, candidate.getBaseName());
+        assertEquals(new DocumentReference("xwiki", List.of("SOPManager", "BB", "CC", "AA", NATIVE), "WebHome"),
+            candidate.getDocumentReference());
+        assertVersions(candidate, "BB/CC/AA/" + NATIVE + DOCX);
+        assertEquals("Dummy Händedesinfektion", candidate.getVersions().get(0).getData().get("title"));
+        assertTrue(candidate.isSelected());
+        assertEquals("Documents that can be imported: 2 of 2, selected: 2.", messages().get(messages().size() - 1));
+    }
+
+    @Test
+    void analyseTheFilesOfTheFolderFirst() throws Exception
+    {
+        createSubfolders();
+
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(),
+            List.of("BB/AA/" + NATIVE + DOCX, CLEAN + DOCX, NATIVE + PDF), TYPES, null);
+
+        assertEquals(List.of(NATIVE, CLEAN, "BB/AA/" + NATIVE),
+            analysis.getDocuments().stream().map(SOPImportCandidate::getName).toList());
+        assertVersions(analysis.getDocuments().get(0), NATIVE + PDF);
+        messages();
+    }
+
+    @Test
+    void analyseNeedsASelectedFile()
+    {
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), List.of(), TYPES,
+            null);
+
+        assertEquals("sopManager.import.message.noSelectedFile [" + this.folder + "]", analysis.getError());
+        assertEquals(List.of("The import failed: [" + this.folder + "]."), messages());
     }
 
     private List<String> messages()
@@ -405,6 +495,29 @@ class DefaultSOPImportManagerTest
         assertTrue(log.get(13).startsWith("Documents not imported (9): " + CONVERTED + PDF + ", "), log.get(13));
     }
 
+    @Test
+    void importTheDocumentsOfSubfolders() throws Exception
+    {
+        createSubfolders();
+        DocumentReference reference =
+            new DocumentReference("xwiki", List.of("SOPManager", "BB", "CC", "AA", NATIVE), "WebHome");
+        Map<String, List<String>> users = Map.of(SOPImportManager.APPROVER, List.of("xwiki:XWiki.MMuster"));
+
+        SOPImportReport report = this.importManager.importDocuments(this.folder.toString(),
+            List.of("BB/CC/AA/" + NATIVE + DOCX, "BB/CC/AA/../../../" + NATIVE + DOCX), Map.of("BB/CC/AA/" + NATIVE,
+                users), null);
+
+        // The document is created below the pages of its folders, and named after its file.
+        assertEquals(reference, report.getResults().get(0).getDocumentReference());
+        assertEquals(Outcome.IMPORTED, report.getResults().get(0).getOutcome());
+        verify(this.documentCreator).create(eq(reference), eq(NATIVE), any(), eq(users), eq(this.context));
+        // The paths with "..", which would name pages after them, are refused.
+        assertResult(report.getResults().get(1), "BB/CC/AA/../../../" + NATIVE + DOCX, null, Outcome.FAILED,
+            "sopManager.import.message.notInFolder [BB/CC/AA/../../../" + NATIVE + DOCX + "]");
+        verify(this.documentCreator).create(any(), anyString(), any(), any(), any());
+        messages();
+    }
+
     private static void assertResult(SOPImportResult result, String fileName, Compatibility compatibility,
         Outcome outcome, String message)
     {
@@ -455,7 +568,7 @@ class DefaultSOPImportManagerTest
         SOPImportReport report = this.importManager.importDocuments(this.folder.toString(), List.of(NATIVE + DOCX),
             Map.of(),
             "job");
-        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), TYPES, 0, "job");
+        SOPImportAnalysis analysis = this.importManager.analyseDocuments(this.folder.toString(), null, TYPES, "job");
 
         assertEquals("sopManager.import.message.notImporter [" + SOP_EDITORS + "]", report.getError());
         assertTrue(report.getResults().isEmpty());
@@ -474,9 +587,9 @@ class DefaultSOPImportManagerTest
     void importNeedsAnExistingAbsoluteFolder() throws IOException
     {
         assertEquals("sopManager.import.message.noFolder []",
-            this.importManager.analyseDocuments(" ", TYPES, 0, null).getError());
+            this.importManager.analyseDocuments(" ", null, TYPES, null).getError());
         assertEquals("sopManager.import.message.noSuchFolder [relative]",
-            this.importManager.analyseDocuments("relative", TYPES, 0, null).getError());
+            this.importManager.analyseDocuments("relative", null, TYPES, null).getError());
         String missing = this.folder.resolve("missing").toString();
         assertEquals("sopManager.import.message.noSuchFolder [" + missing + "]",
             this.importManager.importDocuments(missing, List.of(), Map.of(), null).getError());
@@ -495,7 +608,7 @@ class DefaultSOPImportManagerTest
     {
         for (int i = 0; i < 21; i++) {
             this.importManager.importDocuments("", List.of(), Map.of(), "report" + i);
-            this.importManager.analyseDocuments("", TYPES, 0, "analysis" + i);
+            this.importManager.analyseDocuments("", null, TYPES, "analysis" + i);
         }
         assertNull(this.importManager.getReport("report0"));
         assertNull(this.importManager.getAnalysis("analysis0"));

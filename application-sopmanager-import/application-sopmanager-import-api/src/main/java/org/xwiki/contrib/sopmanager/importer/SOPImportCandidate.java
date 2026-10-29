@@ -55,7 +55,7 @@ public class SOPImportCandidate
     private String lastModifiedFile;
 
     /**
-     * @param name the name of the document: the name of its files, without extension
+     * @param name the name of the document: the path of its files relative to the imported folder, without extension
      * @param documentReference the SOP document the files would be imported as
      * @param exists whether this SOP document already exists, in which case the document is not imported
      */
@@ -67,11 +67,30 @@ public class SOPImportCandidate
     }
 
     /**
-     * @return the name of the document: the name of its files, without extension
+     * @return the name of the document: the path of its files relative to the imported folder, without extension,
+     *     e.g. "BB/AA/Document"
      */
     public String getName()
     {
         return this.name;
+    }
+
+    /**
+     * @return the name of the files of the document, without extension and without folder, e.g. "Document"
+     */
+    public String getBaseName()
+    {
+        return this.name.substring(this.name.lastIndexOf(SOPImportFolder.SEPARATOR) + 1);
+    }
+
+    /**
+     * @return the path of the folder of the document relative to the imported folder, e.g. "BB/AA"; empty for a
+     *     document of the imported folder
+     */
+    public String getFolder()
+    {
+        int separator = this.name.lastIndexOf(SOPImportFolder.SEPARATOR);
+        return separator < 0 ? "" : this.name.substring(0, separator);
     }
 
     /**

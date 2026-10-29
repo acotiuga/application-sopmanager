@@ -19,7 +19,11 @@
  */
 package org.xwiki.contrib.sopmanager.importer.internal;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,6 +178,39 @@ class ImportVersionsTest
         assertNull(candidate.getRecommended());
         assertNull(candidate.getOriginal());
         assertNull(scan.getTextMatch());
+    }
+
+    @Test
+    void guessRecommended() throws Exception
+    {
+        // The original Word document rather than its PDF.
+        assertEquals(document("ANA_AA_9.101_Dummy-Haendedesinfektion.docx"), ImportVersions.guessRecommended(
+            documents("ANA_AA_9.101_Dummy-Haendedesinfektion.pdf", "ANA_AA_9.101_Dummy-Haendedesinfektion.docx")));
+        // The PDF rather than the Word document converted from it.
+        assertEquals(document("ANA_AA_9.102_Dummy-Bestueckung-Notfallwagen.pdf"),
+            ImportVersions.guessRecommended(documents("ANA_AA_9.102_Dummy-Bestueckung-Notfallwagen.docx",
+                "ANA_AA_9.102_Dummy-Bestueckung-Notfallwagen.pdf")));
+        // The Word document converted by Word from the Word 97-2003 document.
+        assertEquals(document("ANA_AA_9.105_Dummy-Altformat.docx"), ImportVersions.guessRecommended(
+            documents("ANA_AA_9.105_Dummy-Altformat.doc", "ANA_AA_9.105_Dummy-Altformat.docx")));
+        // A Word document that can't be read.
+        assertEquals(document("ANA_AA_9.106_Dummy-Scan.pdf"), ImportVersions.guessRecommended(
+            documents("ANA_AA_9.104_Dummy-beschaedigt.docx", "ANA_AA_9.106_Dummy-Scan.pdf")));
+        assertNull(ImportVersions.guessRecommended(documents("ANA_AA_9.104_Dummy-beschaedigt.docx", "Notizen.txt")));
+    }
+
+    private static Path document(String name) throws URISyntaxException
+    {
+        return Paths.get(ImportVersionsTest.class.getResource("/documents/" + name).toURI());
+    }
+
+    private static List<Path> documents(String... names) throws URISyntaxException
+    {
+        List<Path> documents = new ArrayList<>();
+        for (String name : names) {
+            documents.add(document(name));
+        }
+        return documents;
     }
 
     @Test

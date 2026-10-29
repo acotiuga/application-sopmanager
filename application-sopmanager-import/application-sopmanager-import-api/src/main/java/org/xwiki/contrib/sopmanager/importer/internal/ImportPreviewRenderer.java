@@ -75,8 +75,10 @@ public class ImportPreviewRenderer
                 // Not an image a browser displays (e.g. an EMF or WMF drawing): its name.
                 block.getParent().replaceChild(new WordBlock(String.format("[%s]", name)), block);
             } else {
-                String uri = "data:" + mediaType + ";base64," + Base64.getEncoder().encodeToString(bytes);
-                ResourceReference reference = new ResourceReference(uri, ResourceType.URL);
+                // A data URI, rendered as "image:data:<media type>;base64,<content>": not as an URL, which the browser
+                // can't load.
+                String uri = mediaType + ";base64," + Base64.getEncoder().encodeToString(bytes);
+                ResourceReference reference = new ResourceReference(uri, ResourceType.DATA);
                 reference.setTyped(true);
                 block.getParent().replaceChild(new ImageBlock(reference, false, image.getParameters()), block);
             }

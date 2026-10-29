@@ -19,6 +19,7 @@
  */
 package org.xwiki.contrib.sopmanager.importer.internal;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,18 +77,28 @@ public final class ImportVersions
      */
     public static Origin getOrigin(String format, ImportedDocument document)
     {
+        return getOrigin(format, document.compatibility(), document.source());
+    }
+
+    /**
+     * @param format the format of the file: its extension
+     * @param compatibility how the content of the file was converted
+     * @param source the properties of the file telling where it comes from
+     * @return where the file comes from
+     */
+    public static Origin getOrigin(String format, Compatibility compatibility, DocumentSource source)
+    {
         if (DocumentReader.DOC.equals(format)) {
             return Origin.ORIGINAL;
         }
         if (DocumentReader.PDF.equals(format)) {
             return Origin.EXPORTED_TO_PDF;
         }
-        DocumentSource source = document.source();
         String application = StringUtils.defaultString(source.application()).toLowerCase(Locale.ROOT);
-        if (document.compatibility() == Compatibility.FIXED_LAYOUT || application.contains("aspose")) {
+        if (compatibility == Compatibility.FIXED_LAYOUT || application.contains("aspose")) {
             return Origin.CONVERTED_FROM_PDF;
         }
-        if (document.compatibility() == Compatibility.HEADER_FOOTER_IN_CONTENT) {
+        if (compatibility == Compatibility.HEADER_FOOTER_IN_CONTENT) {
             return Origin.REBUILT;
         }
         boolean fromWord97 = Strings.CI.endsWith(source.originalDocument(), "." + DocumentReader.DOC)
@@ -125,7 +136,49 @@ public final class ImportVersions
 
     private static int getRank(SOPImportVersion version)
     {
-        return DocumentReader.DOC.equals(version.getFormat()) ? WORD_97_RANK : RANKS.get(version.getOrigin());
+        return getRank(version.getFormat(), version.getOrigin());
+    }
+
+    private static int getRank(String format, Origin origin)
+    {
+        return DocumentReader.DOC.equals(format) ? WORD_97_RANK : RANKS.get(origin);
+    }
+
+    /**
+     * Guesses the version of a document that {@link #compare} recommends, without converting the files: only where
+     * the Word documents come from is read, the other versions are assumed to be importable.
+     *
+     * @param versions the files of a document in different formats (e.g. A.docx and A.pdf)
+     * @return the version that is likely to be recommended, {@code null} if none can be imported
+     */
+    public static Path guessRecommended(List<Path> versions)
+    {
+        Path recommended = null;
+        int recommendedRank = -1;
+        for (Path version : versions) {
+            int rank = guessRank(version);
+            if (rank > recommendedRank) {
+                recommended = version;
+                recommendedRank = rank;
+            }
+        }
+        return recommended;
+    }
+
+    /**
+     * @return the rank of the version, -1 if it can't be imported
+     */
+    private static int guessRank(Path version)
+    {
+        String format = DocumentReader.getExtension(version);
+        if (DocumentReader.DOCX.equals(format)) {
+            try {
+                return getRank(format, new DocxReader(new DocxPackage(version)).readOrigin());
+            } catch (DocumentReadException e) {
+                return -1;
+            }
+        }
+        return DocumentReader.FORMATS.contains(format) ? getRank(format, getOrigin(format, null, null)) : -1;
     }
 
     /**

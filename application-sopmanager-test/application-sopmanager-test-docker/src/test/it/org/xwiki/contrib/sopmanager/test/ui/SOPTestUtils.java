@@ -51,8 +51,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Helpers of the functional tests of the SOP Manager.
@@ -211,6 +211,35 @@ public final class SOPTestUtils
         // The number of files written, and the folder.
         assertEquals(String.valueOf(documents.size()), StringUtils.substringBefore(folder, ':'), folder);
         return StringUtils.substringAfter(folder, ":");
+    }
+
+    /**
+     * Copies files of the folder written by {@link #copyDocumentsToServer(TestUtils, List)} into sub-folders of a new
+     * folder of the server, e.g. AA/BB/AA and AA/BB/CC/AA, where the same document is a different document.
+     *
+     * @param setup the test setup, logged in as superadmin
+     * @param folder the folder of the documents on the server
+     * @param copies the paths of the copies in the new folder, e.g. "BB/AA/Document.docx" for a copy of the file
+     *     "Document.docx" in the sub-folder "BB/AA"
+     * @return the absolute path of the new folder on the server, named "AA"
+     * @throws Exception if the files can't be copied
+     */
+    public static String copyToSubfolders(TestUtils setup, String folder, List<String> copies) throws Exception
+    {
+        String root = setup.executeWikiPlain(String.join("\n",
+            "{{groovy}}",
+            "def root = new File(System.getProperty('java.io.tmpdir'), 'sop-import-tree/AA')",
+            "root.parentFile.deleteDir()",
+            "root.mkdirs()",
+            "'" + String.join("|", copies) + "'.split('\\\\|').each {",
+            "  def target = new File(root, it)",
+            "  target.parentFile.mkdirs()",
+            "  target.bytes = new File('" + folder + "', target.name).bytes",
+            "}",
+            "print(root.absolutePath)",
+            "{{/groovy}}"), Syntax.XWIKI_2_1).trim();
+        assertTrue(root.endsWith("/AA"), root);
+        return root;
     }
 
     /**

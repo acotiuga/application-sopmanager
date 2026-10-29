@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.importer.SOPImportCandidate;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportPreview;
 import org.xwiki.contrib.sopmanager.importer.SOPImportResult;
 import org.xwiki.contrib.sopmanager.importer.SOPImportResult.Compatibility;
@@ -105,8 +106,9 @@ public class ImportDocumentAnalyser
     /**
      * Analyses a document to import and logs the result.
      *
-     * @param name the name of the document
-     * @param files its files, in different formats
+     * @param name the name of the document: the path of its files relative to the imported folder, without
+     *     extension, e.g. "BB/AA/Document"
+     * @param files its files, in different formats, all in the same folder
      * @param users the users of the wiki, who may be named in the document
      * @param context the XWiki context
      * @return the document, its versions compared, the persons named in its recommended version
@@ -124,8 +126,13 @@ public class ImportDocumentAnalyser
         }
         SOPImportCandidate candidate = new SOPImportCandidate(name, reference, exists);
         Map<SOPImportVersion, ImportedDocument> documents = new HashMap<>();
+        String folder = ImportFolder.getParent(name);
         for (Path file : files) {
-            ReadVersion version = read(file);
+            String fileName = file.getFileName().toString();
+            if (!folder.isEmpty()) {
+                fileName = folder + SOPImportFolder.SEPARATOR + fileName;
+            }
+            ReadVersion version = readVersion(file, fileName);
             if (version.document() != null) {
                 documents.put(version.version(), version.document());
             }
@@ -145,8 +152,19 @@ public class ImportDocumentAnalyser
      */
     public ReadVersion read(Path file)
     {
-        SOPImportVersion version =
-            new SOPImportVersion(file.getFileName().toString(), DocumentReader.getExtension(file));
+        return readVersion(file, file.getFileName().toString());
+    }
+
+    /**
+     * Reads a file, and describes it.
+     *
+     * @param file a file to import
+     * @param fileName the path of the file relative to the imported folder, naming its version
+     * @return the description of the file, and the document read from it
+     */
+    public ReadVersion readVersion(Path file, String fileName)
+    {
+        SOPImportVersion version = new SOPImportVersion(fileName, DocumentReader.getExtension(file));
         try {
             ImportedDocument document = this.documentReader.read(file);
             ImportVersionDescription.describe(version, document);
@@ -174,7 +192,20 @@ public class ImportDocumentAnalyser
      */
     public SOPImportPreview preview(Path file)
     {
-        ReadVersion version = read(file);
+        return preview(file, file.getFileName().toString());
+    }
+
+    /**
+     * Previews the import of a file.
+     *
+     * @param file a file to import
+     * @param fileName the path of the file relative to the imported folder, naming its version
+     * @return the SOP document it would be imported as
+     * @see #preview(Path)
+     */
+    public SOPImportPreview preview(Path file, String fileName)
+    {
+        ReadVersion version = readVersion(file, fileName);
         ImportedDocument document = version.document();
         if (document != null) {
             shareTableHeaders(file, document);

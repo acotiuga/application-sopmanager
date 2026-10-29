@@ -46,6 +46,7 @@ import org.xwiki.model.reference.WikiReference;
 import org.xwiki.test.docker.junit5.UITest;
 import org.xwiki.test.integration.junit.LogCaptureConfiguration;
 import org.xwiki.test.ui.TestUtils;
+import org.xwiki.test.ui.po.ViewPage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -193,8 +194,12 @@ class ImportDocumentsIT
         setup.login(EDITOR, PASSWORD);
         SOPManagerHomePage home = SOPManagerHomePage.gotoPage();
         assertTrue(home.hasImportLink());
-        // Analyse the folder, selecting the first 2 documents to try the import on them.
-        ImportDocumentsPage analysis = ImportDocumentsPage.gotoPage().analyse(folder, DOCX_DOC_PDF, 2);
+        // Analyse the folder: all the documents that can be imported are selected. Keep the first 2 to try the import
+        // on them.
+        ImportDocumentsPage analysis = ImportDocumentsPage.gotoPage().analyse(folder, DOCX_DOC_PDF);
+        for (String file : List.of(IN_CONTENT.file(), WORD_97.file(), CLEAN.file())) {
+            analysis.unselect(file);
+        }
 
         assertEquals("", analysis.getReportError());
         assertEquals(List.of(NATIVE.page(), CONVERTED.page(), IN_CONTENT.page(), DAMAGED, WORD_97.page(), SCAN,
@@ -256,7 +261,7 @@ class ImportDocumentsIT
         List<String> log = analysis.getLog();
         assertTrue(log.contains("Analysing the 12 files of the folder [" + folder + "] (accepted types: docx, doc, "
             + "pdf)."), String.join("\n", log));
-        assertTrue(log.contains("Documents that can be imported: 5 of 7, selected: 2."), String.join("\n", log));
+        assertTrue(log.contains("Documents that can be imported: 5 of 7, selected: 5."), String.join("\n", log));
 
         // Preview the versions: the pages they would be imported as, opened directly in the preview mode of the
         // editor, in a new window.
@@ -307,7 +312,7 @@ class ImportDocumentsIT
     {
         allowJobMacroWarnings(logCaptureConfiguration);
         setup.login(EDITOR, PASSWORD);
-        ImportDocumentsPage analysis = ImportDocumentsPage.gotoPage().analyse(folder, DOCX_DOC_PDF, null);
+        ImportDocumentsPage analysis = ImportDocumentsPage.gotoPage().analyse(folder, DOCX_DOC_PDF);
 
         // The documents already imported are skipped: collapsed, their details can be expanded.
         for (SOPTestUtils.Document document : List.of(NATIVE, CONVERTED)) {
@@ -494,6 +499,76 @@ class ImportDocumentsIT
         assertTrue(pdf.body().contains("Schublade 1"), pdf.body());
         assertFalse(pdf.text().contains("Freigabe am"), pdf.text());
         assertFalse(pdf.text().contains("W:\\"), pdf.text());
+    }
+
+    @Test
+    @Order(8)
+    void importTheTreeOfFolders(TestUtils setup, LogCaptureConfiguration logCaptureConfiguration) throws Exception
+    {
+        allowJobMacroWarnings(logCaptureConfiguration);
+        // The same document in AA/BB/AA and AA/BB/CC/AA: two different documents, given their folders. Another
+        // document in AA/BB/AA, in PDF and in Word converted from the PDF.
+        setup.loginAsSuperAdmin();
+        String inAA = "BB/AA/" + CLEAN.file();
+        String inCC = "BB/CC/AA/" + CLEAN.file();
+        String tree = SOPTestUtils.copyToSubfolders(setup, folder, List.of(inAA, inCC, "BB/AA/" + CONVERTED.file(),
+            "BB/AA/" + CONVERTED.file(PDF)));
+
+        setup.login(EDITOR, PASSWORD);
+        ImportDocumentsPage importPage = ImportDocumentsPage.gotoPage().browse(tree + "/missing");
+        assertEquals("The folder [" + tree + "/missing] does not exist on the server, or is not an absolute path.",
+            importPage.getFolderError());
+        importPage = importPage.browse(tree);
+        assertEquals("", importPage.getFolderError());
+        // The sub-folders and their documents, all selected; only the folder to import is expanded. The files with the
+        // same name in different formats are one document.
+        String cleanInAA = "BB/AA/" + CLEAN.page();
+        String convertedInAA = "BB/AA/" + CONVERTED.page();
+        String cleanInCC = "BB/CC/AA/" + CLEAN.page();
+        assertEquals(List.of("", "BB", "BB/AA", "BB/CC", "BB/CC/AA"), importPage.getFolders());
+        // Sorted by path.
+        assertEquals(List.of(convertedInAA, cleanInAA, cleanInCC), importPage.getTreeDocuments());
+        assertEquals(List.of("BB/AA/" + CONVERTED.file(), "BB/AA/" + CONVERTED.file(PDF), inAA, inCC),
+            importPage.getTreeFiles());
+        assertEquals(importPage.getTreeFiles(), importPage.getSelectedTreeFiles());
+        assertEquals(CLEAN.file(), importPage.getDocumentLabel(cleanInAA));
+        assertEquals(CONVERTED.page() + " (docx, pdf)", importPage.getDocumentLabel(convertedInAA));
+        // The icon of the version to import: the PDF rather than the Word document converted from it.
+        assertEquals("fa fa-file-pdf-o", importPage.getDocumentIcon(convertedInAA));
+        assertEquals("fa fa-file-word-o", importPage.getDocumentIcon(cleanInAA));
+        assertTrue(importPage.isFolderExpanded(""));
+        assertFalse(importPage.isFolderExpanded("BB"));
+        // The documents of each folder and of its sub-folders.
+        assertEquals("AA (3 documents)", importPage.getFolderLabel(""));
+        assertEquals("AA (2 documents)", importPage.getFolderLabel("BB/AA"));
+        assertEquals("CC (1 document)", importPage.getFolderLabel("BB/CC"));
+        // Unselecting a document unselects all its versions.
+        importPage.setDocumentSelected(convertedInAA, false);
+        assertEquals(List.of(inAA, inCC), importPage.getSelectedTreeFiles());
+        // Unselecting a folder unselects all its documents, which can then be selected one by one.
+        importPage.setFolderSelected("BB/CC", false);
+        assertEquals(List.of(inAA), importPage.getSelectedTreeFiles());
+        importPage.setDocumentSelected(cleanInCC, true);
+        importPage.setDocumentSelected(cleanInAA, false);
+        assertEquals(List.of(inCC), importPage.getSelectedTreeFiles());
+        importPage.setDocumentSelected(cleanInAA, true);
+        assertEquals(List.of(inAA, inCC), importPage.getSelectedTreeFiles());
+
+        // The selected documents, below their folders.
+        ImportDocumentsPage analysis = importPage.analyse("docx");
+        assertEquals(List.of("BB/AA/" + CLEAN.page(), "BB/CC/AA/" + CLEAN.page()), analysis.getDocuments());
+        assertEquals(List.of("BB/AA", "BB/CC/AA"), analysis.getAnalysedFolders());
+        assertEquals(List.of("BB/AA/" + CLEAN.file(), "BB/CC/AA/" + CLEAN.file()), analysis.getSelectedFiles());
+
+        ImportDocumentsPage report = analysis.importSelected();
+        assertEquals("Imported documents (2)", report.getImportedTitle());
+        assertEquals(List.of("BB/AA/" + CLEAN.file(), "BB/CC/AA/" + CLEAN.file()),
+            report.getImported().stream().map(ReportRow::file).toList());
+        // Each document is imported below the pages of its folders, created for it.
+        assertTrue(setup.pageExists(List.of("SOPManager", "BB", "AA", CLEAN.page()), "WebHome"));
+        assertTrue(setup.pageExists(List.of("SOPManager", "BB", "CC", "AA", CLEAN.page()), "WebHome"));
+        setup.gotoPage(new LocalDocumentReference(List.of("SOPManager", "BB", "CC"), "WebHome"));
+        assertEquals("CC", new ViewPage().getDocumentTitle());
     }
 
     /**
