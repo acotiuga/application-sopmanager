@@ -125,6 +125,9 @@ class ImportDocumentsIT
         setup.createUser("MMuster", PASSWORD, null, "first_name", "Max", "last_name", "Muster");
         setup.createUser("KBeispiel", PASSWORD, null, "first_name", "Karl", "last_name", "Beispiel");
         setup.createUser("BeispielKl", PASSWORD, null, "first_name", "Klaus", "last_name", "");
+        // The groups of managers of the approver and of a reviewer, the other reviewer having none.
+        setup.addObject("XWiki", "ANA_Leitender_Arzt", "XWiki.XWikiGroups", "member", "XWiki.MMuster");
+        setup.addObject("XWiki", "ANA_Leitender_Pfleger", "XWiki.XWikiGroups", "member", "XWiki.KBeispiel");
         // The editor imports the SOP documents, writes them, reviews and approves them.
         for (String group : List.of("SOPEditorsGroup", "SOPReviewersGroup", "SOPApproversGroup")) {
             setup.addObject("XWiki", group, "XWiki.XWikiGroups", "member", "XWiki." + EDITOR);
@@ -361,6 +364,9 @@ class ImportDocumentsIT
         assertEquals(MUSTER, data.get("approverUser"));
         assertEquals(BEISPIEL, data.get("reviewerUser"));
         assertEquals("", data.get("revisionOwner"));
+        // The groups of managers of the approver and of the reviewer.
+        assertEquals("xwiki:XWiki.ANA_Leitender_Arzt", data.get("approverGroups"));
+        assertEquals("xwiki:XWiki.ANA_Leitender_Pfleger", data.get("reviewerGroups"));
         // The page header and footer are not in the content.
         String content = SOPTestUtils.getContent(setup, NATIVE.page());
         assertTrue(content.contains("|Hygienische Händedesinfektion|3 ml"), content);
@@ -381,6 +387,9 @@ class ImportDocumentsIT
         assertEquals(CONVERTED.title(), data.get("title"));
         assertEquals(MUSTER, data.get("approverUser"));
         assertEquals("xwiki:XWiki.BeispielKl", data.get("reviewerUser"));
+        // The selected reviewer has no group of managers.
+        assertEquals("xwiki:XWiki.ANA_Leitender_Arzt", data.get("approverGroups"));
+        assertEquals("", data.get("reviewerGroups"));
         assertEquals("ANA_AA_9.102", data.get("revisionId"));
         assertEquals("2", data.get("revisionNumber"));
         assertEquals("23.01.2024", data.get("releaseDate"));

@@ -41,6 +41,7 @@ import org.xwiki.rendering.block.XDOM;
 import org.xwiki.rendering.renderer.BlockRenderer;
 import org.xwiki.rendering.renderer.printer.WikiPrinter;
 import org.xwiki.rendering.syntax.Syntax;
+import org.xwiki.test.annotation.ComponentList;
 import org.xwiki.test.junit5.mockito.ComponentTest;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
@@ -68,6 +69,7 @@ import static org.mockito.Mockito.when;
  * @version $Id$
  */
 @ComponentTest
+@ComponentList(ImportRoles.class)
 class SOPDocumentCreatorTest
 {
     private static final DocumentReference USER = new DocumentReference("xwiki", "XWiki", "Editor");
@@ -94,6 +96,9 @@ class SOPDocumentCreatorTest
 
     @MockComponent
     private ImportFolderPages folderPages;
+
+    @MockComponent
+    private ImportGroups groups;
 
     private XWikiContext context;
 
@@ -154,6 +159,12 @@ class SOPDocumentCreatorTest
             Compatibility.COMPATIBLE, false, List.of(new ImportWarning("sopManager.import.warning.backgroundImages", 1)),
             DocumentSource.UNKNOWN);
 
+        DocumentReference muster = new DocumentReference("xwiki", "XWiki", "MMuster");
+        DocumentReference beispiel = new DocumentReference("xwiki", "XWiki", "KBeispiel");
+        when(this.groups.getManagerGroups(List.of(muster, beispiel), "xwiki")).thenReturn(List.of(
+            new DocumentReference("xwiki", "XWiki", "ANA_Leitender_Arzt"),
+            new DocumentReference("xwiki", "XWiki", "ITS_Leitender_Arzt")));
+
         // The approvers selected, as submitted by the user picker, one of them twice; the first selected owner that
         // doesn't exist; no reviewer.
         List<ImportWarning> warnings = this.creator.create(REFERENCE, "ANA_AA_9.101_Händedesinfektion", docx,
@@ -164,7 +175,11 @@ class SOPDocumentCreatorTest
             new ImportWarning("sopManager.import.warning.reviewerNotSet", "K. Beispiel")), warnings);
         verify(this.object).set("approverUser", "xwiki:XWiki.MMuster,xwiki:XWiki.KBeispiel", this.context);
         verify(this.object).set("revisionOwner", "xwiki:XWiki.KBeispiel", this.context);
+        verify(this.object).set("approverGroups", "xwiki:XWiki.ANA_Leitender_Arzt,xwiki:XWiki.ITS_Leitender_Arzt",
+            this.context);
         verify(this.object, never()).set(eq("reviewerUser"), any(), any());
+        // No reviewer, so no group.
+        verify(this.object, never()).set(eq("reviewerGroups"), any(), any());
         verify(this.document).setSyntax(Syntax.XWIKI_2_1);
         verify(this.document).setTitle("Händedesinfektion");
         verify(this.document).setContent("content");
@@ -182,6 +197,19 @@ class SOPDocumentCreatorTest
         verify(this.object).set("releaseDate", date(LocalDate.of(2025, 11, 5)), this.context);
         verify(this.object).set("revisionPlannedDate", date(LocalDate.of(2020, 11, 4)), this.context);
         verify(this.wiki).saveDocument(this.document, "Imported", this.context);
+    }
+
+    @Test
+    void createWithReviewersWithoutGroup() throws Exception
+    {
+        ImportedDocument docx = new ImportedDocument(new XDOM(List.of()), Map.of(), new SOPDocumentDetails(),
+            Compatibility.COMPATIBLE, false, List.of(), DocumentSource.UNKNOWN);
+
+        this.creator.create(REFERENCE, "ANA_AA_9.101_Händedesinfektion", docx,
+            Map.of(SOPImportManager.REVIEWER, List.of("KBeispiel")), this.context);
+
+        verify(this.object).set("reviewerUser", "xwiki:XWiki.KBeispiel", this.context);
+        verify(this.object, never()).set(eq("reviewerGroups"), any(), any());
     }
 
     @Test

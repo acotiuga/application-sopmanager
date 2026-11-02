@@ -115,7 +115,7 @@ public final class SOPTestUtils
         "#set ($object = $document.getObject('SOPManager.Code.ControlledDocumentClass'))",
         "#set ($data = {'title': $document.plainTitle})",
         "#foreach ($property in ['status', 'isInReview', 'revisionId', 'revisionNumber', 'pdfTemplate', "
-            + "'revisionOwner', 'approverUser', 'reviewerUser', 'pDFSecondaryTargetLocation'])",
+            + "'revisionOwner', 'approverUser', 'reviewerUser', 'approverGroups', 'reviewerGroups', 'pDFSecondaryTargetLocation'])",
         "  #set ($data[$property] = \"$!object.getValue($property)\")",
         "#end",
         "#foreach ($property in ['releaseDate', 'revisionPlannedDate'])",

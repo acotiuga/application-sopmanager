@@ -39,8 +39,6 @@ import org.xwiki.contrib.sopmanager.SOPManager;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.DocumentReferenceResolver;
-import org.xwiki.model.reference.EntityReferenceSerializer;
 import org.xwiki.rendering.renderer.BlockRenderer;
 import org.xwiki.rendering.renderer.printer.DefaultWikiPrinter;
 import org.xwiki.rendering.renderer.printer.WikiPrinter;
@@ -72,8 +70,6 @@ public class SOPDocumentCreator
      */
     static final String PDF_TEMPLATE_HORIZONTAL = "SOPManager.Code.GKHPDFTemplateHorizontal";
 
-    private static final String WARNING_PREFIX = "sopManager.import.warning.";
-
     private static final String WEB_HOME = "WebHome";
 
     /**
@@ -90,14 +86,10 @@ public class SOPDocumentCreator
     private ContextualLocalizationManager localizationManager;
 
     @Inject
-    @Named("current")
-    private DocumentReferenceResolver<String> resolver;
-
-    @Inject
-    private EntityReferenceSerializer<String> serializer;
-
-    @Inject
     private ImportFolderPages folderPages;
+
+    @Inject
+    private ImportRoles roles;
 
     /**
      * @param baseName the path of the imported file relative to the imported folder, without extension, e.g.
@@ -121,10 +113,7 @@ public class SOPDocumentCreator
      * @param reference the SOP document to create
      * @param baseName the name of the imported file, without extension
      * @param docx the imported document
-     * @param users the users selected for the document, by role ({@link SOPImportManager#OWNER},
-     *     {@link SOPImportManager#APPROVER}, {@link SOPImportManager#REVIEWER}): the references of the users, possibly
-     *     separated by commas as submitted by the user pickers; the first one is set as owner, all of them as approvers
-     *     and reviewers
+     * @param users the users selected for the document, by role, see {@link ImportRoles}
      * @param context the XWiki context
      * @return what was not imported as is
      * @throws XWikiException if the document can't be saved
@@ -163,46 +152,11 @@ public class SOPDocumentCreator
         setDate(sop, "releaseDate", details.getReleaseDate(), context);
         setDate(sop, "revisionPlannedDate", details.getRevisionPlannedDate(), context);
         List<ImportWarning> warnings = new ArrayList<>(docx.warnings());
-        setUsers(sop, "revisionOwner", users.get(SOPImportManager.OWNER), false, context);
-        if (!setUsers(sop, "approverUser", users.get(SOPImportManager.APPROVER), true, context)
-            && StringUtils.isNotBlank(details.getApprovedBy())) {
-            warnings.add(new ImportWarning(WARNING_PREFIX + "approverNotSet", details.getApprovedBy()));
-        }
-        if (!setUsers(sop, "reviewerUser", users.get(SOPImportManager.REVIEWER), true, context)
-            && StringUtils.isNotBlank(details.getRevisedBy())) {
-            warnings.add(new ImportWarning(WARNING_PREFIX + "reviewerNotSet", details.getRevisedBy()));
-        }
+        warnings.addAll(this.roles.set(sop, reference.getWikiReference().getName(), users, details, context));
 
         context.getWiki().saveDocument(document,
             this.localizationManager.getTranslationPlain("sopManager.import.saveComment"), context);
         return warnings;
-    }
-
-    /**
-     * Sets a user property to the selected users that exist: all of them, separated by commas, if the property holds
-     * several users, the first one otherwise.
-     *
-     * @return whether a user was set
-     */
-    private boolean setUsers(BaseObject sop, String property, List<String> users, boolean multiple,
-        XWikiContext context) throws XWikiException
-    {
-        List<String> existing = new ArrayList<>();
-        for (String value : users == null ? List.<String>of() : users) {
-            for (String user : StringUtils.split(StringUtils.defaultString(value), ',')) {
-                DocumentReference reference = this.resolver.resolve(user.trim());
-                String serialized = this.serializer.serialize(reference);
-                if (StringUtils.isNotBlank(user) && !existing.contains(serialized)
-                    && context.getWiki().exists(reference, context)) {
-                    existing.add(serialized);
-                }
-            }
-        }
-        if (existing.isEmpty()) {
-            return false;
-        }
-        sop.set(property, multiple ? String.join(",", existing) : existing.get(0), context);
-        return true;
     }
 
     private static void setDate(BaseObject sop, String property, LocalDate date, XWikiContext context)
