@@ -351,13 +351,13 @@ public class SOPDocumentDetails
 
     private Integer parseRevision(String label, String value)
     {
-        if (value.matches("\\d{1,4}")) {
-            return Integer.valueOf(value);
-        }
-        // The revision in the label, e.g. "Version 03", above the date of the version.
+        // The revision in the label, e.g. "Version 03", above the date of the version: 3.
         Matcher matcher = NUMBER.matcher(label);
         if (matcher.find()) {
             return Integer.valueOf(matcher.group());
+        }
+        if (value.matches("\\d{1,4}")) {
+            return Integer.valueOf(value);
         }
         if (!value.isEmpty()) {
             addWarning(new ImportWarning("sopManager.import.warning.invalidRevision", value));

@@ -76,6 +76,27 @@ class SOPDocumentDetailsTest
     }
 
     @Test
+    void readTheRevisionInTheLabel()
+    {
+        // Whatever is below the label: a date, the year of the version, nothing.
+        for (String value : List.of("2.6.2020", "2020", "")) {
+            SOPDocumentDetails details = new SOPDocumentDetails();
+            details.setValue("Version 03", value);
+            assertEquals(3, details.getRevisionNumber(), value);
+            assertEquals(List.of(), details.getWarnings(), value);
+        }
+
+        SOPDocumentDetails details = new SOPDocumentDetails();
+        details.setValue("Version 3", "");
+        assertEquals(3, details.getRevisionNumber());
+
+        // No number in the label: the value below it.
+        details = new SOPDocumentDetails();
+        details.setValue("Version", "05");
+        assertEquals(5, details.getRevisionNumber());
+    }
+
+    @Test
     void readReleaseTable()
     {
         SOPDocumentDetails details = new SOPDocumentDetails();
