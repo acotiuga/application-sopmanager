@@ -99,10 +99,11 @@ class ImportFolderPagesTest
         when(this.serializer.serialize(AA)).thenReturn("xwiki:SOPManager.BB.AA.WebHome");
 
         this.folderPages.create(new DocumentReference("xwiki", List.of("SOPManager", "BB", "AA", "CC", "Document"),
-            "WebHome"), this.context);
+            "WebHome"), List.of("Folder BB", "Folder AA", "CC"), this.context);
 
         verify(folder).setSyntax(Syntax.XWIKI_2_1);
-        verify(folder).setTitle("AA");
+        // The name of the folder, not the name of its page.
+        verify(folder).setTitle("Folder AA");
         verify(folder).setContent("{{documentTree root=\"document:xwiki:SOPManager.BB.AA.WebHome\"/}}");
         verify(folder).setCreatorReference(USER);
         verify(folder).setAuthorReference(USER);
@@ -116,7 +117,7 @@ class ImportFolderPagesTest
     {
         // A document of the imported folder: no page of folder.
         this.folderPages.create(new DocumentReference("xwiki", List.of("SOPManager", "Document"), "WebHome"),
-            this.context);
+            List.of(), this.context);
 
         verify(this.wiki, never()).exists(any(DocumentReference.class), any(XWikiContext.class));
         verify(this.wiki, never()).saveDocument(any(), anyString(), any());

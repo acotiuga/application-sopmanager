@@ -3,6 +3,7 @@ org.xwiki.contrib.sopmanager.importer.internal.DocumentReader
 org.xwiki.contrib.sopmanager.importer.internal.ImportDocumentAnalyser
 org.xwiki.contrib.sopmanager.importer.internal.ImportFolderPages
 org.xwiki.contrib.sopmanager.importer.internal.ImportGroups
+org.xwiki.contrib.sopmanager.importer.internal.ImportPageNames
 org.xwiki.contrib.sopmanager.importer.internal.ImportPreviewRenderer
 org.xwiki.contrib.sopmanager.importer.internal.ImportRights
 org.xwiki.contrib.sopmanager.importer.internal.ImportRoles

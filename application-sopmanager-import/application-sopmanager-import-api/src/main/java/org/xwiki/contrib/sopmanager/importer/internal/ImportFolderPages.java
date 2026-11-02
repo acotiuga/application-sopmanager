@@ -64,19 +64,23 @@ public class ImportFolderPages
      * can't edit are not created.
      *
      * @param reference the SOP document of an imported document
+     * @param folders the names of the folders of the imported document, whose pages may be named differently by the
+     *     naming strategy of the wiki
      * @param context the XWiki context
      * @throws XWikiException if a page can't be saved
      */
-    public void create(DocumentReference reference, XWikiContext context) throws XWikiException
+    public void create(DocumentReference reference, List<String> folders, XWikiContext context) throws XWikiException
     {
         List<SpaceReference> spaces = reference.getSpaceReferences();
         // Not the SOP Manager space, nor the space of the document.
-        for (SpaceReference space : spaces.subList(1, Math.max(1, spaces.size() - 1))) {
+        List<SpaceReference> folderSpaces = spaces.subList(1, Math.max(1, spaces.size() - 1));
+        for (int i = 0; i < folderSpaces.size(); i++) {
+            SpaceReference space = folderSpaces.get(i);
             DocumentReference folder = new DocumentReference(WEB_HOME, space);
             if (!context.getWiki().exists(folder, context) && this.rights.canEdit(folder, context)) {
                 XWikiDocument document = context.getWiki().getDocument(folder, context).clone();
                 document.setSyntax(Syntax.XWIKI_2_1);
-                document.setTitle(space.getName());
+                document.setTitle(i < folders.size() ? folders.get(i) : space.getName());
                 document.setContent(String.format("{{documentTree root=\"document:%s\"/}}",
                     this.serializer.serialize(folder).replace("~", "~~").replace("\"", "~\"")));
                 DocumentReference user = context.getUserReference();

@@ -306,12 +306,21 @@ public final class SOPTestUtils
     }
 
     /**
+     * @param name the name of a document, without extension
+     * @return the name of its page: without the code of the document
+     */
+    public static String pageName(String name)
+    {
+        return name.replaceFirst("^[A-Z]+_[A-Z]+_[\\d.]+_", "");
+    }
+
+    /**
      * @param name the name of a SOP document
      * @return the reference of the document, in the SOP Manager space
      */
     public static LocalDocumentReference reference(String name)
     {
-        return new LocalDocumentReference(List.of(SOP_MANAGER, name), "WebHome");
+        return new LocalDocumentReference(List.of(SOP_MANAGER, pageName(name)), "WebHome");
     }
 
     /**
@@ -323,7 +332,8 @@ public final class SOPTestUtils
     @SuppressWarnings("unchecked")
     public static Map<String, String> getData(TestUtils setup, String name) throws Exception
     {
-        String json = setup.executeWiki(DATA_SCRIPT, Syntax.XWIKI_2_1, Map.of("outputSyntax", "plain", "page", name));
+        String json = setup.executeWiki(DATA_SCRIPT, Syntax.XWIKI_2_1, Map.of("outputSyntax", "plain", "page",
+            pageName(name)));
         return new ObjectMapper().readValue(json.trim(), Map.class);
     }
 

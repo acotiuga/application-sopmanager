@@ -95,6 +95,9 @@ public class DefaultSOPImportManager implements SOPImportManager
     private ImportRights rights;
 
     @Inject
+    private ImportPageNames pageNames;
+
+    @Inject
     private JobProgressManager progressManager;
 
     @Inject
@@ -383,11 +386,14 @@ public class DefaultSOPImportManager implements SOPImportManager
             if (context.getWiki().exists(reference, context)) {
                 result.setOutcome(Outcome.SKIPPED_EXISTING);
                 result.setMessage(translate(MESSAGE_PREFIX + "exists", this.serializer.serialize(reference)));
+            } else if (!this.pageNames.isValid(reference)) {
+                result.setOutcome(Outcome.FAILED);
+                result.setMessage(translate(MESSAGE_PREFIX + "invalidName", this.serializer.serialize(reference)));
             } else if (!this.rights.canEdit(reference, context)) {
                 result.setOutcome(Outcome.FAILED);
                 result.setMessage(translate(MESSAGE_PREFIX + NOT_ALLOWED, this.serializer.serialize(reference)));
             } else {
-                for (ImportWarning warning : this.documentCreator.create(reference, ImportFolder.getName(baseName),
+                for (ImportWarning warning : this.documentCreator.create(reference, baseName,
                     document, users, context)) {
                     result.addWarning(this.analyser.translate(warning));
                 }

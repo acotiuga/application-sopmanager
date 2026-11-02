@@ -98,6 +98,9 @@ class SOPDocumentCreatorTest
     private ImportFolderPages folderPages;
 
     @MockComponent
+    private ImportPageNames pageNames;
+
+    @MockComponent
     private ImportGroups groups;
 
     private XWikiContext context;
@@ -189,7 +192,7 @@ class SOPDocumentCreatorTest
         verify(this.document).setAttachment(eq("photo.png"), any(InputStream.class), eq(this.context));
         verify(this.attachment).setAuthorReference(USER);
         verify(this.object).set("status", "imported", this.context);
-        verify(this.folderPages).create(REFERENCE, this.context);
+        verify(this.folderPages).create(REFERENCE, List.of(), this.context);
         verify(this.object).set("isInReview", 0, this.context);
         verify(this.object).set("pdfTemplate", "SOPManager.Code.GKHPDFTemplateVertical", this.context);
         verify(this.object).set("revisionId", "ANA_AA_9.101", this.context);
@@ -210,6 +213,20 @@ class SOPDocumentCreatorTest
 
         verify(this.object).set("reviewerUser", "xwiki:XWiki.KBeispiel", this.context);
         verify(this.object, never()).set(eq("reviewerGroups"), any(), any());
+    }
+
+    @Test
+    void createBelowFolders() throws Exception
+    {
+        ImportedDocument docx = new ImportedDocument(new XDOM(List.of()), Map.of(), new SOPDocumentDetails(),
+            Compatibility.COMPATIBLE, false, List.of(), DocumentSource.UNKNOWN);
+
+        this.creator.create(REFERENCE, "BB/AA/ITS_AA_7 137 Inhalt", docx, Map.of(), this.context);
+
+        verify(this.folderPages).create(REFERENCE, List.of("BB", "AA"), this.context);
+        // The code only in its field, whether it comes from the file name.
+        verify(this.document).setTitle("Inhalt");
+        verify(this.object).set("revisionId", "ITS_AA_7.137", this.context);
     }
 
     @Test
@@ -238,8 +255,14 @@ class SOPDocumentCreatorTest
         assertEquals("ANA_AA_9.1", SOPDocumentCreator.getTitle("ANA_AA_9.1", details));
         assertEquals("Titel", SOPDocumentCreator.getTitle("ANA_AA_9.1 - Titel", details));
         assertNull(SOPDocumentCreator.getRevisionId("Hausordnung", details));
-        assertEquals(REFERENCE, this.creator.getReference("ANA_AA_9.101_Händedesinfektion", "xwiki"));
-        assertEquals(new DocumentReference("xwiki", List.of("SOPManager", "BB", "AA", "ANA_AA_9.101"), "WebHome"),
-            this.creator.getReference("BB/AA/ANA_AA_9.101", "xwiki"));
+        assertEquals("ANA_AA_9.1", SOPDocumentCreator.getRevisionId("ANA_AA_9.1 - Titel", details));
+    }
+
+    @Test
+    void getReference()
+    {
+        when(this.pageNames.getReference("BB/ANA_AA_9.101_Händedesinfektion", "xwiki")).thenReturn(REFERENCE);
+
+        assertEquals(REFERENCE, this.creator.getReference("BB/ANA_AA_9.101_Händedesinfektion", "xwiki"));
     }
 }

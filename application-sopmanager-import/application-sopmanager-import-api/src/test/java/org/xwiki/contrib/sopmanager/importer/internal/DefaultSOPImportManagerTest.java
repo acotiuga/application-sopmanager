@@ -22,6 +22,7 @@ package org.xwiki.contrib.sopmanager.importer.internal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -126,6 +127,9 @@ class DefaultSOPImportManagerTest
     private SOPDocumentCreator documentCreator;
 
     @MockComponent
+    private ImportPageNames pageNames;
+
+    @MockComponent
     private ImportDocumentAnalyser analyser;
 
     @MockComponent
@@ -158,8 +162,14 @@ class DefaultSOPImportManagerTest
         when(localizationManager.getTranslationPlain(anyString(), any(Object[].class))).thenAnswer(
             invocation -> invocation.getArgument(0) + " " + Arrays.toString(
                 Arrays.copyOfRange(invocation.getArguments(), 1, invocation.getArguments().length)));
+        when(this.pageNames.isValid(any())).thenReturn(true);
         when(this.documentCreator.getReference(anyString(), eq("xwiki"))).thenAnswer(
-            invocation -> new SOPDocumentCreator().getReference(invocation.getArgument(0), "xwiki"));
+            invocation -> {
+                // The naming of the pages is tested by ImportPageNamesTest.
+                List<String> spaces = new ArrayList<>(List.of("SOPManager"));
+                spaces.addAll(List.of(((String) invocation.getArgument(0)).split("/")));
+                return new DocumentReference("xwiki", spaces, "WebHome");
+            });
         when(this.serializer.serialize(any())).thenAnswer(invocation -> invocation.getArgument(0).toString());
         // The documents are read and analysed by the real reader and analyser, without office server.
         DocumentReader reader = new DocumentReader();
@@ -509,7 +519,7 @@ class DefaultSOPImportManagerTest
         // The document is created below the pages of its folders, and named after its file.
         assertEquals(reference, report.getResults().get(0).getDocumentReference());
         assertEquals(Outcome.IMPORTED, report.getResults().get(0).getOutcome());
-        verify(this.documentCreator).create(eq(reference), eq(NATIVE), any(), eq(users), eq(this.context));
+        verify(this.documentCreator).create(eq(reference), eq("BB/CC/AA/" + NATIVE), any(), eq(users), eq(this.context));
         // The paths with "..", which would name pages after them, are refused.
         assertResult(report.getResults().get(1), "BB/CC/AA/../../../" + NATIVE + DOCX, null, Outcome.FAILED,
             "sopManager.import.message.notInFolder [BB/CC/AA/../../../" + NATIVE + DOCX + "]");
@@ -555,6 +565,24 @@ class DefaultSOPImportManagerTest
         assertNull(this.importManager.previewDocument(this.folder.toString(), "~$A_AA_9.101_Dummy-Haendedesinfektion"
             + DOCX));
         assertNull(this.importManager.previewDocument("relative", NATIVE + PDF));
+    }
+
+    @Test
+    void importNeedsAPageNameAllowedByTheNamingStrategy() throws Exception
+    {
+        when(this.pageNames.isValid(any())).thenReturn(false);
+
+        SOPImportReport report = this.importManager.importDocuments(this.folder.toString(),
+            List.of(NATIVE + DOCX), Map.of(), null);
+
+        SOPImportResult result = report.getResults().get(0);
+        assertEquals(Outcome.FAILED, result.getOutcome());
+        assertTrue(result.getMessage().contains("invalidName"), result.getMessage());
+        verify(this.documentCreator, never()).create(any(), any(), any(), any(), any());
+        assertTrue(this.logCapture.getMessage(0).startsWith("Importing the 1 selected files"));
+        assertTrue(this.logCapture.getMessage(1).contains(NATIVE + DOCX), this.logCapture.getMessage(1));
+        assertEquals("Imported documents (0): ", this.logCapture.getMessage(2));
+        assertEquals("Documents not imported (1): " + NATIVE + DOCX, this.logCapture.getMessage(3));
     }
 
     @Test

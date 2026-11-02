@@ -288,7 +288,7 @@ class ImportDocumentsIT
             preview.getPreviewContent());
         analysis = preview.close();
         // Nothing was saved.
-        assertFalse(setup.pageExists(List.of("SOPManager", NATIVE.page()), "WebHome"));
+        assertFalse(setup.pageExists(List.of("SOPManager", SOPTestUtils.pageName(NATIVE.page())), "WebHome"));
 
         // Change the reviewer of a document, then import the selected versions.
         analysis.setUser(CONVERTED.page(), REVIEWER, "Klaus", "XWiki.BeispielKl");
@@ -350,6 +350,9 @@ class ImportDocumentsIT
     {
         setup.loginAsSuperAdmin();
         // The details of the page header and footer are in the SOP object.
+        // The code of the document is only in its field, neither in the name of its page nor in its title.
+        assertTrue(setup.pageExists(List.of("SOPManager", "Dummy-Haendedesinfektion"), "WebHome"));
+        assertFalse(setup.pageExists(List.of("SOPManager", NATIVE.page()), "WebHome"));
         Map<String, String> data = SOPTestUtils.getData(setup, NATIVE.page());
         assertEquals(NATIVE.title(), data.get("title"));
         assertEquals("imported", data.get("status"));

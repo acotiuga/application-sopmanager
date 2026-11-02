@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,6 +35,7 @@ import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.contrib.sopmanager.SOPManager;
+import org.xwiki.contrib.sopmanager.importer.SOPImportFolder;
 import org.xwiki.contrib.sopmanager.importer.SOPImportManager;
 import org.xwiki.localization.ContextualLocalizationManager;
 import org.xwiki.model.reference.DocumentReference;
@@ -70,13 +70,7 @@ public class SOPDocumentCreator
      */
     static final String PDF_TEMPLATE_HORIZONTAL = "SOPManager.Code.GKHPDFTemplateHorizontal";
 
-    private static final String WEB_HOME = "WebHome";
-
-    /**
-     * The separator of the folders in the paths of the imported files, see
-     * {@link org.xwiki.contrib.sopmanager.importer.SOPImportFolder#SEPARATOR}.
-     */
-    private static final String SEPARATOR = "/";
+    private static final String SEPARATOR = SOPImportFolder.SEPARATOR;
 
     @Inject
     @Named("xwiki/2.1")
@@ -91,19 +85,18 @@ public class SOPDocumentCreator
     @Inject
     private ImportRoles roles;
 
+    @Inject
+    private ImportPageNames pageNames;
+
     /**
      * @param baseName the path of the imported file relative to the imported folder, without extension, e.g.
-     *     "BB/AA/Document"
+     *     "BB/AA/ANA_AA_7.212_Document"
      * @param wiki the wiki where to import the file
-     * @return the SOP document of the imported file: a page of the SOP Manager space named after the file, below the
-     *     pages of its folders, e.g. SOPManager.BB.AA.Document.WebHome
+     * @return the SOP document of the imported file, see {@link ImportPageNames}
      */
     public DocumentReference getReference(String baseName, String wiki)
     {
-        List<String> spaces = new ArrayList<>();
-        spaces.add(SOPManager.SOP_MANAGER);
-        spaces.addAll(List.of(baseName.split(SEPARATOR)));
-        return new DocumentReference(wiki, spaces, WEB_HOME);
+        return this.pageNames.getReference(baseName, wiki);
     }
 
     /**
@@ -111,7 +104,7 @@ public class SOPDocumentCreator
      * process, and the pages of its folders that don't exist yet.
      *
      * @param reference the SOP document to create
-     * @param baseName the name of the imported file, without extension
+     * @param baseName the path of the imported file relative to the imported folder, without extension
      * @param docx the imported document
      * @param users the users selected for the document, by role, see {@link ImportRoles}
      * @param context the XWiki context
@@ -122,11 +115,13 @@ public class SOPDocumentCreator
     public List<ImportWarning> create(DocumentReference reference, String baseName, ImportedDocument docx,
         Map<String, List<String>> users, XWikiContext context) throws XWikiException, IOException
     {
-        this.folderPages.create(reference, context);
+        String parent = ImportFolder.getParent(baseName);
+        this.folderPages.create(reference, parent.isEmpty() ? List.of() : List.of(parent.split(SEPARATOR)), context);
+        String name = ImportFolder.getName(baseName);
         SOPDocumentDetails details = docx.details();
         XWikiDocument document = context.getWiki().getDocument(reference, context).clone();
         document.setSyntax(Syntax.XWIKI_2_1);
-        document.setTitle(getTitle(baseName, details));
+        document.setTitle(getTitle(name, details));
         WikiPrinter printer = new DefaultWikiPrinter();
         this.renderer.render(docx.content(), printer);
         document.setContent(printer.toString());
@@ -145,7 +140,7 @@ public class SOPDocumentCreator
         sop.set("status", SOPImportManager.IMPORTED, context);
         sop.set("isInReview", 0, context);
         sop.set("pdfTemplate", docx.landscape() ? PDF_TEMPLATE_HORIZONTAL : PDF_TEMPLATE_VERTICAL, context);
-        sop.set("revisionId", StringUtils.defaultString(getRevisionId(baseName, details)), context);
+        sop.set("revisionId", StringUtils.defaultString(getRevisionId(name, details)), context);
         if (details.getRevisionNumber() != null) {
             sop.set("revisionNumber", details.getRevisionNumber(), context);
         }
@@ -175,8 +170,7 @@ public class SOPDocumentCreator
         if (StringUtils.isNotEmpty(details.getRevisionId())) {
             return details.getRevisionId();
         }
-        Matcher matcher = SOPDocumentDetails.CODE.matcher(baseName);
-        return matcher.find() ? matcher.group(1) : null;
+        return ImportPageNames.getCode(baseName);
     }
 
     /**
@@ -187,8 +181,6 @@ public class SOPDocumentCreator
         if (StringUtils.isNotBlank(details.getTitle())) {
             return details.getTitle();
         }
-        Matcher matcher = SOPDocumentDetails.CODE.matcher(baseName);
-        String title = matcher.find() ? StringUtils.strip(baseName.substring(matcher.end()), " ._-") : baseName;
-        return title.isEmpty() ? baseName : title;
+        return ImportPageNames.removeCode(baseName);
     }
 }

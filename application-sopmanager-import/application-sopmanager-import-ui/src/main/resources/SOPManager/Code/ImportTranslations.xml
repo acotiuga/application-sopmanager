@@ -140,6 +140,7 @@ sopManager.import.message.officeServer=The office server is not running: start i
 sopManager.import.message.unreadable=The document can not be read: {0}
 sopManager.import.message.notInFolder=[{0}] is not a file of the folder.
 sopManager.import.message.exists=The page [{0}] already exists.
+sopManager.import.message.invalidName=The name of the page [{0}] is not allowed by the naming strategy of the wiki.
 sopManager.import.message.failed=The import failed: {0}
 sopManager.import.warning.invalidDate=The {0} [{1}] is not a valid date (dd.MM.yyyy): it was not imported.
 sopManager.import.warning.invalidRevision=The revision [{0}] is not a number: it was not imported.
