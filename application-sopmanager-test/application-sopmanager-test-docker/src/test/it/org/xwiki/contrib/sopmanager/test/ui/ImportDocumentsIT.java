@@ -458,12 +458,14 @@ class ImportDocumentsIT
         assertEquals(IMPORTED, home.getStatus(CONVERTED.title()));
         assertTrue(home.canStartReview(CONVERTED.title()));
 
-        // The review keeps the revision of the imported document, and its planned revision date still to come.
+        // The review keeps the revision of the imported document, and its dates as its planned revision date is still to
+        // come.
         setup.loginAsSuperAdmin();
         Map<String, String> data = SOPTestUtils.getData(setup, NATIVE.page());
         assertEquals("draft", data.get("status"));
         assertEquals("1", data.get("isInReview"));
         assertEquals("5", data.get("revisionNumber"));
+        assertEquals("05.11.2025", data.get("releaseDate"));
         assertEquals("04.11.2028", data.get("revisionPlannedDate"));
         assertEquals("xwiki:XWiki." + EDITOR, data.get("revisionOwner"));
     }
@@ -479,6 +481,7 @@ class ImportDocumentsIT
         assertTrue(pdf.header().contains(NATIVE.title()), pdf.header());
         // The page footer of the PDF template: the release details.
         assertTrue(pdf.footer().contains("Sop Editor"), pdf.footer());
+        assertTrue(pdf.footer().contains("05.11.2025"), pdf.footer());
         assertTrue(pdf.footer().contains("04.11.2028"), pdf.footer());
         assertTrue(pdf.footer().matches("(?s).*\\b5\\b.*"), pdf.footer());
         // The content, without the page header and footer of the Word document.
@@ -498,6 +501,7 @@ class ImportDocumentsIT
         assertTrue(pdf.header().contains("ANA_AA_9.102"), pdf.header());
         assertTrue(pdf.header().contains(CONVERTED.title()), pdf.header());
         assertTrue(pdf.footer().contains("Sop Editor"), pdf.footer());
+        assertTrue(pdf.footer().contains("23.01.2024"), pdf.footer());
         assertTrue(pdf.footer().contains("23.01.2027"), pdf.footer());
         assertTrue(pdf.body().contains("Schublade 1"), pdf.body());
         assertFalse(pdf.text().contains("Freigabe am"), pdf.text());

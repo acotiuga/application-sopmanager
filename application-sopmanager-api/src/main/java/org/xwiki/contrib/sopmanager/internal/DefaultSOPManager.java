@@ -70,6 +70,8 @@ public class DefaultSOPManager implements SOPManager
 
     private static final String REVISION_NUMBER = "revisionNumber";
 
+    private static final String RELEASE_DATE = "releaseDate";
+
     private static final String REVISION_PLANNED_DATE = "revisionPlannedDate";
 
     private static final int DEFAULT_REVISION_PERIOD_YEARS = 3;
@@ -182,20 +184,23 @@ public class DefaultSOPManager implements SOPManager
     }
 
     /**
-     * Starts the revision of a document: its owner, its revision number and its planned revision date. An imported
-     * document keeps the revision of the imported document, its owner, and its planned revision date while it's still
-     * to come.
+     * Starts the revision of a document: its owner, its revision number and its dates: released today, to be revised
+     * after the default period. An imported document keeps the revision of the imported document and its owner. While
+     * its planned revision date is still to come, its last approval remains valid: it also keeps its dates, only
+     * getting today as release date if it has none.
      */
     private void startRevision(BaseObject sopObj, XWikiContext context)
     {
         boolean imported = IMPORTED.equals(sopObj.getStringValue(STATUS));
         Date plannedDate = sopObj.getDateValue(REVISION_PLANNED_DATE);
+        boolean validDates = imported && plannedDate != null && plannedDate.after(new Date());
         if (!imported || sopObj.getLargeStringValue(REVISION_OWNER).isBlank()) {
             sopObj.setLargeStringValue(REVISION_OWNER, serializer.serialize(context.getUserReference()));
         }
-        // Set today as the default revisionDate.
-        sopObj.setDateValue("releaseDate", new Date());
-        if (!imported || plannedDate == null || !plannedDate.after(new Date())) {
+        if (!validDates || sopObj.getDateValue(RELEASE_DATE) == null) {
+            sopObj.setDateValue(RELEASE_DATE, new Date());
+        }
+        if (!validDates) {
             sopObj.setDateValue(REVISION_PLANNED_DATE, getDefaultRevisionPlannedDate());
         }
         if (!imported || sopObj.getIntValue(REVISION_NUMBER) < 1) {
