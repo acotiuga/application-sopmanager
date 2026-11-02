@@ -89,9 +89,20 @@ public class DocxBlockConverter
     private final Map<String, int[]> numbers = new HashMap<>();
 
     /**
-     * An item of a list being built: its level, the format of its list, and its block.
+     * An item of a list being built: its level, the format of its list, its number, and its block.
      */
-    private record OpenItem(int level, ListFormat format, ListItemBlock item)
+    private record OpenItem(int level, ListFormat format, int number, ListItemBlock item)
+    {
+        boolean isContinuedBy(ListFormat otherFormat, int otherNumber)
+        {
+            return this.format.equals(otherFormat) && this.format.continues(this.number, otherNumber);
+        }
+    }
+
+    /**
+     * A list paragraph: its level, the format of its list, and its number.
+     */
+    private record ListParagraph(Element element, int level, ListFormat format, int number)
     {
     }
 
@@ -113,19 +124,16 @@ public class DocxBlockConverter
     {
         List<Block> blocks = new ArrayList<>();
         ListBuilder list = new ListBuilder();
+        List<ListParagraph> listParagraphs = new ArrayList<>();
         for (Element element : flatten(elements)) {
             Element numbering = is(element, P) ? path(element, PPR, "numPr") : null;
             String numId = value(numbering, "numId");
             if (!numId.isEmpty() && !"0".equals(numId)) {
                 int level = Math.min(parseLevel(value(numbering, "ilvl")), MAX_LEVELS - 1);
-                List<Block> after = new ArrayList<>();
-                list.add(level, this.styles.getListFormat(numId, level), nextNumber(numId, level),
-                    this.inlineConverter.convert(element, after));
-                if (!after.isEmpty()) {
-                    blocks.addAll(list.build());
-                    blocks.addAll(after);
-                }
+                listParagraphs.add(new ListParagraph(element, level, this.styles.getListFormat(numId, level),
+                    nextNumber(numId, level)));
             } else {
+                addList(listParagraphs, list, blocks);
                 blocks.addAll(list.build());
                 if (is(element, P)) {
                     convertParagraph(element, blocks);
@@ -134,8 +142,69 @@ public class DocxBlockConverter
                 }
             }
         }
+        addList(listParagraphs, list, blocks);
         blocks.addAll(list.build());
         return blocks;
+    }
+
+    /**
+     * Adds consecutive list paragraphs to the list being built, and forgets them.
+     */
+    private void addList(List<ListParagraph> paragraphs, ListBuilder list, List<Block> blocks)
+    {
+        int[] levels = getLevels(paragraphs);
+        for (int i = 0; i < levels.length; i++) {
+            ListParagraph paragraph = paragraphs.get(i);
+            List<Block> after = new ArrayList<>();
+            list.add(levels[i], paragraph.format(), paragraph.number(),
+                this.inlineConverter.convert(paragraph.element(), after));
+            if (!after.isEmpty()) {
+                blocks.addAll(list.build());
+                blocks.addAll(after);
+            }
+        }
+        paragraphs.clear();
+    }
+
+    /**
+     * Nests the items interrupting a numbered list in the last item before them, e.g. the letters of "1. 2. a) b) 3.":
+     * all the numbers looking alike once imported, the list would otherwise read 1, 2, 1, 2, 3.
+     *
+     * @return the levels of the consecutive list paragraphs
+     */
+    private static int[] getLevels(List<ListParagraph> paragraphs)
+    {
+        int[] levels = paragraphs.stream().mapToInt(ListParagraph::level).toArray();
+        for (int i = 1; i < levels.length; i++) {
+            int previous = i - 1;
+            while (previous >= 0 && levels[previous] > levels[i]) {
+                previous--;
+            }
+            if (previous >= 0 && levels[previous] == levels[i]) {
+                int resume = getResume(paragraphs, levels, previous, i);
+                for (int nested = i; nested < resume; nested++) {
+                    levels[nested]++;
+                }
+            }
+        }
+        return levels;
+    }
+
+    /**
+     * @return the position of the item continuing the list of the previous item after the items starting at the given
+     *     position, -1 if these items don't interrupt the list
+     */
+    private static int getResume(List<ListParagraph> paragraphs, int[] levels, int previous, int start)
+    {
+        ListFormat format = paragraphs.get(previous).format();
+        if (format.isInterruptedBy(paragraphs.get(start).format())) {
+            for (int i = start + 1; i < levels.length && levels[i] >= levels[previous]; i++) {
+                if (levels[i] == levels[previous] && paragraphs.get(i).format().equals(format)) {
+                    return format.continues(paragraphs.get(previous).number(), paragraphs.get(i).number()) ? i : -1;
+                }
+            }
+        }
+        return -1;
     }
 
     /**
@@ -160,8 +229,8 @@ public class DocxBlockConverter
      */
     private int nextNumber(String numId, int level)
     {
-        int[] counters = this.numbers.computeIfAbsent(numId, key -> new int[MAX_LEVELS]);
-        counters[level]++;
+        int[] counters = this.numbers.computeIfAbsent(this.styles.getCounters(numId), key -> new int[MAX_LEVELS]);
+        counters[level] = counters[level] == 0 ? this.styles.getListStart(numId, level) : counters[level] + 1;
         for (int deeper = level + 1; deeper < MAX_LEVELS; deeper++) {
             counters[deeper] = 0;
         }
@@ -328,18 +397,18 @@ public class DocxBlockConverter
 
         void add(int level, ListFormat format, int number, List<Block> content)
         {
-            // Close the items and lists deeper than this level, and the list of this level if its format differs (e.g.
-            // bullets after numbered items).
+            // Close the items and lists deeper than this level, and the list of this level if the item doesn't continue
+            // it (e.g. bullets after numbered items, or a numbered list starting again).
             while (!this.open.isEmpty() && (this.open.get(this.open.size() - 1).level() > level
                 || this.open.get(this.open.size() - 1).level() == level
-                && !this.open.get(this.open.size() - 1).format().equals(format))) {
+                && !this.open.get(this.open.size() - 1).isContinuedBy(format, number))) {
                 this.open.remove(this.open.size() - 1);
                 this.openLists.remove(this.openLists.size() - 1);
             }
             ListItemBlock item = new ListItemBlock(content);
             if (!this.open.isEmpty() && this.open.get(this.open.size() - 1).level() == level) {
                 this.openLists.get(this.openLists.size() - 1).addChild(item);
-                this.open.set(this.open.size() - 1, new OpenItem(level, format, item));
+                this.open.set(this.open.size() - 1, new OpenItem(level, format, number, item));
             } else {
                 // Keep the number of the document, the lists continuing in other cells or after paragraphs.
                 Block list = format.newList(number);
@@ -349,7 +418,7 @@ public class DocxBlockConverter
                 } else {
                     this.open.get(this.open.size() - 1).item().addChild(list);
                 }
-                this.open.add(new OpenItem(level, format, item));
+                this.open.add(new OpenItem(level, format, number, item));
                 this.openLists.add(list);
             }
         }

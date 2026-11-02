@@ -26,36 +26,56 @@ import org.xwiki.rendering.block.BulletedListBlock;
 import org.xwiki.rendering.block.NumberedListBlock;
 
 /**
- * The format of a list of an imported document: bulleted, or numbered with a style ("1.", "a.", "i."...) and the
- * character closing the numbers, a dot or a parenthesis ("1)", "a)"). The numbers closed by a parenthesis have the list
- * styles of the WYSIWYG editor defined by GKH.Code.CKEditorNumberedListStyles (the syntax of the wiki has no such
- * list), e.g. "gkh-lower-alpha-parenthesis". The numbered lists have a class, styled by the SOP Manager as in the
- * imported documents: the numbers at the left of the page and the text indented.
+ * The format of a list of an imported document: bulleted or numbered. The numbered lists are the standard ordered lists
+ * of the wiki, without any list style, whatever the numbers of the imported document: "1)", "a)" and "i." are all
+ * imported as "1.". The way the numbers are written in the document is only used to tell its lists apart, e.g. in
+ * "1. 2. a) b) 3.", where the letters are nested in the item 2 so that the numbers stay unambiguous.
  *
  * @param bullet whether the list is bulleted
- * @param style the CSS style of the numbers, e.g. "lower-alpha", empty for decimal numbers
- * @param parenthesis whether the numbers are closed by a parenthesis, e.g. "1)"
+ * @param numbering how the numbers of the list are written in the document, e.g. "a)"; it's not imported
  * @version $Id$
  * @since 1.0
  */
-public record ListFormat(boolean bullet, String style, boolean parenthesis)
+public record ListFormat(boolean bullet, String numbering)
 {
     /**
      * A bulleted list.
      */
-    public static final ListFormat BULLET = new ListFormat(true, "", false);
+    public static final ListFormat BULLET = new ListFormat(true, "");
 
     /**
-     * A list numbered "1.", "2.".
+     * A numbered list whose numbers are not known.
      */
-    public static final ListFormat DECIMAL = new ListFormat(false, "", false);
+    public static final ListFormat NUMBERED = new ListFormat(false, "");
 
     /**
-     * The class of the numbered lists.
+     * @param numbering how the numbers of the list are written in the document, e.g. "a)"
+     * @return a numbered list
      */
-    public static final String LIST_CLASS = "sop-list";
+    public static ListFormat numbered(String numbering)
+    {
+        return new ListFormat(false, numbering);
+    }
 
-    private static final String DECIMAL_STYLE = "decimal";
+    /**
+     * @param previous the number of the previous item, in a list of this format
+     * @param number the number of an item of this format
+     * @return whether the item continues the list: the numbers of a numbered list follow each other
+     */
+    public boolean continues(int previous, int number)
+    {
+        return this.bullet || number == previous + 1;
+    }
+
+    /**
+     * @param other the format of the items following an item of this format
+     * @return whether these items may interrupt a list of this format, which continues after them: two numbered lists
+     *     whose numbers are written differently
+     */
+    public boolean isInterruptedBy(ListFormat other)
+    {
+        return !this.bullet && !other.bullet && !equals(other);
+    }
 
     /**
      * @param start the number of the first item, which may continue a list interrupted by paragraphs
@@ -70,14 +90,6 @@ public record ListFormat(boolean bullet, String style, boolean parenthesis)
         if (start > 1) {
             list.setParameter("start", String.valueOf(start));
         }
-        String listStyle = this.style;
-        if (this.parenthesis) {
-            listStyle = "gkh-" + (listStyle.isEmpty() ? DECIMAL_STYLE : listStyle) + "-parenthesis";
-        }
-        if (!listStyle.isEmpty()) {
-            list.setParameter("style", "list-style-type: " + listStyle);
-        }
-        list.setParameter("class", LIST_CLASS);
         return list;
     }
 }

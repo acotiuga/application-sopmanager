@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.w3c.dom.Element;
 
 /**
@@ -46,17 +47,20 @@ public class DocxStyles
 
     private static final String ABSTRACT_NUM_ID = "abstractNumId";
 
+    private static final String ILVL = "ilvl";
+
     private static final int MAX_HEADING = 6;
 
     /**
      * The CSS styles of the number formats of Word.
      */
-    private static final Map<String, String> NUMBER_STYLES = Map.of("lowerLetter", "lower-alpha", "upperLetter",
-        "upper-alpha", "lowerRoman", "lower-roman", "upperRoman", "upper-roman");
-
     private final Map<String, Integer> headingLevels = new HashMap<>();
 
     private final Map<String, ListFormat> listFormats = new HashMap<>();
+
+    private final Map<String, Integer> listStarts = new HashMap<>();
+
+    private final Map<String, String> numberings = new HashMap<>();
 
     /**
      * @param styles the root of the styles part, can be {@code null}
@@ -122,25 +126,34 @@ public class DocxStyles
             abstracts.put(attribute(abstractNum, ABSTRACT_NUM_ID), abstractNum);
         }
         for (Element num : children(numbering, "num")) {
-            Element abstractNum = abstracts.get(value(num, ABSTRACT_NUM_ID));
-            for (Element level : children(abstractNum, "lvl")) {
-                this.listFormats.put(attribute(num, "numId") + '/' + attribute(level, "ilvl"), getFormat(level));
+            String numId = attribute(num, "numId");
+            String abstractNumId = value(num, ABSTRACT_NUM_ID);
+            // The lists of the same definition continue each other, unless they start again.
+            this.numberings.put(numId, abstractNumId);
+            for (Element level : children(abstracts.get(abstractNumId), "lvl")) {
+                String key = numId + '/' + attribute(level, ILVL);
+                this.listFormats.put(key, getFormat(level));
+                this.listStarts.put(key, NumberUtils.toInt(value(level, "start"), 1));
+            }
+            for (Element override : children(num, "lvlOverride")) {
+                String start = value(override, "startOverride");
+                if (!start.isEmpty()) {
+                    this.numberings.put(numId, numId + "/override");
+                    this.listStarts.put(numId + '/' + attribute(override, ILVL), NumberUtils.toInt(start, 1));
+                }
             }
         }
     }
 
     /**
-     * @return the format of a level of a list: its numbers (e.g. "lowerLetter"), and its text (e.g. "%1)")
+     * @return the format of a level of a list: bulleted, or numbered as told by its numbers (e.g. "lowerLetter") and
+     *     its text (e.g. "%1)")
      */
     private static ListFormat getFormat(Element level)
     {
         String format = value(level, "numFmt");
-        if ("bullet".equals(format)) {
-            return ListFormat.BULLET;
-        }
-        String text = value(level, "lvlText");
-        return new ListFormat(false, NUMBER_STYLES.getOrDefault(format, ""), text.endsWith(")")
-            && !text.startsWith("("));
+        return "bullet".equals(format) ? ListFormat.BULLET
+            : ListFormat.numbered(format + value(level, "lvlText").replaceAll("%\\d", ""));
     }
 
     /**
@@ -159,12 +172,31 @@ public class DocxStyles
 
     /**
      * @param numId the numbering of a list paragraph
+     * @return what identifies the counters of the numbering, shared by the numberings continuing each other
+     */
+    public String getCounters(String numId)
+    {
+        return this.numberings.getOrDefault(numId, numId);
+    }
+
+    /**
+     * @param numId the numbering of a list paragraph
      * @param level the level of the paragraph in the list
-     * @return the format of the items of this level, decimal numbers if it is not defined
+     * @return the number of the first item of this level
+     */
+    public int getListStart(String numId, int level)
+    {
+        return this.listStarts.getOrDefault(numId + '/' + level, 1);
+    }
+
+    /**
+     * @param numId the numbering of a list paragraph
+     * @param level the level of the paragraph in the list
+     * @return the format of the items of this level, numbered if it is not defined
      */
     public ListFormat getListFormat(String numId, int level)
     {
-        return this.listFormats.getOrDefault(numId + '/' + level, ListFormat.DECIMAL);
+        return this.listFormats.getOrDefault(numId + '/' + level, ListFormat.NUMBERED);
     }
 
     /**

@@ -21,7 +21,6 @@ package org.xwiki.contrib.sopmanager.importer.internal;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -201,7 +200,7 @@ class ImportVersionsTest
 
     private static Path document(String name) throws URISyntaxException
     {
-        return Paths.get(ImportVersionsTest.class.getResource("/documents/" + name).toURI());
+        return TestDocuments.get(name);
     }
 
     private static List<Path> documents(String... names) throws URISyntaxException

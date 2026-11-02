@@ -366,8 +366,11 @@ class ImportDocumentsIT
         assertTrue(content.contains("|Hygienische Händedesinfektion|3 ml"), content);
         assertTrue(content.contains("1. Die Hände werden vor und nach jedem Patientenkontakt desinfiziert."),
             content);
-        // The numbers closed by a parenthesis, and the indentation of the paragraphs, as in the document.
-        assertTrue(content.contains("(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n1. Die Hände"), content);
+        // The numbers and the letters closed by a parenthesis in the document are standard numbered lists, without any
+        // list style, and the indentation of the paragraphs is kept.
+        assertTrue(content.contains("**Vorgehen**\n\n1. Die Hände"), content);
+        assertTrue(content.contains("\n11. Die Fingerkuppen"), content);
+        assertFalse(content.contains("list-style-type"), content);
         assertTrue(content.contains("(% style=\"margin-left: 1.25cm\" %)\nDie Hände trocknen an der Luft."), content);
         assertTrue(content.contains("[[image:photo.png||width=\"167\"]]"), content);
         SOPTestUtils.assertNoHeaderOrFooter("ANA_AA_9.101", content);

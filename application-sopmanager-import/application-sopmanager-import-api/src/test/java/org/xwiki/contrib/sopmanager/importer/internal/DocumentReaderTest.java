@@ -72,7 +72,7 @@ class DocumentReaderTest
 
     private static Path document(String name) throws Exception
     {
-        return Paths.get(DocumentReaderTest.class.getResource("/documents/" + name).toURI());
+        return TestDocuments.get(name);
     }
 
     @Test
@@ -91,8 +91,9 @@ class DocumentReaderTest
     void readWord97Document() throws Exception
     {
         // The conversion of the office server: the Word document converted from the Word 97-2003 document.
+        Path converted = document(WORD_97 + ".docx");
         OfficeConverterResult result = mock(OfficeConverterResult.class);
-        when(result.getOutputFile()).thenReturn(document(WORD_97 + ".docx").toFile());
+        when(result.getOutputFile()).thenReturn(converted.toFile());
         when(this.converter.convertDocument(anyMap(), eq("document.doc"), eq("document.docx"))).thenReturn(result);
 
         ImportedDocument document = this.reader.read(document(WORD_97 + ".doc"));
@@ -107,12 +108,13 @@ class DocumentReaderTest
     }
 
     @Test
-    void readWord97DocumentWithoutOfficeServer()
+    void readWord97DocumentWithoutOfficeServer() throws Exception
     {
+        Path word97 = document(WORD_97 + ".doc");
         when(this.officeServer.getState()).thenReturn(OfficeServer.ServerState.NOT_CONNECTED);
 
         UnsupportedDocumentException exception =
-            assertThrows(UnsupportedDocumentException.class, () -> this.reader.read(document(WORD_97 + ".doc")));
+            assertThrows(UnsupportedDocumentException.class, () -> this.reader.read(word97));
 
         assertEquals(new ImportWarning("sopManager.import.message.officeServer"), exception.getReason());
     }
@@ -123,8 +125,9 @@ class DocumentReaderTest
         when(this.converter.convertDocument(anyMap(), any(), any()))
             .thenThrow(new OfficeConverterException("Conversion failed"));
 
+        Path word97 = document(WORD_97 + ".doc");
         DocumentReadException exception =
-            assertThrows(DocumentReadException.class, () -> this.reader.read(document(WORD_97 + ".doc")));
+            assertThrows(DocumentReadException.class, () -> this.reader.read(word97));
 
         assertEquals("Failed to convert the document: Conversion failed", exception.getMessage());
         assertTrue(exception.getCause() instanceof OfficeConverterException);

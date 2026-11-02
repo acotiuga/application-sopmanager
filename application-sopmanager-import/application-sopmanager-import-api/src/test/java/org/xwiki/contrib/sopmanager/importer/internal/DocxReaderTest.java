@@ -25,7 +25,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +88,7 @@ class DocxReaderTest
 
     private static Path document(String name) throws URISyntaxException
     {
-        return Paths.get(DocxReaderTest.class.getResource("/documents/" + name).toURI());
+        return TestDocuments.get(name);
     }
 
     private static String render(XDOM content)
@@ -149,10 +148,8 @@ class DocxReaderTest
             + "|Berufsgruppe|Pflegerische und ärztliche Mitarbeiter\n"
             + "|Ziel|Vermeidung von Infektionen\n\n"
             + "**Vorgehen**\n\n"
-            + "(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n"
             + "1. Die Hände werden vor und nach jedem Patientenkontakt desinfiziert.\n"
             + "1. Das Desinfektionsmittel wird 30 Sekunden **vollständig** eingerieben.\n"
-            + "(% style=\"list-style-type: gkh-lower-alpha-parenthesis\" class=\"sop-list\" %)\n"
             + "11. Die Fingerkuppen und Daumen werden //besonders// beachtet.\n"
             + "1. Schmuck und Uhren werden vor Dienstbeginn abgelegt.\n\n"
             + "(% style=\"margin-left: 1.25cm\" %)\n"
@@ -255,11 +252,6 @@ class DocxReaderTest
     @Test
     void readInvalidFiles() throws Exception
     {
-        DocumentReadException damaged = assertThrows(DocumentReadException.class,
-            () -> read("ANA_AA_9.104_Dummy-beschaedigt.docx"));
-        assertTrue(damaged.getMessage().startsWith("Not a Word document"), damaged.getMessage());
-        assertThrows(DocumentReadException.class, () -> read("~$A_AA_9.101_Dummy-Haendedesinfektion.docx"));
-
         Path noDocument = this.folder.resolve("noDocument.docx");
         write(noDocument, Map.of("word/styles.xml", "<w:styles " + W + "/>"));
         assertEquals("Not a Word document: no main part.",
@@ -280,6 +272,95 @@ class DocxReaderTest
         write(entity, Map.of("word/document.xml", "<!DOCTYPE d [<!ENTITY e SYSTEM \"file:///etc/passwd\">]>"
             + "<w:document " + W + "><w:body><w:p><w:r><w:t>&e;</w:t></w:r></w:p></w:body></w:document>"));
         assertThrows(DocumentReadException.class, () -> new DocxReader(new DocxPackage(entity)).read());
+
+        // Last, as the test stops here when the generated documents are missing.
+        Path damagedDocument = document("ANA_AA_9.104_Dummy-beschaedigt.docx");
+        DocumentReadException damaged = assertThrows(DocumentReadException.class,
+            () -> new DocxReader(new DocxPackage(damagedDocument)).read());
+        assertTrue(damaged.getMessage().startsWith("Not a Word document"), damaged.getMessage());
+        Path lockFile = document("~$A_AA_9.101_Dummy-Haendedesinfektion.docx");
+        assertThrows(DocumentReadException.class, () -> new DocxReader(new DocxPackage(lockFile)).read());
+    }
+
+    @Test
+    void readListsInterruptedByOtherNumbers() throws Exception
+    {
+        String body = numbered("Eins", 1, 0) + numbered("Zwei", 1, 0)
+            // Numbers closed by a parenthesis, at the same level: nested, the first list continuing after them.
+            + numbered("Klammer eins", 2, 0) + numbered("Klammer zwei", 2, 0) + numbered("Klammer drei", 2, 0)
+            + numbered("Drei", 1, 0)
+            // Letters, at the same level, with a sub-list.
+            + numbered("Buchstabe a", 3, 0) + numbered("Unterpunkt", 3, 1) + numbered("Buchstabe b", 3, 0)
+            + numbered("Vier", 1, 0)
+            // Other numbers, at the same level, the first list not continuing: a new list.
+            + numbered("Klammer vier", 2, 0) + paragraph(text("Absatz"))
+            // Another list numbered the same way, at the same level: a new list, starting again.
+            + numbered("Neu eins", 4, 0) + numbered("Neu zwei", 4, 0) + numbered("Neuer eins", 5, 0)
+            + paragraph(text("Absatz"))
+            // Another list of the same definition, which continues its numbers.
+            + numbered("Fünf", 6, 0) + paragraph(text("Absatz"))
+            // A definition starting at another number, next to a list whose numbers don't lead to it.
+            + numbered("Eins neu", 8, 0) + numbered("Ab zehn", 7, 0);
+        String numbering = "<w:numbering " + W + ">"
+            + abstractNum(0, "decimal", "%1.") + abstractNum(1, "decimal", "%1)")
+            + abstractNum(2, "lowerLetter", "%1)")
+            + abstractNum(3, "decimal", "%1.").replace("<w:numFmt", "<w:start w:val=\"10\"/><w:numFmt")
+            + num(1, 0) + num(2, 1) + num(3, 2) + restartedNum(4, 0) + restartedNum(5, 0) + num(6, 0) + num(7, 3)
+            + restartedNum(8, 0) + "</w:numbering>";
+        Path file = this.folder.resolve("lists.docx");
+        write(file, Map.of("word/document.xml", "<w:document " + W + "><w:body>" + body + "</w:body></w:document>",
+            "word/_rels/document.xml.rels", String.format(RELATIONSHIPS, "<Relationship Id=\"rIdNumbering\" Type=\""
+                + REL + "numbering\" Target=\"/word/numbering.xml\"/>"),
+            "word/numbering.xml", numbering));
+
+        ImportedDocument docx = new DocxReader(new DocxPackage(file)).read();
+
+        assertEquals("1. Eins\n"
+            + "1. Zwei\n"
+            + "11. Klammer eins\n"
+            + "11. Klammer zwei\n"
+            + "11. Klammer drei\n"
+            + "1. Drei\n"
+            + "11. Buchstabe a\n"
+            + "111. Unterpunkt\n"
+            + "11. Buchstabe b\n"
+            + "1. Vier\n\n"
+            + "(% start=\"4\" %)\n"
+            + "1. Klammer vier\n\n"
+            + "Absatz\n\n"
+            + "1. Neu eins\n"
+            + "1. Neu zwei\n\n"
+            + "1. Neuer eins\n\n"
+            + "Absatz\n\n"
+            + "(% start=\"5\" %)\n"
+            + "1. Fünf\n\n"
+            + "Absatz\n\n"
+            + "1. Eins neu\n\n"
+            + "(% start=\"10\" %)\n"
+            + "1. Ab zehn", render(docx.content()));
+    }
+
+    private static String numbered(String text, int numId, int level)
+    {
+        return listItem(text, level).replace("w:numId w:val=\"1\"", "w:numId w:val=\"" + numId + "\"");
+    }
+
+    private static String abstractNum(int id, String format, String text)
+    {
+        return "<w:abstractNum w:abstractNumId=\"" + id + "\"><w:lvl w:ilvl=\"0\"><w:numFmt w:val=\"" + format
+            + "\"/><w:lvlText w:val=\"" + text + "\"/></w:lvl><w:lvl w:ilvl=\"1\"><w:numFmt w:val=\"decimal\"/>"
+            + "<w:lvlText w:val=\"%2.\"/></w:lvl></w:abstractNum>";
+    }
+
+    private static String restartedNum(int id, int abstractId)
+    {
+        return num(id, abstractId).replace("</w:num>",
+            "<w:lvlOverride w:ilvl=\"0\"><w:startOverride w:val=\"1\"/></w:lvlOverride></w:num>");
+    }
+
+    private static String num(int id, int abstractId)
+    {
+        return "<w:num w:numId=\"" + id + "\"><w:abstractNumId w:val=\"" + abstractId + "\"/></w:num>";
     }
 
     @Test
@@ -349,7 +430,6 @@ class DocxReaderTest
         assertEquals(List.of(new ImportWarning("sopManager.import.warning.backgroundImages", 1)), docx.warnings());
         assertEquals("[[XWiki>>url:https://xwiki.org]] Seite 3 --alt-- __neu__\n"
             + "~{~{velocity}} -eingefügt\n\n"
-            + "(% class=\"sop-list\" %)\n"
             + "1. Eins\n"
             + "1*. Unterpunkt\n"
             + "1. Zwei\n\n"
@@ -358,7 +438,7 @@ class DocxReaderTest
             + "|=(% colspan=\"2\" %)A|=(% rowspan=\"3\" %)B\n"
             + "|=C|D\n"
             + "|E|F\n\n"
-            + "|(((\n(% start=\"3\" class=\"sop-list\" %)\n1. In der Zelle\n)))\n\n"
+            + "|(((\n(% start=\"3\" %)\n1. In der Zelle\n)))\n\n"
             + "Im Inhaltssteuerelement", render(docx.content()));
     }
 

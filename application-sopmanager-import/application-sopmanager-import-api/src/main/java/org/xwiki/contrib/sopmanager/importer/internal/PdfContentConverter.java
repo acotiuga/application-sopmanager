@@ -110,6 +110,12 @@ public class PdfContentConverter
                     figures.add(elements.get(index++));
                 }
                 convertTable(element, figures, page, blocks);
+            } else if (LIST.equals(this.structure.getType(element))) {
+                List<PDStructureElement> lists = new ArrayList<>(List.of(element));
+                while (index < elements.size() && LIST.equals(this.structure.getType(elements.get(index)))) {
+                    lists.add(elements.get(index++));
+                }
+                blocks.addAll(this.listConverter.convert(lists, page));
             } else {
                 convert(element, page, blocks);
             }
@@ -243,9 +249,7 @@ public class PdfContentConverter
         PDPage page = PdfStructure.getPage(element, parentPage);
         String type = this.structure.getType(element);
         Matcher heading = HEADING.matcher(type);
-        if (LIST.equals(type)) {
-            blocks.addAll(this.listConverter.convert(element, page));
-        } else if (TABLE.equals(type)) {
+        if (TABLE.equals(type)) {
             this.tableConverter.convert(element, page).ifPresent(blocks::add);
         } else if (FIGURE.equals(type)) {
             ImageBlock image = this.images.extract(element, page);

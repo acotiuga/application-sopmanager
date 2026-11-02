@@ -22,7 +22,6 @@ package org.xwiki.contrib.sopmanager.importer.internal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +189,7 @@ class DefaultSOPImportManagerTest
             invocation -> realAnalyser.read(invocation.getArgument(0), (SOPImportResult) invocation.getArgument(1)));
         when(this.analyser.translate(any())).thenAnswer(invocation -> realAnalyser.translate(invocation.getArgument(0)));
 
-        Path documents = Paths.get(getClass().getResource("/documents").toURI());
+        Path documents = TestDocuments.getFolder();
         try (Stream<Path> files = Files.list(documents)) {
             for (Path file : files.toList()) {
                 Files.copy(file, this.folder.resolve(file.getFileName()));

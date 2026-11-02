@@ -78,15 +78,18 @@ public class PdfListConverter
     }
 
     /**
-     * @param list a list of the structure tree
-     * @param page the page of the list
-     * @return the list blocks: one per kind of consecutive items
+     * @param lists consecutive lists of the structure tree, as Word may split a list
+     * @param page the page of the lists
+     * @return the list blocks: one per kind of consecutive items, an item starting a new list when its number doesn't
+     *     follow the previous one
      */
-    public List<Block> convert(PDStructureElement list, PDPage page)
+    public List<Block> convert(List<PDStructureElement> lists, PDPage page)
     {
         List<Item> items = new ArrayList<>();
-        collect(list, page, items);
-        return build(items);
+        for (PDStructureElement list : lists) {
+            collect(list, page, items);
+        }
+        return build(nest(items));
     }
 
     private void collect(PDStructureElement list, PDPage parentPage, List<Item> items)
@@ -99,7 +102,7 @@ public class PdfListConverter
                 items.add(convertItem(child, PdfStructure.getPage(child, page)));
                 afterItem = true;
             } else if (LIST.equals(type) && afterItem) {
-                items.get(items.size() - 1).sublists().addAll(convert(child, page));
+                items.get(items.size() - 1).sublists().addAll(convert(List.of(child), page));
             } else if (LIST.equals(type)) {
                 collect(child, page, items);
             }
@@ -125,7 +128,7 @@ public class PdfListConverter
         List<Block> sublists = new ArrayList<>();
         for (PDStructureElement child : PdfStructure.getElements(content)) {
             if (LIST.equals(this.structure.getType(child))) {
-                sublists.addAll(convert(child, page));
+                sublists.addAll(convert(List.of(child), page));
             }
         }
         Matcher matcher = LABEL.matcher(label);
@@ -158,8 +161,7 @@ public class PdfListConverter
     }
 
     /**
-     * @return the format of a list from the label of an item: a bullet, a number or a letter, closed by a dot or a
-     *     parenthesis ("1)", but not "(1)")
+     * @return the format of a list from the label of an item: numbered for a number or a letter, else bulleted
      */
     private static ListFormat getFormat(Matcher label)
     {
@@ -167,11 +169,13 @@ public class PdfListConverter
             // No label, or a bullet.
             return ListFormat.BULLET;
         }
-        String style = "";
+        String numbers;
         if (label.group(4) != null) {
-            style = Character.isUpperCase(label.group(4).charAt(0)) ? "upper-alpha" : "lower-alpha";
+            numbers = Character.isUpperCase(label.group(4).charAt(0)) ? "A" : "a";
+        } else {
+            numbers = label.group(3).contains(".") ? "1.1" : "1";
         }
-        return new ListFormat(false, style, ")".equals(label.group(5)) && label.group(2).isEmpty());
+        return ListFormat.numbered(label.group(2) + numbers + label.group(5));
     }
 
     private static int getNumber(Matcher label)
@@ -187,18 +191,60 @@ public class PdfListConverter
         return Character.toLowerCase(label.group(4).charAt(0)) - 'a' + 1;
     }
 
+    /**
+     * Nests the items interrupting a numbered list in the last item before them, e.g. the letters of "1. 2. a) b) 3.":
+     * all the numbers looking alike once imported, the list would otherwise read 1, 2, 1, 2, 3.
+     *
+     * @return the items that are not nested, the nested ones being in their sub-lists
+     */
+    private static List<Item> nest(List<Item> items)
+    {
+        List<Item> result = new ArrayList<>();
+        int index = 0;
+        while (index < items.size()) {
+            Item item = items.get(index);
+            int resume = result.isEmpty() ? -1 : getResume(items, result.get(result.size() - 1), index);
+            if (resume < 0) {
+                result.add(item);
+                index++;
+            } else {
+                result.get(result.size() - 1).sublists().addAll(build(nest(items.subList(index, resume))));
+                index = resume;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @return the position of the item continuing the list of the previous item after the items starting at the given
+     *     position, -1 if these items don't interrupt the list
+     */
+    private static int getResume(List<Item> items, Item previous, int start)
+    {
+        if (previous.format().isInterruptedBy(items.get(start).format())) {
+            for (int index = start + 1; index < items.size(); index++) {
+                Item item = items.get(index);
+                if (item.format().equals(previous.format())) {
+                    return previous.format().continues(previous.number(), item.number()) ? index : -1;
+                }
+            }
+        }
+        return -1;
+    }
+
     private static List<Block> build(List<Item> items)
     {
         List<Block> lists = new ArrayList<>();
         Block list = null;
-        ListFormat format = null;
+        Item previous = null;
         for (Item item : items) {
-            if (list == null || !item.format().equals(format)) {
-                format = item.format();
+            if (list == null || !item.format().equals(previous.format())
+                || !item.format().continues(previous.number(), item.number())) {
                 // Keep the numbers of the document, which continue the lists interrupted by paragraphs.
-                list = format.newList(item.number());
+                list = item.format().newList(item.number());
                 lists.add(list);
             }
+            previous = item;
             List<Block> content = new ArrayList<>(item.content());
             content.addAll(item.sublists());
             list.addChild(new ListItemBlock(content));

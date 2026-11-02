@@ -22,7 +22,6 @@ package org.xwiki.contrib.sopmanager.importer.internal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -69,7 +68,7 @@ class PdfReaderTest
 
     private static ImportedDocument read(String name) throws Exception
     {
-        return new PdfReader(Paths.get(PdfReaderTest.class.getResource("/documents/" + name).toURI())).read();
+        return new PdfReader(TestDocuments.get(name)).read();
     }
 
     private static String render(XDOM content)
@@ -102,10 +101,8 @@ class PdfReaderTest
             + "|Berufsgruppe|Pflegerische und ärztliche Mitarbeiter\n"
             + "|Ziel|Vermeidung von Infektionen\n\n"
             + "**Vorgehen**\n\n"
-            + "(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n"
             + "1. Die Hände werden vor und nach jedem Patientenkontakt desinfiziert.\n"
             + "1. Das Desinfektionsmittel wird 30 Sekunden **vollständig** eingerieben.\n"
-            + "(% style=\"list-style-type: gkh-lower-alpha-parenthesis\" class=\"sop-list\" %)\n"
             + "11. Die Fingerkuppen und Daumen werden //besonders// beachtet.\n"
             + "1. Schmuck und Uhren werden vor Dienstbeginn abgelegt.\n\n"
             + "(% style=\"margin-left: 1.25cm\" %)\n"
@@ -143,10 +140,10 @@ class PdfReaderTest
     }
 
     @Test
-    void readPdfWithoutStructure()
+    void readPdfWithoutStructure() throws Exception
     {
-        UnsupportedDocumentException exception =
-            assertThrows(UnsupportedDocumentException.class, () -> read("ANA_AA_9.106_Dummy-Scan.pdf"));
+        PdfReader reader = new PdfReader(TestDocuments.get("ANA_AA_9.106_Dummy-Scan.pdf"));
+        UnsupportedDocumentException exception = assertThrows(UnsupportedDocumentException.class, reader::read);
 
         assertEquals(new ImportWarning("sopManager.import.message.untaggedPdf"), exception.getReason());
     }
@@ -209,14 +206,12 @@ class PdfReaderTest
         assertEquals("= Einleitung =\n\n"
             + "Ein Absatz mit //kursivem// Text.\n\n"
             + "Die Hände werden geschaffen, bei OP-Beginn.\n\n"
-            + "(% style=\"list-style-type: gkh-decimal-parenthesis\" class=\"sop-list\" %)\n"
             + "1. Erster Schritt\n"
             + "1. Zweiter Schritt\n"
-            + "(% style=\"list-style-type: gkh-lower-alpha-parenthesis\" class=\"sop-list\" %)\n"
             + "11. Unterpunkt\n\n"
             + "* Ein Punkt\n\n"
             + "Nach der Liste.\n\n"
-            + "(% start=\"3\" class=\"sop-list\" %)\n"
+            + "(% start=\"3\" %)\n"
             + "1. Dritter Schritt\n\n"
             + "* Strich\n\n"
             + "|=Material|=Menge\n"
@@ -225,6 +220,56 @@ class PdfReaderTest
             + "[[image:figure-1.png||width=\"53\"]]\n\n"
             + "Hinweis\n\n"
             + "Im Container.", render(pdf.content()));
+    }
+
+    @Test
+    void readListsInterruptedByOtherNumbers() throws Exception
+    {
+        Path file;
+        try (TaggedPdf pdf = new TaggedPdf()) {
+            PDStructureElement document = pdf.getRoot();
+            PDStructureElement list = pdf.element("L", document);
+            writeItem(pdf, list, "1.", "Eins", 700);
+            writeItem(pdf, list, "2.", "Zwei", 688);
+            // Numbers closed by a parenthesis, at the same level: nested, the first list continuing after them.
+            writeItem(pdf, list, "1)", "Klammer eins", 676);
+            writeItem(pdf, list, "2)", "Klammer zwei", 664);
+            writeItem(pdf, list, "3)", "Klammer drei", 652);
+            writeItem(pdf, list, "3.", "Drei", 640);
+            // Letters, in the next list of the structure tree, as Word may split a list.
+            list = pdf.element("L", document);
+            writeItem(pdf, list, "a)", "Buchstabe a", 628);
+            writeItem(pdf, list, "b)", "Buchstabe b", 616);
+            list = pdf.element("L", document);
+            writeItem(pdf, list, "4.", "Vier", 604);
+            // Other numbers, the first list not continuing: a new list.
+            writeItem(pdf, list, "4)", "Klammer vier", 592);
+            pdf.line(pdf.element("P", document), 72, 580, "Absatz");
+            // A list numbered the same way, starting again in the same list of the structure tree: a new list.
+            list = pdf.element("L", document);
+            writeItem(pdf, list, "1.", "Neu eins", 568);
+            writeItem(pdf, list, "2.", "Neu zwei", 556);
+            writeItem(pdf, list, "1.", "Neuer eins", 544);
+            file = pdf.save(this.folder.resolve("lists.pdf"));
+        }
+
+        ImportedDocument pdf = new PdfReader(file).read();
+
+        assertEquals("1. Eins\n"
+            + "1. Zwei\n"
+            + "11. Klammer eins\n"
+            + "11. Klammer zwei\n"
+            + "11. Klammer drei\n"
+            + "1. Drei\n"
+            + "11. Buchstabe a\n"
+            + "11. Buchstabe b\n"
+            + "1. Vier\n\n"
+            + "(% start=\"4\" %)\n"
+            + "1. Klammer vier\n\n"
+            + "Absatz\n\n"
+            + "1. Neu eins\n"
+            + "1. Neu zwei\n\n"
+            + "1. Neuer eins", render(pdf.content()));
     }
 
     @Test
