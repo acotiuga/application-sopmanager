@@ -40,7 +40,7 @@
     <xwiki.test.ui.servletEngineTag>10.1-jdk21</xwiki.test.ui.servletEngineTag>
     <xwiki.test.ui.database>postgresql</xwiki.test.ui.database>
     <xwiki.test.ui.databaseTag>17</xwiki.test.ui.databaseTag>
-    <licensing.version>2.0.6</licensing.version>
+    <licensing.version>1.33.1</licensing.version>
   </properties>
   <dependencyManagement>
     <dependencies>
