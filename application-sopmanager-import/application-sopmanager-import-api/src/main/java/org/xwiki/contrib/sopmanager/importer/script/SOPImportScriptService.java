@@ -92,7 +92,7 @@ public class SOPImportScriptService implements ScriptService
     }
 
     /**
-     * @param analysisId the identifier given to {@link #analyseDocuments(String, String, int, String)}
+     * @param analysisId the identifier given to {@link #analyseDocuments(String, List, String, String)}
      * @return the analysis, {@code null} if it's not one of the last analyses since the server started, or the current
      *     user can't import documents
      */

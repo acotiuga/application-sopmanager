@@ -94,7 +94,7 @@ public interface SOPImportManager
         String analysisId);
 
     /**
-     * @param analysisId the identifier given to {@link #analyseDocuments(String, String, int, String)}
+     * @param analysisId the identifier given to {@link #analyseDocuments(String, List, String, String)}
      * @return this analysis, if it's one of the last analyses since the server was started, {@code null} otherwise
      */
     SOPImportAnalysis getAnalysis(String analysisId);
