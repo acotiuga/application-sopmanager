@@ -304,7 +304,7 @@ class ImportDocumentsIT
         assertTrue(log.contains("Importing the 2 selected files of the folder [" + folder + "]."),
             String.join("\n", log));
         assertTrue(log.contains(String.format("[%s] (Compatible): imported as [xwiki:SOPManager.%s.WebHome].",
-            NATIVE.file(), NATIVE.page().replace(".", "\\."))), String.join("\n", log));
+            NATIVE.file(), SOPTestUtils.pageName(NATIVE.page()))), String.join("\n", log));
         assertTrue(log.contains(String.format("Imported documents (2): %s, %s", NATIVE.file(), CONVERTED.file(PDF))),
             String.join("\n", log));
     }
