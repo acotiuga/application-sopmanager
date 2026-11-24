@@ -67,6 +67,13 @@ sopManager.reviewPage.submitForApproval=Submitted for approval.
 sopManager.groupSelector.reviewers.placeholder=Select reviewer groups...
 sopManager.groupSelector.approvers.placeholder=Select approver groups...
 sopManager.groupSelector.noGroups=No groups have been configured for this role.
+sopManager.reviewPage.userGroups.title=Groups of a user
+sopManager.reviewPage.userGroups.hint=Among the reviewer groups (the members of the SOPReviewersGroup group) and the approver groups (the members of the SOPApproversGroup group), shows those the user belongs to, directly or through another group.
+sopManager.reviewPage.userGroups.user=User
+sopManager.reviewPage.userGroups.reviewerGroups=Reviewer groups
+sopManager.reviewPage.userGroups.approverGroups=Approver groups
+sopManager.reviewPage.userGroups.none=None
+sopManager.reviewPage.userGroups.error=The groups of the user could not be retrieved.
 
 SOPManager.Code.ControlledDocumentClass_status_returnedForChanges=Returned for changes
 SOPManager.Code.ControlledDocumentClass_status_draft=Draft

@@ -37,7 +37,31 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
   <content>{{velocity wiki="false"}}
-#if ($xcontext.action == 'get')
+#if ($xcontext.action == 'get' &amp;&amp; $request.sopGroupsOfUser != $NULL)
+  ## Among the reviewer groups (the members of XWiki.SOPReviewersGroup) and the approver groups (the members of
+  ## XWiki.SOPApproversGroup), those the given user belongs to, directly or through another group.
+  #set ($userGroups = {'reviewerGroups': [], 'approverGroups': []})
+  #if ("$!request.sopGroupsOfUser.trim()" != '')
+    #set ($userReference = $services.model.resolveDocument($request.sopGroupsOfUser.trim()))
+    #foreach ($entry in [['reviewerGroups', 'XWiki.SOPReviewersGroup'], ['approverGroups', 'XWiki.SOPApproversGroup']])
+      #foreach ($groupReference in $services.user.group.getMembers($entry[1], false))
+        #if ($groupReference &amp;&amp; $services.user.group.getMembers($groupReference, true).contains($userReference))
+          #set ($groupDocument = $xwiki.getDocument($groupReference))
+          #set ($groupTitle = "$!groupDocument.plainTitle")
+          #if ($groupTitle == '')
+            #set ($groupTitle = $groupDocument.name)
+          #end
+          #set ($discard = $userGroups.get($entry[0]).add({
+            'reference': $services.model.serialize($groupReference, 'local'),
+            'title': $groupTitle,
+            'url': $groupDocument.getURL()
+          }))
+        #end
+      #end
+    #end
+  #end
+  #jsonResponse($userGroups)
+#elseif ($xcontext.action == 'get')
   #set ($message = '')
   #set ($statusCode = 200)
 
@@ -207,6 +231,57 @@
       button.prop('disabled', false);
     });
   });
+
+  // Show the reviewer and approver groups the selected user belongs to.
+  var displayUserGroups = function(container, groups) {
+    container.empty();
+    if (!groups || !groups.length) {
+      container.append($('&lt;span class="noUserGroups"/&gt;').text(container.closest('.sopUserGroups').data('none')));
+      return;
+    }
+    groups.forEach(function(group, index) {
+      if (index &gt; 0) {
+        container.append(', ');
+      }
+      container.append($('&lt;a/&gt;').attr({'href': group.url, 'title': group.reference}).text(group.title));
+    });
+  };
+
+  var userGroupsRequest = 0;
+  $('#SOPReviewPagespane').on('change', '#sopUserGroupsUser', function() {
+    var section = $(this).closest('.sopUserGroups');
+    var reviewerGroups = section.find('.sopUserReviewerGroups');
+    var approverGroups = section.find('.sopUserApproverGroups');
+    var errorBox = section.find('.sopUserGroupsError');
+    var user = $(this).val() || '';
+    if (Array.isArray(user)) {
+      user = user.length ? user[0] : '';
+    }
+    errorBox.addClass('hidden');
+    if (!user) {
+      reviewerGroups.empty();
+      approverGroups.empty();
+      return;
+    }
+    var request = ++userGroupsRequest;
+    section.find('.fa-spinner').removeClass('hidden');
+    $.get(serviceURL, {'sopGroupsOfUser': user}).done(function(data) {
+      if (request === userGroupsRequest) {
+        displayUserGroups(reviewerGroups, data.reviewerGroups);
+        displayUserGroups(approverGroups, data.approverGroups);
+      }
+    }).fail(function() {
+      if (request === userGroupsRequest) {
+        reviewerGroups.empty();
+        approverGroups.empty();
+        errorBox.text(section.data('error')).removeClass('hidden');
+      }
+    }).always(function() {
+      if (request === userGroupsRequest) {
+        section.find('.fa-spinner').addClass('hidden');
+      }
+    });
+  });
 });</code>
     </property>
     <property>
@@ -331,6 +406,14 @@
 #generatePDF {
   margin-top: 0;
   margin-right: 10px;
+}
+
+.sopUserGroups {
+  margin-top: 20px;
+}
+
+.sopUserGroups .noUserGroups {
+  font-style: italic;
 }</code>
     </property>
     <property>
@@ -594,6 +677,37 @@
               {{error}}reviewNotification{{/error}}
 
             &lt;/div&gt;
+          &lt;/div&gt;
+          ## Find the reviewer and approver groups a user belongs to.
+          #set ($discard = $xwiki.linkx.use($services.webjars.url('selectize.js', 'css/selectize.bootstrap3.css'),
+            {'type': 'text/css', 'rel': 'stylesheet'}))
+          #set ($discard = $xwiki.ssfx.use('uicomponents/suggest/xwiki.selectize.css', true))
+          #set ($discard = $xwiki.jsfx.use('uicomponents/suggest/suggestUsersAndGroups.js', {'forceSkinAction': true,
+            'language': $xcontext.locale}))
+          &lt;div class="sopUserGroups xform"
+              data-none="$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.none'))"
+              data-error="$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.error'))"&gt;
+            &lt;h3&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.title'))&lt;/h3&gt;
+            &lt;p class="xHint"&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.hint'))&lt;/p&gt;
+            &lt;dl&gt;
+              &lt;dt&gt;
+                &lt;label for="sopUserGroupsUser"&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.user'))&lt;/label&gt;
+              &lt;/dt&gt;
+              &lt;dd&gt;
+                &lt;input type="text" id="sopUserGroupsUser" class="suggest-users" value=""
+                  data-xwiki-selectize="$escapetool.xml('{"maxItems":1}')" /&gt;
+                &lt;span class="hidden fa fa-spinner fa-spin"&gt;&lt;/span&gt;
+              &lt;/dd&gt;
+              &lt;dt&gt;
+                &lt;label&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.reviewerGroups'))&lt;/label&gt;
+              &lt;/dt&gt;
+              &lt;dd class="sopUserReviewerGroups"&gt;&lt;/dd&gt;
+              &lt;dt&gt;
+                &lt;label&gt;$escapetool.xml($services.localization.render('sopManager.reviewPage.userGroups.approverGroups'))&lt;/label&gt;
+              &lt;/dt&gt;
+              &lt;dd class="sopUserApproverGroups"&gt;&lt;/dd&gt;
+            &lt;/dl&gt;
+            &lt;div class="hidden box errormessage sopUserGroupsError"&gt;&lt;/div&gt;
           &lt;/div&gt;
         #end
       &lt;/div&gt;
