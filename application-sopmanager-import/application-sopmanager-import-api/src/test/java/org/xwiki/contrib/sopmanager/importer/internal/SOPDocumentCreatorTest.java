@@ -164,7 +164,7 @@ class SOPDocumentCreatorTest
 
         DocumentReference muster = new DocumentReference("xwiki", "XWiki", "MMuster");
         DocumentReference beispiel = new DocumentReference("xwiki", "XWiki", "KBeispiel");
-        when(this.groups.getManagerGroups(List.of(muster, beispiel), "xwiki")).thenReturn(List.of(
+        when(this.groups.getApproverGroups(List.of(muster, beispiel), "xwiki")).thenReturn(List.of(
             new DocumentReference("xwiki", "XWiki", "ANA_Leitender_Arzt"),
             new DocumentReference("xwiki", "XWiki", "ITS_Leitender_Arzt")));
 

@@ -68,7 +68,8 @@ public class ImportRoles
      * @param users the users selected for the document, by role ({@link SOPImportManager#OWNER},
      *     {@link SOPImportManager#APPROVER}, {@link SOPImportManager#REVIEWER}): the references of the users, possibly
      *     separated by commas as submitted by the user pickers; the first one is set as owner, all of them as approvers
-     *     and reviewers, whose groups of managers are set as the approver and reviewer groups
+     *     and reviewers; the groups offered for the approval and the review that they belong to are set as the
+     *     approver and reviewer groups
      * @param details the details read from the document
      * @param context the XWiki context
      * @return the persons named in the document who are not set
@@ -82,11 +83,11 @@ public class ImportRoles
 
         List<DocumentReference> approvers = getUsers(users.get(SOPImportManager.APPROVER), context);
         setReferences(sop, "approverUser", approvers, context);
-        setReferences(sop, "approverGroups", this.groups.getManagerGroups(approvers, wiki), context);
+        setReferences(sop, "approverGroups", this.groups.getApproverGroups(approvers, wiki), context);
 
         List<DocumentReference> reviewers = getUsers(users.get(SOPImportManager.REVIEWER), context);
         setReferences(sop, "reviewerUser", reviewers, context);
-        setReferences(sop, "reviewerGroups", this.groups.getManagerGroups(reviewers, wiki), context);
+        setReferences(sop, "reviewerGroups", this.groups.getReviewerGroups(reviewers, wiki), context);
 
         List<ImportWarning> warnings = new ArrayList<>();
         if (approvers.isEmpty() && StringUtils.isNotBlank(details.getApprovedBy())) {

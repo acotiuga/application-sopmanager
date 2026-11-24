@@ -24,7 +24,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.WikiReference;
 import org.xwiki.test.LogLevel;
 import org.xwiki.test.junit5.LogCaptureExtension;
 import org.xwiki.test.junit5.mockito.ComponentTest;
@@ -44,7 +43,9 @@ import static org.mockito.Mockito.when;
 @ComponentTest
 class ImportGroupsTest
 {
-    private static final WikiReference WIKI = new WikiReference("xwiki");
+    private static final DocumentReference APPROVERS = reference("SOPApproversGroup");
+
+    private static final DocumentReference REVIEWERS = reference("SOPReviewersGroup");
 
     private static final DocumentReference MUSTER = reference("MMuster");
 
@@ -53,6 +54,10 @@ class ImportGroupsTest
     private static final DocumentReference ANA = reference("ANA_Leitender_Arzt");
 
     private static final DocumentReference ITS = reference("ITS_Leitender_Arzt");
+
+    private static final DocumentReference ENDOSKOPIE = reference("gRol_Endoskopie_Pflege_StationsleitungGroup");
+
+    private static final DocumentReference PFLEGE = reference("Pflege");
 
     @RegisterExtension
     private LogCaptureExtension logCapture = new LogCaptureExtension(LogLevel.WARN);
@@ -69,32 +74,72 @@ class ImportGroupsTest
     }
 
     @Test
-    void getManagerGroups() throws Exception
+    void getApproverGroups() throws Exception
     {
-        when(this.groupManager.getGroups(MUSTER, WIKI, true)).thenReturn(List.of(ITS, reference("XWikiAllGroup"), ANA,
-            reference("leitender_arzt"), reference("Leitender_Arzt")));
-        when(this.groupManager.getGroups(BEISPIEL, WIKI, true)).thenReturn(List.of(ANA));
+        // The groups offered for the approval, and a user.
+        when(this.groupManager.getMembers(APPROVERS, false)).thenReturn(List.of(ITS, ENDOSKOPIE, ANA, PFLEGE, MUSTER));
+        when(this.groupManager.getMembers(ITS, true)).thenReturn(List.of(MUSTER));
+        // A member through another group.
+        when(this.groupManager.getMembers(ENDOSKOPIE, true)).thenReturn(List.of(reference("Endoskopie"), BEISPIEL));
+        when(this.groupManager.getMembers(ANA, true)).thenReturn(List.of(MUSTER, BEISPIEL));
+        when(this.groupManager.getMembers(PFLEGE, true)).thenReturn(List.of(reference("Other")));
+        // A group the approvers belong to, not offered for the approval.
+        when(this.groupManager.getMembers(REVIEWERS, false)).thenReturn(List.of(reference("ANA_Pflege")));
+        when(this.groupManager.getMembers(reference("ANA_Pflege"), true)).thenReturn(List.of(MUSTER));
 
-        // Only the groups of managers, each once.
-        assertEquals(List.of(ANA, ITS), this.groups.getManagerGroups(List.of(MUSTER, BEISPIEL), "xwiki"));
+        // Only the groups offered for the approval that the approvers belong to, each once.
+        assertEquals(List.of(ANA, ITS, ENDOSKOPIE), this.groups.getApproverGroups(List.of(MUSTER, BEISPIEL), "xwiki"));
     }
 
     @Test
-    void getManagerGroupsWithoutGroup() throws Exception
+    void getReviewerGroups() throws Exception
     {
-        when(this.groupManager.getGroups(MUSTER, WIKI, true)).thenReturn(List.of(reference("XWikiAllGroup")));
+        when(this.groupManager.getMembers(REVIEWERS, false)).thenReturn(List.of(PFLEGE, ANA));
+        when(this.groupManager.getMembers(PFLEGE, true)).thenReturn(List.of(BEISPIEL));
+        when(this.groupManager.getMembers(ANA, true)).thenReturn(List.of(MUSTER));
+        // The groups offered for the approval are not used for the review.
+        when(this.groupManager.getMembers(APPROVERS, false)).thenReturn(List.of(ITS));
+        when(this.groupManager.getMembers(ITS, true)).thenReturn(List.of(BEISPIEL));
 
-        assertEquals(List.of(), this.groups.getManagerGroups(List.of(MUSTER), "xwiki"));
-        assertEquals(List.of(), this.groups.getManagerGroups(List.of(), "xwiki"));
+        assertEquals(List.of(PFLEGE), this.groups.getReviewerGroups(List.of(BEISPIEL), "xwiki"));
     }
 
     @Test
-    void getManagerGroupsWhenTheGroupsOfAUserCantBeRead() throws Exception
+    void getGroupsInAnotherWiki() throws Exception
     {
-        when(this.groupManager.getGroups(MUSTER, WIKI, true)).thenThrow(new GroupException("Failed"));
-        when(this.groupManager.getGroups(BEISPIEL, WIKI, true)).thenReturn(List.of(ANA));
+        DocumentReference approvers = new DocumentReference("sub", "XWiki", "SOPApproversGroup");
+        when(this.groupManager.getMembers(approvers, false)).thenReturn(List.of(ANA));
+        when(this.groupManager.getMembers(ANA, true)).thenReturn(List.of(MUSTER));
 
-        assertEquals(List.of(ANA), this.groups.getManagerGroups(List.of(MUSTER, BEISPIEL), "xwiki"));
-        assertEquals("Failed to read the groups of [xwiki:XWiki.MMuster].", this.logCapture.getMessage(0));
+        assertEquals(List.of(ANA), this.groups.getApproverGroups(List.of(MUSTER), "sub"));
+        assertEquals(List.of(), this.groups.getApproverGroups(List.of(MUSTER), "xwiki"));
+    }
+
+    @Test
+    void getGroupsWithoutGroup() throws Exception
+    {
+        when(this.groupManager.getMembers(APPROVERS, false)).thenReturn(List.of(ANA));
+        when(this.groupManager.getMembers(ANA, true)).thenReturn(List.of(BEISPIEL));
+
+        assertEquals(List.of(), this.groups.getApproverGroups(List.of(MUSTER), "xwiki"));
+        assertEquals(List.of(), this.groups.getApproverGroups(List.of(), "xwiki"));
+        // No group offered for the review.
+        assertEquals(List.of(), this.groups.getReviewerGroups(List.of(MUSTER), "xwiki"));
+    }
+
+    @Test
+    void getGroupsWhenTheMembersOfAGroupCantBeRead() throws Exception
+    {
+        when(this.groupManager.getMembers(APPROVERS, false)).thenReturn(List.of(ITS, ANA));
+        when(this.groupManager.getMembers(ITS, true)).thenThrow(new GroupException("Failed"));
+        when(this.groupManager.getMembers(ANA, true)).thenReturn(List.of(MUSTER));
+
+        assertEquals(List.of(ANA), this.groups.getApproverGroups(List.of(MUSTER), "xwiki"));
+        assertEquals("Failed to read the members of [xwiki:XWiki.ITS_Leitender_Arzt].", this.logCapture.getMessage(0));
+
+        when(this.groupManager.getMembers(REVIEWERS, false)).thenThrow(new GroupException("Failed"));
+
+        assertEquals(List.of(), this.groups.getReviewerGroups(List.of(MUSTER), "xwiki"));
+        assertEquals("Failed to read the members of [xwiki:XWiki.SOPReviewersGroup].", this.logCapture.getMessage(1));
     }
 }
